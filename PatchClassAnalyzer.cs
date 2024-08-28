@@ -175,10 +175,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                if(!MissingMethodType.Check(context, patchMethodData, patchMethod.Locations))
+                if(MissingMethodType.Check(context, patchMethodData, patchMethod.Locations))
                     continue;
 
-                if (!AmbiguousMatch.Check(context, patchMethodData, patchMethod.Locations))
+                if (AmbiguousMatch.Check(context, patchMethodData, patchMethod.Locations))
                     continue;
 
                 context.ReportDiagnostic(Diagnostic.Create(

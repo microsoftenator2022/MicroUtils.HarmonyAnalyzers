@@ -25,7 +25,7 @@ internal static class AmbiguousMatch
     {
         if (!patchMethodData.IsAmbiguousMatch)
         {
-            return true;
+            return false;
         }
 
         context.ReportDiagnostic(Diagnostic.Create(
@@ -34,6 +34,6 @@ internal static class AmbiguousMatch
             additionalLocations: locations.Skip(1),
             messageArgs: [patchMethodData.PatchMethod, string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
-        return false;
+        return true;
     }
 }

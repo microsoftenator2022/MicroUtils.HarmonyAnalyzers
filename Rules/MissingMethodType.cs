@@ -26,7 +26,7 @@ internal static class MissingMethodType
         if (patchMethodData.TargetMethodType is not null ||
             patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is not { } property)
         {
-            return true;
+            return false;
         }
 
         void report(Constants.PatchTargetMethodType methodType) =>
@@ -42,6 +42,6 @@ internal static class MissingMethodType
         if (property.SetMethod is not null)
             report(Constants.PatchTargetMethodType.Setter);
 
-        return false;
+        return true;
     }
 }
