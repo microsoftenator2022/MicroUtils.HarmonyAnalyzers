@@ -94,7 +94,7 @@ internal static partial class Util
     public static IMethodSymbol? FindMethodWithArgs(this IEnumerable<IMethodSymbol> source, IEnumerable<ITypeSymbol> argTypes) =>
         source.FindMethodsWithArgs(argTypes).TryExactlyOne();
 
-    public static int DistinctTypeConstantsCount(IEnumerable<TypedConstant> typedConstants, CancellationToken ct)
+    public static int DistinctTypedConstantsCount(IEnumerable<TypedConstant> typedConstants, CancellationToken ct)
     {
         if (!typedConstants.Any())
             return 0;
@@ -103,7 +103,7 @@ internal static partial class Util
         {
             return typedConstants
                 .GroupBy(c => c.Kind)
-                .Select(cs => Math.Max(1, DistinctTypeConstantsCount(cs, ct)))
+                .Select(cs => Math.Max(1, DistinctTypedConstantsCount(cs, ct)))
                 .Sum();
         }
 
@@ -131,7 +131,7 @@ internal static partial class Util
                         if (ct.IsCancellationRequested)
                             return 0;
                         
-                        count += Math.Max(1, DistinctTypeConstantsCount(lg.Select(c => c.Values[i]), ct));
+                        count += Math.Max(1, DistinctTypedConstantsCount(lg.Select(c => c.Values[i]), ct));
                     }
                 }
 
