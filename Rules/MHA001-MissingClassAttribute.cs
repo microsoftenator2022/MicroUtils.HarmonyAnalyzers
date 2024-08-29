@@ -15,7 +15,7 @@ internal static class MissingClassAttribute
         "MHA001",
         $"Missing {Constants.Attribute_HarmonyLib_HarmonyPatch} class attribute",
         "Class '{0}' lacks a " + Constants.Attribute_HarmonyLib_HarmonyPatch + " attribute, but has one or more members with a " + Constants.Attribute_HarmonyLib_HarmonyPatch + " attribute",
-        nameof(Constants.RuleCategory.MissingAttribute),
+        nameof(Constants.RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
 

@@ -27,8 +27,9 @@ public static partial class Constants
 
     public enum RuleCategory
     {
-        MissingAttribute,
-        TargetMethod
+        PatchAttribute,
+        TargetMethod,
+        PatchMethod
     }
 
     internal enum HarmonyPatchType

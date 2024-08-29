@@ -15,7 +15,7 @@ internal static class NoPatchMethods
         "MHA006",
         "No patch methods in patch class",
         "Patch class {0} contains no patch methods",
-        nameof(Constants.RuleCategory.MissingAttribute),
+        nameof(Constants.RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 

@@ -14,7 +14,7 @@ internal class MissingPatchTypeAttribute
         "MHA002",
         $"Missing Harmony patch type method attribute",
         "'{0}' is missing a Harmony patch type attribute (" + string.Join(", ", Constants.HarmonyPatchTypeAttributeNames) + ")",
-        nameof(Constants.RuleCategory.MissingAttribute),
+        nameof(Constants.RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
 
