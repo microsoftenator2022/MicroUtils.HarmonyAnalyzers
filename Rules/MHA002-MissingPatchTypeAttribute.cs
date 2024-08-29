@@ -20,19 +20,16 @@ internal class MissingPatchTypeAttribute
 
     internal static void Check(
         SyntaxNodeAnalysisContext context,
-        IMethodSymbol method,
-        ImmutableArray<INamedTypeSymbol> patchTypeAttributeTypes,
-        ImmutableArray<Location> locations)
+        PatchMethodData methodData,
+        ImmutableArray<INamedTypeSymbol> patchTypeAttributeTypes)
     {
-        if (!Constants.HarmonyPatchTypeNames.Contains(method.Name) &&
-            !method.GetAttributes().Select(attr => attr.AttributeClass)
-                .ContainsAny(patchTypeAttributeTypes, SymbolEqualityComparer.Default))
+        if (methodData.PatchType is null)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
-                location: locations[0],
-                additionalLocations: locations.Skip(1),
-                messageArgs: method));
+                location: methodData.PatchMethod.Locations[0],
+                additionalLocations: methodData.PatchMethod.Locations.Skip(1),
+                messageArgs: methodData.PatchMethod));
         }
     }
 }

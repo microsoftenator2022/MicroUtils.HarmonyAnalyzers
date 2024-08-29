@@ -41,7 +41,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         AmbiguousMatch.Descriptor,
         TargetMethodMatchFailed.Descriptor,
         NoPatchMethods.Descriptor,
-        MultipleTargetMethodDefinitions.Descriptor
+        MultipleTargetMethodDefinitions.Descriptor,
+        PatchTypeAttributeConflict.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -81,7 +82,34 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 return (m, attrs);
             })
             .Where(static pair => pair.attrs.Length > 0 || Constants.HarmonyPatchTypeNames.Contains(pair.m.Name))
-            .Select(pair => new PatchMethodData(classSymbol, pair.m).AddTargetMethodData(classAttributes).AddTargetMethodData(pair.attrs))
+            .Select(pair =>
+            {
+                var methodData = new PatchMethodData(classSymbol, pair.m)
+                    .AddTargetMethodData(classAttributes)
+                    .AddTargetMethodData(pair.attrs);
+
+                if (Enum.TryParse<Constants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
+                    methodData = methodData with { PatchType = methodNamePatchType };
+
+                foreach (var pt in Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>())
+                {
+                    var attributeType = pt.GetPatchTypeAttributeType(context.Compilation, context.CancellationToken);
+
+                    if (attributeType is not null &&
+                        pair.m.GetAttributes()
+                            .Select(attr => attr.AttributeClass)
+                            .Contains(attributeType, SymbolEqualityComparer.Default))
+                    {
+                        PatchTypeAttributeConflict.Check(context, methodData, attributeType);
+
+                        methodData = methodData with { PatchType = pt };
+                    }
+                }
+
+                MissingPatchTypeAttribute.Check(context, methodData, patchTypeAttributeTypes);
+
+                return methodData;
+            })
             .ToImmutableArray();
 
         if (classAttributes.Length == 0 && patchMethodsData.Length == 0)
@@ -112,51 +140,39 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             var patchMethod = patchMethodData.PatchMethod;
 
             context.ReportDiagnostic(Diagnostic.Create(
-            descriptor: DebugMessage,
-            location: patchMethod.Locations[0],
-            messageArgs: patchMethodData));
+                descriptor: DebugMessage,
+                location: patchMethod.Locations[0],
+                messageArgs: patchMethodData));
         }
 #endif
-
-        foreach (var patchMethod in patchMethodsData)
-        {
-            if (context.CancellationToken.IsCancellationRequested)
-                break;
-            
-            MissingPatchTypeAttribute.Check(context, patchMethod.PatchMethod, patchTypeAttributeTypes, patchMethod.PatchMethod.Locations);
-        }
 
         if (targetMethodMethods.Length > 0)
         {
             MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
             return;
         }
-        else
+
+        foreach (var patchMethodData in patchMethodsData)
         {
-            foreach (var patchMethodData in patchMethodsData)
-            {
-                if (context.CancellationToken.IsCancellationRequested)
-                    break;
+            if (context.CancellationToken.IsCancellationRequested)
+                break;
 
-                var patchMethod = patchMethodData.PatchMethod;
+            var patchMethod = patchMethodData.PatchMethod;
 
-                if (patchMethodData.TargetMethod is not null)
-                {
-                    continue;
-                }
+            if (patchMethodData.TargetMethod is not null)
+                continue;
 
-                if(MissingMethodType.Check(context, patchMethodData, patchMethod.Locations))
-                    continue;
+            if (MissingMethodType.Check(context, patchMethodData, patchMethod.Locations))
+                continue;
 
-                if (AmbiguousMatch.Check(context, patchMethodData, patchMethod.Locations))
-                    continue;
+            if (AmbiguousMatch.Check(context, patchMethodData, patchMethod.Locations))
+                continue;
 
-                context.ReportDiagnostic(Diagnostic.Create(
-                    descriptor: TargetMethodMatchFailed.Descriptor,
-                    location: patchMethod.Locations[0],
-                    additionalLocations: patchMethod.Locations.Skip(1),
-                    messageArgs: patchMethod));
-            }
+            context.ReportDiagnostic(Diagnostic.Create(
+                descriptor: TargetMethodMatchFailed.Descriptor,
+                location: patchMethod.Locations[0],
+                additionalLocations: patchMethod.Locations.Skip(1),
+                messageArgs: patchMethod));
         }
     }
 }

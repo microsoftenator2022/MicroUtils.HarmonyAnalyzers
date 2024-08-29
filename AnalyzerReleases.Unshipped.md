@@ -12,3 +12,8 @@ MHA004  | TargetMethod     | Warning  | Ambiguous match
 MHA005  | TargetMethod     | Warning  | No matching method found
 MHA006  | PatchMethod      | Warning  | No patch methods in patch class
 MHA007  | TargetMethod     | Warning  | TargetMethod(s) + HarmonyPatch attribute arguments
+MHA008  | PatchMethod      | Warning  | Assignment to non-ref injection argument
+MHA009  | PatchMethod      | Warning  | Invalid patch method return type
+MHA010  | PatchAttribute   | Warning  | HarmonyPatch attribute conflict
+MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the same method
+MHA012  | PatchMethod      | Warning  | Return injection in passthrough Postfix

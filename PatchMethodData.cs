@@ -95,7 +95,7 @@ internal readonly record struct PatchMethodData(
             {
                 case Constants.Parameter_declaringType:
                     patchData = patchData with
-                    { 
+                    {
                         TargetType = patchAttribute.ConstructorArguments[i].Value as INamedTypeSymbol,
                         SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
                     };
@@ -110,7 +110,7 @@ internal readonly record struct PatchMethodData(
                 case Constants.Parameter_methodType:
                     var value = (int?)patchAttribute.ConstructorArguments[i].Value;
                     patchData = patchData with
-                    { 
+                    {
                         TargetMethodType = value is not null ? (Constants.PatchTargetMethodType)value.Value : null,
                         SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
                     };
