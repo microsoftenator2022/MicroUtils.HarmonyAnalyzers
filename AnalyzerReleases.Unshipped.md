@@ -16,4 +16,4 @@ MHA008  | PatchMethod      | Warning  | Assignment to non-ref injection argument
 MHA009  | PatchMethod      | Warning  | Invalid patch method return type
 MHA010  | PatchAttribute   | Warning  | HarmonyPatch attribute conflict
 MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the same method
-MHA012  | PatchMethod      | Warning  | Return injection in passthrough Postfix
+MHA012  | PatchMethod      | Warning  | __result injection in passthrough Postfix

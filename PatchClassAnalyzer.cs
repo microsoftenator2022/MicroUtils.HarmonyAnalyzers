@@ -100,9 +100,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                             .Select(attr => attr.AttributeClass)
                             .Contains(attributeType, SymbolEqualityComparer.Default))
                     {
-                        PatchTypeAttributeConflict.Check(context, methodData, attributeType);
+                        if (!PatchTypeAttributeConflict.Check(context, methodData, attributeType))
 
-                        methodData = methodData with { PatchType = pt };
+                            methodData = methodData with { PatchType = pt };
                     }
                 }
 

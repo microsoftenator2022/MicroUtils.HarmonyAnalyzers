@@ -18,7 +18,7 @@ internal class PatchTypeAttributeConflict
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
+    internal static bool Check(
         SyntaxNodeAnalysisContext context,
         PatchMethodData methodData,
         INamedTypeSymbol patchTypeAttributeType)
@@ -35,6 +35,10 @@ internal class PatchTypeAttributeConflict
                 location: methodData.PatchMethod.Locations[0],
                 additionalLocations: methodData.PatchMethod.Locations.Skip(1),
                 [methodData.PatchMethod, patchTypeAttributeType]));
+
+            return true;
         }
+
+        return false;
     }
 }
