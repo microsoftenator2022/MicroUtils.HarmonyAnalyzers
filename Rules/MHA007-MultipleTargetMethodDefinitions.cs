@@ -7,7 +7,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace HarmonyAnalyzers.Rules;
+namespace MicroUtils.HarmonyAnalyzers.Rules;
 internal static class MultipleTargetMethodDefinitions
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(

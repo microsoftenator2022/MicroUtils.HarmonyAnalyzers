@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace HarmonyAnalyzers.Rules;
+namespace MicroUtils.HarmonyAnalyzers.Rules;
 internal static class MissingClassAttribute
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(

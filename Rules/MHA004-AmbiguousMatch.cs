@@ -7,7 +7,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace HarmonyAnalyzers.Rules;
+namespace MicroUtils.HarmonyAnalyzers.Rules;
 internal static class AmbiguousMatch
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
@@ -24,9 +24,7 @@ internal static class AmbiguousMatch
         ImmutableArray<Location> locations)
     {
         if (!patchMethodData.IsAmbiguousMatch)
-        {
             return false;
-        }
 
         context.ReportDiagnostic(Diagnostic.Create(
             descriptor: Descriptor,

@@ -7,7 +7,7 @@ using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace HarmonyAnalyzers;
+namespace MicroUtils.HarmonyAnalyzers;
 internal class HarmonyTypeHelpers
 {
     public static INamedTypeSymbol? GetHarmonyPatchType(Compilation compilation, CancellationToken ct) =>

@@ -7,9 +7,9 @@ using System.Threading;
 
 using Microsoft.CodeAnalysis;
 
-namespace HarmonyAnalyzers;
+namespace MicroUtils.HarmonyAnalyzers;
 
-using static HarmonyAnalyzers.Constants.PatchTargetMethodType;
+using static MicroUtils.HarmonyAnalyzers.Constants.PatchTargetMethodType;
 
 internal readonly record struct PatchMethodData(
     INamedTypeSymbol PatchClass,
@@ -63,7 +63,7 @@ internal readonly record struct PatchMethodData(
     {
         var @this = this;
 
-        return ((@this.TargetMethodType ?? Normal), @this.ArgumentTypes) switch
+        return (@this.TargetMethodType ?? Normal, @this.ArgumentTypes) switch
         {
             (Normal, null)          => @this.GetCandidateTargetMembers<IMethodSymbol>(),
             (Normal, _)             => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(@this.ArgumentTypes),

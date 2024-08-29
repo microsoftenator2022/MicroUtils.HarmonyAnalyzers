@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-namespace HarmonyAnalyzers;
+namespace MicroUtils.HarmonyAnalyzers;
 internal partial class Util
 {
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> source) where T : notnull =>

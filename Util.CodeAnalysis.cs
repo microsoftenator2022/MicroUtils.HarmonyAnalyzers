@@ -6,7 +6,7 @@ using System.Threading;
 
 using Microsoft.CodeAnalysis;
 
-namespace HarmonyAnalyzers;
+namespace MicroUtils.HarmonyAnalyzers;
 internal static partial class Util
 {
     public static IEnumerable<INamespaceSymbol> GetAllNamespaces(this INamespaceSymbol root, CancellationToken ct)

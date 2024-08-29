@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-using HarmonyAnalyzers.Rules;
-
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace HarmonyAnalyzers;
+using MicroUtils.HarmonyAnalyzers.Rules;
+
+namespace MicroUtils.HarmonyAnalyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public partial class PatchClassAnalyzer : DiagnosticAnalyzer

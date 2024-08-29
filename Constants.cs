@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 
-namespace HarmonyAnalyzers;
+namespace MicroUtils.HarmonyAnalyzers;
 
 public static partial class Constants
 {

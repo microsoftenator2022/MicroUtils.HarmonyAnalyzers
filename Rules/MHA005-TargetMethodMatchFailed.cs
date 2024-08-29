@@ -4,7 +4,7 @@ using System.Text;
 
 using Microsoft.CodeAnalysis;
 
-namespace HarmonyAnalyzers.Rules;
+namespace MicroUtils.HarmonyAnalyzers.Rules;
 internal static class TargetMethodMatchFailed
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
