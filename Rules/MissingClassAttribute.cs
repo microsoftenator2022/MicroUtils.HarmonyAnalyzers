@@ -23,7 +23,7 @@ internal static class MissingClassAttribute
         SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
-        ImmutableArray<(IMethodSymbol, ImmutableArray<AttributeData>)> methodAttributes)
+        ImmutableArray<PatchMethodData> methodAttributes)
     {
         if (classAttributes.Length == 0 && methodAttributes.Length > 0)
             context.ReportDiagnostic(Diagnostic.Create(

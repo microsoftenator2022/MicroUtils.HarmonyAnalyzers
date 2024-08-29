@@ -13,7 +13,7 @@ using static HarmonyAnalyzers.Constants.PatchTargetMethodType;
 
 internal readonly record struct PatchMethodData(
     INamedTypeSymbol PatchClass,
-    IMethodSymbol? PatchMethod = null,
+    IMethodSymbol PatchMethod,
     Constants.HarmonyPatchType? PatchType = null,
     INamedTypeSymbol? TargetType = null,
     string? TargetMethodName = null,

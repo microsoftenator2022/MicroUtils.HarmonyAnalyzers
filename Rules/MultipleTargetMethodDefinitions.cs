@@ -22,14 +22,14 @@ internal static class MultipleTargetMethodDefinitions
         SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
-        ImmutableArray<(IMethodSymbol m, ImmutableArray<AttributeData> attrs)> patchMethods,
+        ImmutableArray<PatchMethodData> patchMethods,
         ImmutableArray<IMethodSymbol> targetMethodMethods)
     {
         var targetMethodMethodLocations =
                 targetMethodMethods
                     .SelectMany(m => m.Locations);
 
-        var allPatchAttributes = classAttributes.Concat(patchMethods.SelectMany(pair => pair.attrs));
+        var allPatchAttributes = classAttributes.Concat(patchMethods.SelectMany(patchMethodData => patchMethodData.SourceAttributes));
 
         var allTargetMethodLocations =
             targetMethodMethodLocations

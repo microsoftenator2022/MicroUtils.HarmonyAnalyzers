@@ -70,7 +70,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
             .ToImmutableArray();
 
-        var patchMethods = classSymbol.GetMembers()
+        var patchMethodsData = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
             .Select(m =>
             {
@@ -81,28 +81,14 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 return (m, attrs);
             })
             .Where(static pair => pair.attrs.Length > 0 || Constants.HarmonyPatchTypeNames.Contains(pair.m.Name))
+            .Select(pair => new PatchMethodData(classSymbol, pair.m).AddTargetMethodData(classAttributes).AddTargetMethodData(pair.attrs))
             .ToImmutableArray();
 
-
-        if (classAttributes.Length == 0 && patchMethods.Length == 0)
+        if (classAttributes.Length == 0 && patchMethodsData.Length == 0)
             return;
 
-        MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethods);
-        NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethods);
-
-        //if (!(classAttributes.Length > 0) && patchMethods.Length > 0)
-        //{
-        //    context.ReportDiagnostic(Diagnostic.Create(Rules.MissingClassAttribute, cds.Identifier.GetLocation(), classSymbol));
-        //}
-
-        //if (classAttributes.Length > 0 && !(patchMethods.Length > 0))
-        //{
-        //    context.ReportDiagnostic(Diagnostic.Create(
-        //        descriptor: RuleDescriptors.NoPatchMethods,
-        //        location: classSymbol.Locations[0],
-        //        additionalLocations: classSymbol.Locations.Skip(1),
-        //        messageArgs: [classSymbol]));
-        //}
+        MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData);
+        NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
 
         ImmutableArray<INamedTypeSymbol?> targetMethodsAttributeTypes =
         [
@@ -117,58 +103,42 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 m.GetAttributes().Any(attr => targetMethodsAttributeTypes.Contains(attr.AttributeClass, SymbolEqualityComparer.Default)))
             .ToImmutableArray();
 
-        foreach (var (patchMethod, _) in patchMethods)
+#if DEBUG
+        foreach (var patchMethodData in patchMethodsData)
+        {
+            if (context.CancellationToken.IsCancellationRequested)
+                break;
+
+            var patchMethod = patchMethodData.PatchMethod;
+
+            context.ReportDiagnostic(Diagnostic.Create(
+            descriptor: DebugMessage,
+            location: patchMethod.Locations[0],
+            messageArgs: patchMethodData));
+        }
+#endif
+
+        foreach (var patchMethod in patchMethodsData)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 break;
             
-            MissingPatchTypeAttribute.Check(context, patchMethod, patchTypeAttributeTypes, patchMethod.Locations);
-
-            //if (!Constants.HarmonyPatchTypeNames.Contains(method.Name) &&
-            //    !method.GetAttributes().Select(attr => attr.AttributeClass)
-            //        .ContainsAny(patchTypeAttributes, SymbolEqualityComparer.Default))
-            //{
-            //    context.ReportDiagnostic(Diagnostic.Create(
-            //        descriptor: RuleDescriptors.MissingPatchTypeAttribute,
-            //        location: locations[0],
-            //        additionalLocations: locations.Skip(1),
-            //        messageArgs: method));
-            //}
+            MissingPatchTypeAttribute.Check(context, patchMethod.PatchMethod, patchTypeAttributeTypes, patchMethod.PatchMethod.Locations);
         }
 
         if (targetMethodMethods.Length > 0)
         {
-            MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethods, targetMethodMethods);
+            MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
             return;
         }
         else
         {
-            var classAttributeData = new PatchMethodData(classSymbol).AddTargetMethodData(classAttributes);
-
-            var patchMethodsData = patchMethods
-                .Select(pair => (classAttributeData with { PatchMethod = pair.m }).AddTargetMethodData(pair.attrs));
-
-            //AnalyzePatchMethods(context, classSymbol, classAttributes, patchMethods);
-
             foreach (var patchMethodData in patchMethodsData)
             {
                 if (context.CancellationToken.IsCancellationRequested)
                     break;
 
-                var patchMethod = patchMethodData.PatchMethod!;
-
-                //var locations = patchMethod.DeclaringSyntaxReferences
-                //    .Select(sr => sr.GetSyntax())
-                //    .OfType<MethodDeclarationSyntax>()
-                //    .Select(mds => mds.Identifier.GetLocation())
-                //    .ToImmutableArray();
-
-#if DEBUG
-                context.ReportDiagnostic(Diagnostic.Create(
-                    descriptor: DebugMessage,
-                    location: patchMethod.Locations[0],
-                    messageArgs: patchMethodData));
-#endif
+                var patchMethod = patchMethodData.PatchMethod;
 
                 if (patchMethodData.TargetMethod is not null)
                 {
