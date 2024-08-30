@@ -19,7 +19,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 {
 
 #if DEBUG
-    private static readonly DiagnosticDescriptor DebugMessage = new(
+    internal static readonly DiagnosticDescriptor DebugMessage = new(
 #pragma warning disable RS2000 // Add analyzer diagnostic IDs to analyzer release
         "DEBUG",
 #pragma warning restore RS2000 // Add analyzer diagnostic IDs to analyzer release

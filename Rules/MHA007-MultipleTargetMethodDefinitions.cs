@@ -29,7 +29,7 @@ internal static class MultipleTargetMethodDefinitions
                 targetMethodMethods
                     .SelectMany(m => m.Locations);
 
-        var allPatchAttributes = classAttributes.Concat(patchMethods.SelectMany(patchMethodData => patchMethodData.SourceAttributes));
+        var allPatchAttributes = classAttributes.Concat(patchMethods.SelectMany(patchMethodData => patchMethodData.HarmonyPatchAttributes));
 
         var allTargetMethodLocations =
             targetMethodMethodLocations

@@ -13,35 +13,106 @@ internal static class MissingMethodType
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA003",
         "Missing MethodType argument for HarmonyPatch attribute",
-        "Cannot find target method for patch method '{0}', but a matching method for " + Constants.Type_HarmonyLib_MethodType + ".{1} was found",
+        "Cannot find target method for patch method '{2}', but a matching {0} method {1} was found",
         nameof(Constants.RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    private static void Report(
+        SyntaxNodeAnalysisContext context, 
+        PatchMethodData patchMethodData,
+        ImmutableArray<Location> locations,
+        object?[] messageArgs) =>
+        context.ReportDiagnostic(Diagnostic.Create(
+            descriptor: Descriptor,
+            location: locations[0],
+            additionalLocations: locations.Skip(1),
+            messageArgs: messageArgs.Append(patchMethodData.PatchMethod).ToArray()));
 
     internal static bool Check(
         SyntaxNodeAnalysisContext context,
         PatchMethodData patchMethodData,
         ImmutableArray<Location> locations)
     {
-        if (patchMethodData.TargetMethodType is not null ||
-            patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is not { } property)
-        {
+        if (patchMethodData.TargetMethodType is not null)
             return false;
+
+        if (patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is { } property)
+        {
+
+            if (property.GetMethod is { } getter)
+            {
+                Report(
+                    context,
+                    patchMethodData,
+                    locations,
+                    [Constants.PatchTargetMethodType.Getter, getter]);
+            }
+
+            if (property.SetMethod is { } setter)
+            {
+                Report(
+                    context,
+                    patchMethodData,
+                    locations,
+                    [Constants.PatchTargetMethodType.Setter, setter]);
+            }
+
+            return true;
         }
 
-        void report(Constants.PatchTargetMethodType methodType) =>
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: locations[0],
-                additionalLocations: locations.Skip(1),
-                messageArgs: [patchMethodData.PatchMethod, methodType]));
+        if (patchMethodData.TargetMethod is null)
+        {
+            if (patchMethodData.ArgumentTypes is not null &&
+                patchMethodData.GetCandidateMethods(Constants.PatchTargetMethodType.Constructor, patchMethodData.ArgumentTypes).FirstOrDefault() is { } constructor)
+            {
+                Report(
+                    context,
+                    patchMethodData,
+                    locations,
+                    [Constants.PatchTargetMethodType.Constructor, constructor]);
+            }
+            else if (patchMethodData.ArgumentTypes is { } args &&
+                patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().FirstOrDefault(p => p.IsIndexer) is { } indexer)
+            {
+                if (indexer.GetMethod is { } getter)
+                {
+                    Report(
+                        context,
+                        patchMethodData,
+                        locations,
+                        [Constants.PatchTargetMethodType.Getter, getter]);
+                }
 
-        if (property.GetMethod is not null)
-            report(Constants.PatchTargetMethodType.Getter);
+                if (indexer.SetMethod is { } setter)
+                {
+                    Report(
+                        context,
+                        patchMethodData,
+                        locations,
+                        [Constants.PatchTargetMethodType.Setter, setter]);
+                }
+            }
+            else
+            {
+//#if DEBUG
+//                if (patchMethodData.TargetType is not null)
+//                {
 
-        if (property.SetMethod is not null)
-            report(Constants.PatchTargetMethodType.Setter);
+//                    context.ReportDiagnostic(Diagnostic.Create(
+//                        descriptor: PatchClassAnalyzer.DebugMessage,
+//                        location: locations[0],
+//                        $"{patchMethodData.TargetType} properties: " + string.Join(", ",
+//                            patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().Select(p => p.Name))));
+//                }
+//#endif
 
-        return true;
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 }

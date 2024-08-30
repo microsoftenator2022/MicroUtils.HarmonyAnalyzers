@@ -20,13 +20,13 @@ internal readonly record struct PatchMethodData(
     Constants.PatchTargetMethodType? TargetMethodType = null,
     ImmutableArray<INamedTypeSymbol>? ArgumentTypes = null)
 {
-    public ImmutableArray<AttributeData> SourceAttributes { get; init; } = [];
+    public ImmutableArray<AttributeData> HarmonyPatchAttributes { get; init; } = [];
 
     public ImmutableArray<AttributeData> GetConflicts(CancellationToken ct)
     {
         ImmutableArray<AttributeData> conflicts = [];
 
-        var argsByParameter = this.SourceAttributes
+        var argsByParameter = this.HarmonyPatchAttributes
             .SelectMany(attr => (attr.AttributeConstructor?.Parameters ?? []).Zip(attr.ConstructorArguments, (p, arg) => (attr, p, arg)))
             .GroupBy(triple => triple.p.Name)
             .SelectMany(g => g.GroupBy(triple => triple.p.Type, SymbolEqualityComparer.Default));
@@ -44,7 +44,7 @@ internal readonly record struct PatchMethodData(
     public int Conflicts => this.GetConflicts(default).Length;
 #endif
 
-    private IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
+    public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];
 
     public IEnumerable<TSymbol> GetCandidateTargetMembers<TSymbol>() where TSymbol : ISymbol
@@ -59,23 +59,46 @@ internal readonly record struct PatchMethodData(
         return @this.GetCandidateTargetMembers<TSymbol>().TryExactlyOne();
     }
 
-    public IEnumerable<IMethodSymbol> GetCandidateMethods()
+    public IEnumerable<IMethodSymbol> GetCandidateMethods(
+        Constants.PatchTargetMethodType targetMethodType,
+        IEnumerable<INamedTypeSymbol>? argumentTypes)
     {
         var @this = this;
 
-        return (@this.TargetMethodType ?? Normal, @this.ArgumentTypes) switch
+        return (targetMethodType, argumentTypes) switch
         {
-            (Normal, null)          => @this.GetCandidateTargetMembers<IMethodSymbol>(),
-            (Normal, _)             => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(@this.ArgumentTypes),
-            (Getter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.GetMethod),
-            (Setter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.SetMethod),
-            (Constructor, null)     => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
-            (Constructor, _)        => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(@this.ArgumentTypes) ?? [],
-            (StaticConstructor, _)  => @this.TargetType?.StaticConstructors ?? [],
+            (Normal, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
+            (Normal, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes),
+            (Getter, _) => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.GetMethod),
+            (Setter, _) => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.SetMethod),
+            (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
+            (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes) ?? [],
+            (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
             //(Enumerator, _) => null,
             //(Async, _) => null,
             _ => []
         };
+    }
+
+    public IEnumerable<IMethodSymbol> GetCandidateMethods()
+    {
+        var @this = this;
+
+        return this.GetCandidateMethods(@this.TargetMethodType ?? Normal, @this.ArgumentTypes);
+
+        //return (@this.TargetMethodType ?? Normal, @this.ArgumentTypes) switch
+        //{
+        //    (Normal, null)          => @this.GetCandidateTargetMembers<IMethodSymbol>(),
+        //    (Normal, _)             => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(@this.ArgumentTypes),
+        //    (Getter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.GetMethod),
+        //    (Setter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.SetMethod),
+        //    (Constructor, null)     => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
+        //    (Constructor, _)        => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(@this.ArgumentTypes) ?? [],
+        //    (StaticConstructor, _)  => @this.TargetType?.StaticConstructors ?? [],
+        //    //(Enumerator, _) => null,
+        //    //(Async, _) => null,
+        //    _ => []
+        //};
     }
 
     public IMethodSymbol? TargetMethod => this.GetCandidateMethods().TryExactlyOne();
@@ -97,14 +120,14 @@ internal readonly record struct PatchMethodData(
                     patchData = patchData with
                     {
                         TargetType = patchAttribute.ConstructorArguments[i].Value as INamedTypeSymbol,
-                        SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
+                        HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
                 case Constants.Parameter_methodName:
                     patchData = patchData with
                     {
                         TargetMethodName = patchAttribute.ConstructorArguments[i].Value as string,
-                        SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
+                        HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
                 case Constants.Parameter_methodType:
@@ -112,7 +135,7 @@ internal readonly record struct PatchMethodData(
                     patchData = patchData with
                     {
                         TargetMethodType = value is not null ? (Constants.PatchTargetMethodType)value.Value : null,
-                        SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
+                        HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
                 case Constants.Parameter_argumentTypes:
@@ -122,7 +145,7 @@ internal readonly record struct PatchMethodData(
                             .Select(c => c.Value as INamedTypeSymbol)
                             .NotNull()
                             .ToImmutableArray(),
-                        SourceAttributes = patchData.SourceAttributes.Add(patchAttribute)
+                        HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
             }
