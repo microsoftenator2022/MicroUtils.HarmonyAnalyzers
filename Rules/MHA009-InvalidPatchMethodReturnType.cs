@@ -27,7 +27,7 @@ internal static class InvalidPatchMethodReturnType
         "MHA009",
         "Invalid return type",
         "Method '{0}' has invalid return type '{1}'. Valid return types: {2}.",
-        "PatchMethod",
+        nameof(Constants.RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 
@@ -69,13 +69,13 @@ internal static class InvalidPatchMethodReturnType
         ImmutableArray<ITypeSymbol> validReturnTypes = methodData.PatchType switch
         {
             Prefix => [voidType, boolType],
-            Postfix => new [] { voidType, methodData.TargetMethod?.ReturnType }.NotNull().ToImmutableArray(),
+            Postfix => methodData.TargetMethod?.ReturnType is { } returnType ? [voidType, returnType] : [voidType],
             Transpiler => [IEnumerableT.Construct(CodeInstrctionType)],
             Finalizer => [voidType, ExceptionType],
             _ => []
         };
 
-        if ((methodData.TargetMethod is not null || methodData.PatchType is not Postfix) &&
+        if ((methodData.TargetMethod is not null || !methodData.IsPassthroughPostfix) &&
             !validReturnTypes.Any(t => context.Compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
         {
             context.ReportDiagnostic(Diagnostic.Create(
