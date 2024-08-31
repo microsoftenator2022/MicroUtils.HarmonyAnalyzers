@@ -44,6 +44,11 @@ internal readonly record struct PatchMethodData(
     public int Conflicts => this.GetConflicts(default).Length;
 #endif
 
+    public bool IsPassthroughPostfix =>
+        this.PatchType is Constants.HarmonyPatchType.Postfix &&
+        this.PatchMethod.Parameters.Length > 0 &&
+        this.PatchMethod.ReturnType.Equals(this.PatchMethod.Parameters[0].Type, SymbolEqualityComparer.Default);
+    
     public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];
 
@@ -85,20 +90,6 @@ internal readonly record struct PatchMethodData(
         var @this = this;
 
         return this.GetCandidateMethods(@this.TargetMethodType ?? Normal, @this.ArgumentTypes);
-
-        //return (@this.TargetMethodType ?? Normal, @this.ArgumentTypes) switch
-        //{
-        //    (Normal, null)          => @this.GetCandidateTargetMembers<IMethodSymbol>(),
-        //    (Normal, _)             => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(@this.ArgumentTypes),
-        //    (Getter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.GetMethod),
-        //    (Setter, _)             => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.SetMethod),
-        //    (Constructor, null)     => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
-        //    (Constructor, _)        => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(@this.ArgumentTypes) ?? [],
-        //    (StaticConstructor, _)  => @this.TargetType?.StaticConstructors ?? [],
-        //    //(Enumerator, _) => null,
-        //    //(Async, _) => null,
-        //    _ => []
-        //};
     }
 
     public IMethodSymbol? TargetMethod => this.GetCandidateMethods().TryExactlyOne();

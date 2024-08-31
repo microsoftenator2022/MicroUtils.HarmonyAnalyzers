@@ -24,6 +24,9 @@ public static partial class Constants
     public const string Parameter_argumentVariations = "argumentVariations";
     public const string Parameter_methodType = "methodType";
 
+    public const string Parameter_injection_instance = "__instance";
+    public const string Parameter_injection_result = "__result";
+
     public const string TargetMethodMethodName = "TargetMethod";
     public const string TargetMethodsMethodName = "TargetMethods";
 

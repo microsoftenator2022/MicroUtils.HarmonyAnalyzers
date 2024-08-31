@@ -43,7 +43,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         NoPatchMethods.Descriptor,
         MultipleTargetMethodDefinitions.Descriptor,
         PatchTypeAttributeConflict.Descriptor,
-        InvalidPatchMethodReturnType.Descriptor
+        InvalidPatchMethodReturnType.Descriptor,
+        PaasthroughPostfixResultInjection.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -72,7 +73,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
             .ToImmutableArray();
 
-        var patchMethodsData = classSymbol.GetMembers()
+        var patchMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
             .Select(m =>
             {
@@ -83,6 +84,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 return (m, attrs);
             })
             .Where(static pair => pair.attrs.Length > 0 || Constants.HarmonyPatchTypeNames.Contains(pair.m.Name))
+            .ToImmutableArray();
+        
+        if (classAttributes.Length == 0 && patchMethods.Length == 0)
+            return;
+
+        var patchMethodsData = patchMethods
             .Select(pair =>
             {
                 var methodData = new PatchMethodData(classSymbol, pair.m)
@@ -113,11 +120,24 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             })
             .ToImmutableArray();
 
-        if (classAttributes.Length == 0 && patchMethodsData.Length == 0)
-            return;
-
+        // Rules for patch class
         MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData);
         NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
+
+        // General patch method rules
+        foreach (var patchMethodData in patchMethodsData)
+        {
+            if (context.CancellationToken.IsCancellationRequested)
+                break;
+#if DEBUG
+            context.ReportDiagnostic(Diagnostic.Create(
+                descriptor: DebugMessage,
+                location: patchMethodData.PatchMethod.Locations[0],
+                messageArgs: patchMethodData));
+#endif
+            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData);
+            PaasthroughPostfixResultInjection.Check(context, patchMethodData);
+        }
 
         bool isTargetMethodMethod(IMethodSymbol m) =>
             m.Name is Constants.TargetMethodMethodName ||
@@ -139,20 +159,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Where(isTargetMethodsMethod)
             .ToImmutableArray();
 
-        foreach (var patchMethodData in patchMethodsData)
-        {
-            if (context.CancellationToken.IsCancellationRequested)
-                break;
-#if DEBUG
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: DebugMessage,
-                location: patchMethodData.PatchMethod.Locations[0],
-                messageArgs: patchMethodData));
-#endif
-            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData);
-
-        }
-
+        // Rules for TargetMethod/TargetMethods
         if (targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
         {
             MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
@@ -170,6 +177,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             return;
         }
 
+        // Rules for target method resolution
         foreach (var patchMethodData in patchMethodsData)
         {
             if (context.CancellationToken.IsCancellationRequested)
