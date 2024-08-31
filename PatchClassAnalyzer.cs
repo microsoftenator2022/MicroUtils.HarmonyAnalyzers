@@ -42,7 +42,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         TargetMethodMatchFailed.Descriptor,
         NoPatchMethods.Descriptor,
         MultipleTargetMethodDefinitions.Descriptor,
-        PatchTypeAttributeConflict.Descriptor
+        PatchTypeAttributeConflict.Descriptor,
+        InvalidPatchMethodReturnType.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -118,37 +119,54 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData);
         NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
 
-        ImmutableArray<INamedTypeSymbol?> targetMethodsAttributeTypes =
-        [
-            HarmonyTypeHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken),
-            HarmonyTypeHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken)
-        ];
+        bool isTargetMethodMethod(IMethodSymbol m) =>
+            m.Name is Constants.TargetMethodMethodName ||
+            m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
+                attr.AttributeClass.Equals(HarmonyTypeHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
+
+        bool isTargetMethodsMethod(IMethodSymbol m) =>
+            m.Name is Constants.TargetMethodsMethodName ||
+            m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
+                attr.AttributeClass.Equals(HarmonyTypeHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
         var targetMethodMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
-            .Where(m =>
-                m.Name is Constants.TargetMethodMethodName or Constants.TargetMethodsMethodName ||
-                m.GetAttributes().Any(attr => targetMethodsAttributeTypes.Contains(attr.AttributeClass, SymbolEqualityComparer.Default)))
+            .Where(isTargetMethodMethod)
             .ToImmutableArray();
 
-#if DEBUG
+        var targetMethodsMethods = classSymbol.GetMembers()
+            .OfType<IMethodSymbol>()
+            .Where(isTargetMethodsMethod)
+            .ToImmutableArray();
+
         foreach (var patchMethodData in patchMethodsData)
         {
             if (context.CancellationToken.IsCancellationRequested)
                 break;
-
-            var patchMethod = patchMethodData.PatchMethod;
-
+#if DEBUG
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: DebugMessage,
-                location: patchMethod.Locations[0],
+                location: patchMethodData.PatchMethod.Locations[0],
                 messageArgs: patchMethodData));
-        }
 #endif
+            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData);
 
-        if (targetMethodMethods.Length > 0)
+        }
+
+        if (targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
         {
             MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
+
+            foreach (var m in targetMethodMethods)
+            {
+                InvalidPatchMethodReturnType.CheckTargetMethod(context, m);
+            }
+
+            foreach (var m in targetMethodsMethods)
+            {
+                InvalidPatchMethodReturnType.CheckTargetMethods(context, m);
+            }
+
             return;
         }
 
@@ -157,22 +175,20 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             if (context.CancellationToken.IsCancellationRequested)
                 break;
 
-            var patchMethod = patchMethodData.PatchMethod;
-
             if (patchMethodData.TargetMethod is not null)
                 continue;
 
-            if (MissingMethodType.Check(context, patchMethodData, patchMethod.Locations))
+            if (MissingMethodType.Check(context, patchMethodData))
                 continue;
 
-            if (AmbiguousMatch.Check(context, patchMethodData, patchMethod.Locations))
+            if (AmbiguousMatch.Check(context, patchMethodData))
                 continue;
 
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: TargetMethodMatchFailed.Descriptor,
-                location: patchMethod.Locations[0],
-                additionalLocations: patchMethod.Locations.Skip(1),
-                messageArgs: patchMethod));
+                location: patchMethodData.PatchMethod.Locations[0],
+                additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
+                messageArgs: patchMethodData.PatchMethod));
         }
     }
 }

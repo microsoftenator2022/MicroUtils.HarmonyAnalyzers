@@ -16,6 +16,7 @@ public static partial class Constants
     public const string Attribute_HarmonyLib_HarmonyTargetMethods = "HarmonyTargetMethods";
 
     public const string Type_HarmonyLib_MethodType = "MethodType";
+    public const string Type_HarmonyLib_CodeInstruction = "CodeInstruction";
 
     public const string Parameter_declaringType = "declaringType";
     public const string Parameter_argumentTypes = "argumentTypes";

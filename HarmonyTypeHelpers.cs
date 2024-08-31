@@ -26,4 +26,7 @@ internal class HarmonyTypeHelpers
 
     public static INamedTypeSymbol? GetHarmonyTargetMethodsType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Constants.Namespace_HarmonyLib, Constants.Attribute_HarmonyLib_HarmonyTargetMethods, ct);
+
+    public static INamedTypeSymbol? GetHarmonyCodeInstructionType(Compilation compilation, CancellationToken ct) =>
+        compilation.GetType(Constants.Namespace_HarmonyLib, Constants.Type_HarmonyLib_CodeInstruction, ct);
 }

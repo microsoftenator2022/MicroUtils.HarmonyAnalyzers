@@ -31,11 +31,12 @@ internal static class MissingMethodType
 
     internal static bool Check(
         SyntaxNodeAnalysisContext context,
-        PatchMethodData patchMethodData,
-        ImmutableArray<Location> locations)
+        PatchMethodData patchMethodData)
     {
         if (patchMethodData.TargetMethodType is not null)
             return false;
+
+        var locations = patchMethodData.PatchMethod.Locations;
 
         if (patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is { } property)
         {
@@ -93,22 +94,7 @@ internal static class MissingMethodType
                         [Constants.PatchTargetMethodType.Setter, setter]);
                 }
             }
-            else
-            {
-//#if DEBUG
-//                if (patchMethodData.TargetType is not null)
-//                {
-
-//                    context.ReportDiagnostic(Diagnostic.Create(
-//                        descriptor: PatchClassAnalyzer.DebugMessage,
-//                        location: locations[0],
-//                        $"{patchMethodData.TargetType} properties: " + string.Join(", ",
-//                            patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().Select(p => p.Name))));
-//                }
-//#endif
-
-                return false;
-            }
+            else return false;
 
             return true;
         }

@@ -20,16 +20,15 @@ internal static class AmbiguousMatch
 
     internal static bool Check(
         SyntaxNodeAnalysisContext context,
-        PatchMethodData patchMethodData,
-        ImmutableArray<Location> locations)
+        PatchMethodData patchMethodData)
     {
         if (!patchMethodData.IsAmbiguousMatch)
             return false;
 
         context.ReportDiagnostic(Diagnostic.Create(
             descriptor: Descriptor,
-            location: locations[0],
-            additionalLocations: locations.Skip(1),
+            location: patchMethodData.PatchMethod.Locations[0],
+            additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
             messageArgs: [patchMethodData.PatchMethod, string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
         return true;
