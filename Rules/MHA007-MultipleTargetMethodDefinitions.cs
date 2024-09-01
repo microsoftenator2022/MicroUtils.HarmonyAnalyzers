@@ -52,6 +52,9 @@ internal static class MultipleTargetMethodDefinitions
 
             for (var i = 0; i < allTargetMethodLocations.Length; i++)
             {
+                if (context.CancellationToken.IsCancellationRequested)
+                    return;
+
                 report([allTargetMethodLocations[i]]);
             }
         }

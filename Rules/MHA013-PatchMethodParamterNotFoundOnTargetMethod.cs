@@ -27,6 +27,9 @@ class PatchMethodParamterNotFoundOnTargetMethod
         foreach (var p in methodData.PatchMethod.Parameters
             .Skip(methodData.IsPassthroughPostfix ? 1 : 0))
         {
+            if (context.CancellationToken.IsCancellationRequested)
+                return;
+
             if (HarmonyHelpers.IsInjectionNameConstant(p.Name))
                 continue;
 

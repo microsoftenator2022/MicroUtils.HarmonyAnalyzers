@@ -17,10 +17,10 @@ internal static class HarmonyHelpers
     public static INamedTypeSymbol? GetHarmonyMethodTypeType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Constants.Namespace_HarmonyLib, Constants.Attribute_HarmonyLib_HarmonyPatch, ct);
 
-    public static IEnumerable<INamedTypeSymbol> GetHarmonyPatchMethodAttributeTypes(Compilation compilation, CancellationToken ct) =>
-        Constants.HarmonyPatchTypeAttributeNames
-            .Select(name => compilation.GetType(Constants.Namespace_HarmonyLib, name, ct))
-            .NotNull();
+    public static IEnumerable<(Constants.HarmonyPatchType, INamedTypeSymbol)> GetHarmonyPatchMethodAttributeTypes(Compilation compilation, CancellationToken ct) =>
+        Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>()
+            .SelectMany<Constants.HarmonyPatchType, (Constants.HarmonyPatchType, INamedTypeSymbol)>(pt =>
+                pt.GetPatchTypeAttributeType(compilation, ct) is { } t ? [(pt, t)] : []);
 
     public static INamedTypeSymbol? GetHarmonyTargetMethodType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Constants.Namespace_HarmonyLib, Constants.Attribute_HarmonyLib_HarmonyTargetMethod, ct);

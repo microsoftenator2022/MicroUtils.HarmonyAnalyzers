@@ -73,8 +73,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
             return;
 
-        var patchTypeAttributeTypes =
+        var patchTypeAttributeTypesMap =
             HarmonyHelpers.GetHarmonyPatchMethodAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
+        
+        var patchTypeAttributeTypes = patchTypeAttributeTypesMap.Select(pair => pair.Item2).ToImmutableArray();
 
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
@@ -106,11 +108,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 if (Enum.TryParse<Constants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
                     methodData = methodData with { PatchType = methodNamePatchType };
 
-                foreach (var pt in Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>())
+                //foreach (var pt in Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>())
+                foreach (var (pt, attributeType) in patchTypeAttributeTypesMap)
                 {
-                    var attributeType = pt.GetPatchTypeAttributeType(context.Compilation, context.CancellationToken);
+                    //var attributeType = pt.GetPatchTypeAttributeType(context.Compilation, context.CancellationToken);
 
-                    if (attributeType is not null &&
+                    if (/*attributeType is not null &&*/
                         pair.m.GetAttributes()
                             .Select(attr => attr.AttributeClass)
                             .Contains(attributeType, SymbolEqualityComparer.Default))

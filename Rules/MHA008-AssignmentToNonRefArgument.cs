@@ -35,6 +35,9 @@ internal class AssignmentToNonRefResultArgument
 
         foreach (var (node, symbol) in assignments)
         {
+            if (context.CancellationToken.IsCancellationRequested)
+                return;
+
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: node.Left.GetLocation(),
