@@ -26,7 +26,7 @@ internal class PaasthroughPostfixResultInjection
             return;
 
         if (!methodData.PatchMethod.ReturnsVoid &&
-            methodData.PatchMethod.Parameters.FirstOrDefault(p => p.Name == Constants.Parameter_injection_result) is { } p)
+            methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == Constants.Parameter_injection_result) is { } p)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
