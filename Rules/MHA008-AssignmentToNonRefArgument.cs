@@ -33,12 +33,12 @@ internal class AssignmentToNonRefResultArgument
             .Select(node => (node, symbol: context.SemanticModel.GetSymbolInfo(node.Left, context.CancellationToken).Symbol))
             .Where(n => n.symbol is not null && nonRefParameters.Contains(n.symbol, SymbolEqualityComparer.Default));
 
-        foreach (var a in assignments)
+        foreach (var (node, symbol) in assignments)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
-                location: a.node.Left.GetLocation(),
-                messageArgs: [a.symbol]));
+                location: node.Left.GetLocation(),
+                messageArgs: [symbol]));
         }
     }
 }

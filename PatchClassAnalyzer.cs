@@ -66,14 +66,14 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (context.SemanticModel.GetDeclaredSymbol(cds, context.CancellationToken) is not INamedTypeSymbol classSymbol)
             return;
 
-        if (HarmonyTypeHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
+        if (HarmonyHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
             return;
 
         if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
             return;
 
         var patchTypeAttributeTypes =
-            HarmonyTypeHelpers.GetHarmonyPatchMethodAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
+            HarmonyHelpers.GetHarmonyPatchMethodAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
 
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
@@ -115,7 +115,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                             .Contains(attributeType, SymbolEqualityComparer.Default))
                     {
                         if (!PatchTypeAttributeConflict.Check(context, methodData, attributeType))
-
                             methodData = methodData with { PatchType = pt };
                     }
                 }
@@ -126,11 +125,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             })
             .ToImmutableArray();
 
-        // Rules for patch class
+#region Rules for patch class
         MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData, harmonyAttribute);
         NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
+#endregion
 
-        // General patch method rules
+#region General patch method rules
         foreach (var patchMethodData in patchMethodsData)
         {
             if (context.CancellationToken.IsCancellationRequested)
@@ -146,16 +146,18 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             AssignmentToNonRefResultArgument.Check(context, patchMethodData);
             PatchMethodParamterNotFoundOnTargetMethod.Check(context, patchMethodData);
         }
+#endregion
 
+#region Rules for TargetMethod/TargetMethods
         bool isTargetMethodMethod(IMethodSymbol m) =>
             m.Name is Constants.TargetMethodMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyTypeHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
+                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
         bool isTargetMethodsMethod(IMethodSymbol m) =>
             m.Name is Constants.TargetMethodsMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyTypeHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
+                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
         var targetMethodMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
@@ -170,7 +172,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
         var IEnumerableMethodBaseType = MethodBaseType is { } mb ? IEnumerableTType?.Construct(mb) : null;
 
-        // Rules for TargetMethod/TargetMethods
         if (MethodBaseType is not null && IEnumerableMethodBaseType is not null &&
             targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
         {
@@ -188,8 +189,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
             return;
         }
+#endregion
 
-        // Rules for target method resolution
+#region Rules for target method resolution
         foreach (var patchMethodData in patchMethodsData)
         {
             if (context.CancellationToken.IsCancellationRequested)
@@ -209,5 +211,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 location: patchMethodData.PatchMethod.Locations[0],
                 additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1)));
         }
+#endregion
     }
 }

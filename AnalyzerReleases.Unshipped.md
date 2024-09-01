@@ -17,3 +17,4 @@ MHA009  | PatchMethod      | Warning  | Invalid patch method return type
 MHA010  | PatchAttribute   | Warning  | HarmonyPatch attribute conflict
 MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the same method
 MHA012  | PatchMethod      | Info     | __result injection in passthrough Postfix
+MHA013  | PatchMethod      | Warning  | No matching parameter on target method

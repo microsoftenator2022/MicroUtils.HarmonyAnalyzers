@@ -41,7 +41,7 @@ internal static class InvalidPatchMethodReturnType
 
         var voidType = context.Compilation.GetTypeByMetadataName(typeof(void).ToString());
         var boolType = context.Compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        var CodeInstrctionType = HarmonyTypeHelpers.GetHarmonyCodeInstructionType(context.Compilation, context.CancellationToken);
+        var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(context.Compilation, context.CancellationToken);
         var ExceptionType = context.Compilation.GetTypeByMetadataName(typeof(Exception).ToString());
 
         if (voidType is null ||
