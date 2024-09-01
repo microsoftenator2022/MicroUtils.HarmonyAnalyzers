@@ -70,6 +70,13 @@ internal readonly record struct PatchMethodData(
         return @this.GetCandidateTargetMembers<TSymbol>().TryExactlyOne();
     }
 
+    private IEnumerable<IPropertySymbol> GetTargetProperties()
+    {
+        var @this = this;
+        return GetAllTargetTypeMembers<IPropertySymbol>()
+            .Where(s => string.IsNullOrEmpty(@this.TargetMethodName) ? s.IsIndexer : s.Name == @this.TargetMethodName);
+    }
+
     public IEnumerable<IMethodSymbol> GetCandidateMethods(
         Constants.PatchTargetMethodType targetMethodType,
         IEnumerable<INamedTypeSymbol>? argumentTypes)
@@ -80,8 +87,10 @@ internal readonly record struct PatchMethodData(
         {
             (Normal, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
             (Normal, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes),
-            (Getter, _) => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.GetMethod),
-            (Setter, _) => Util.ReturnSeq(@this.GetTargetMember<IPropertySymbol>()?.SetMethod),
+            (Getter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
+            (Getter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes),
+            (Setter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
+            (Setter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes),
             (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
             (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes) ?? [],
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
