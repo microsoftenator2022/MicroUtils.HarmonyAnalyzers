@@ -31,25 +31,21 @@ internal static class InvalidPatchMethodReturnType
         DiagnosticSeverity.Warning,
         true);
 
-    static INamedTypeSymbol? GetIEnumerableType(Compilation compilation) =>
-        compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
-
     internal static void CheckPatchMethod(
         SyntaxNodeAnalysisContext context,
-        PatchMethodData methodData)
+        PatchMethodData methodData,
+        INamedTypeSymbol IEnumerableTType)
     {
         if (methodData.PatchType is null)
             return;
 
         var voidType = context.Compilation.GetTypeByMetadataName(typeof(void).ToString());
         var boolType = context.Compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        var IEnumerableT = GetIEnumerableType(context.Compilation);
         var CodeInstrctionType = HarmonyTypeHelpers.GetHarmonyCodeInstructionType(context.Compilation, context.CancellationToken);
         var ExceptionType = context.Compilation.GetTypeByMetadataName(typeof(Exception).ToString());
 
         if (voidType is null ||
             boolType is null ||
-            IEnumerableT is null ||
             CodeInstrctionType is null ||
             ExceptionType is null)
         {
@@ -59,7 +55,6 @@ internal static class InvalidPatchMethodReturnType
                 methodData.PatchMethod.Locations[0],
                 $"void = {voidType}, " +
                 $"bool = {boolType}, " +
-                $"IEnumerable<T> = {IEnumerableT}, " +
                 $"CodeInstruction = {CodeInstrctionType}, " +
                 $"Exception = {ExceptionType}"));
 #endif
@@ -70,7 +65,7 @@ internal static class InvalidPatchMethodReturnType
         {
             Prefix => [voidType, boolType],
             Postfix => methodData.TargetMethod?.ReturnType is { } returnType ? [voidType, returnType] : [voidType],
-            Transpiler => [IEnumerableT.Construct(CodeInstrctionType)],
+            Transpiler => [IEnumerableTType.Construct(CodeInstrctionType)],
             Finalizer => [voidType, ExceptionType],
             _ => []
         };
@@ -88,15 +83,9 @@ internal static class InvalidPatchMethodReturnType
 
     internal static void CheckTargetMethod(
         SyntaxNodeAnalysisContext context,
-        IMethodSymbol method)
+        IMethodSymbol method,
+        INamedTypeSymbol MethodBaseType)
     {
-        var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
-
-        if (MethodBaseType is null)
-        {
-            return;
-        }
-
         if (!context.Compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsImplicit)
         {
             context.ReportDiagnostic(Diagnostic.Create(
@@ -108,30 +97,17 @@ internal static class InvalidPatchMethodReturnType
     }
 
     internal static void CheckTargetMethods(
-    SyntaxNodeAnalysisContext context,
-    IMethodSymbol method)
+        SyntaxNodeAnalysisContext context,
+        IMethodSymbol method,
+        INamedTypeSymbol IEnumerableMethodBaseType)
     {
-        var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
-
-        if (MethodBaseType is null)
-        {
-            return;
-        }
-
-        var IEnumerableTargetMethodType = GetIEnumerableType(context.Compilation)?.Construct(MethodBaseType);
-        
-        if (IEnumerableTargetMethodType is null)
-        {
-            return;
-        }
-
-        if (!context.Compilation.ClassifyConversion(method.ReturnType, IEnumerableTargetMethodType).IsImplicit)
+        if (!context.Compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsImplicit)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: method.Locations[0],
                 additionalLocations: method.Locations.Skip(1),
-                messageArgs: [method, method.ReturnType, IEnumerableTargetMethodType]));
+                messageArgs: [method, method.ReturnType, IEnumerableMethodBaseType]));
         }
     }
 }

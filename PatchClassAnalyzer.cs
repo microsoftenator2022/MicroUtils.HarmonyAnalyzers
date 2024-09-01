@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -52,10 +53,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(AnalyzeClassDeclaration, SyntaxKind.ClassDeclaration);
+        context.RegisterSyntaxNodeAction(snContext => AnalyzeClassDeclaration(snContext, context), SyntaxKind.ClassDeclaration);
     }
 
-    private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context)
+    private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, AnalysisContext analContext)
     {
         if (context.Node is not ClassDeclarationSyntax cds)
             return;
@@ -64,6 +65,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             return;
 
         if (HarmonyTypeHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
+            return;
+
+        if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
             return;
 
         var patchTypeAttributeTypes =
@@ -135,7 +139,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 location: patchMethodData.PatchMethod.Locations[0],
                 messageArgs: patchMethodData));
 #endif
-            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData);
+            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData, IEnumerableTType);
             PaasthroughPostfixResultInjection.Check(context, patchMethodData);
         }
 
@@ -159,19 +163,23 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Where(isTargetMethodsMethod)
             .ToImmutableArray();
 
+        var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
+        var IEnumerableMethodBaseType = MethodBaseType is { } mb ? IEnumerableTType?.Construct(mb) : null;
+
         // Rules for TargetMethod/TargetMethods
-        if (targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
+        if (MethodBaseType is not null && IEnumerableMethodBaseType is not null &&
+            targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
         {
             MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
 
             foreach (var m in targetMethodMethods)
             {
-                InvalidPatchMethodReturnType.CheckTargetMethod(context, m);
+                InvalidPatchMethodReturnType.CheckTargetMethod(context, m, MethodBaseType);
             }
 
             foreach (var m in targetMethodsMethods)
             {
-                InvalidPatchMethodReturnType.CheckTargetMethods(context, m);
+                InvalidPatchMethodReturnType.CheckTargetMethods(context, m, IEnumerableMethodBaseType);
             }
 
             return;
