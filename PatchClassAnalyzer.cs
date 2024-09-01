@@ -45,7 +45,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         MultipleTargetMethodDefinitions.Descriptor,
         PatchTypeAttributeConflict.Descriptor,
         InvalidPatchMethodReturnType.Descriptor,
-        PaasthroughPostfixResultInjection.Descriptor
+        PaasthroughPostfixResultInjection.Descriptor,
+        AssignmentToNonRefResultArgument.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -141,6 +142,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 #endif
             InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData, IEnumerableTType);
             PaasthroughPostfixResultInjection.Check(context, patchMethodData);
+            AssignmentToNonRefResultArgument.Check(context, patchMethodData);
         }
 
         bool isTargetMethodMethod(IMethodSymbol m) =>

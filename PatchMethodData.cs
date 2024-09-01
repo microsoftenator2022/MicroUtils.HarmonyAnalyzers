@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers;
 
@@ -21,6 +22,11 @@ internal readonly record struct PatchMethodData(
     ImmutableArray<INamedTypeSymbol>? ArgumentTypes = null)
 {
     public ImmutableArray<AttributeData> HarmonyPatchAttributes { get; init; } = [];
+
+    //public MethodDeclarationSyntax? SyntaxNode => this.PatchMethod.DeclaringSyntaxReferences
+    //    .Select(sr => sr.GetSyntax())
+    //    .OfType<MethodDeclarationSyntax>()
+    //    .FirstOrDefault();
 
     public ImmutableArray<AttributeData> GetConflicts(CancellationToken ct)
     {
