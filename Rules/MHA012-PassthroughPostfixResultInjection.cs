@@ -31,8 +31,7 @@ internal class PaasthroughPostfixResultInjection
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: p.Locations[0],
-                additionalLocations: p.Locations.Skip(1),
-                messageArgs: methodData.PatchMethod));
+                additionalLocations: p.Locations.Skip(1)));
         }
     }
 }

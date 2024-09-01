@@ -13,7 +13,7 @@ internal class MissingPatchTypeAttribute
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA002",
         $"Missing Harmony patch type method attribute",
-        "'{0}' is missing a Harmony patch type attribute (" + string.Join(", ", Constants.HarmonyPatchTypeAttributeNames) + ")",
+        "Patch method requires a Harmony patch type attribute (" + string.Join(", ", Constants.HarmonyPatchTypeAttributeNames) + ")",
         nameof(Constants.RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
@@ -28,8 +28,7 @@ internal class MissingPatchTypeAttribute
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: methodData.PatchMethod.Locations[0],
-                additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-                messageArgs: methodData.PatchMethod));
+                additionalLocations: methodData.PatchMethod.Locations.Skip(1)));
         }
     }
 }

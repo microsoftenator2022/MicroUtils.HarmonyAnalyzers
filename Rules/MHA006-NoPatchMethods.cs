@@ -14,7 +14,7 @@ internal static class NoPatchMethods
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA006",
         "No patch methods in patch class",
-        "Patch class {0} contains no patch methods",
+        "Patch class contains no patch methods",
         nameof(Constants.RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -29,7 +29,6 @@ internal static class NoPatchMethods
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: classSymbol.Locations[0],
-                additionalLocations: classSymbol.Locations.Skip(1),
-                messageArgs: [classSymbol]));
+                additionalLocations: classSymbol.Locations.Skip(1)));
     }
 }

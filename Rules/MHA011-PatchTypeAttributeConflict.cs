@@ -13,7 +13,7 @@ internal class PatchTypeAttributeConflict
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA011",
         "Patch type conflict",
-        "Patch method '{0}' has conflicting patch type attribute {1}",
+        "Patch method has conflicting patch type attribute {0}",
         nameof(Constants.RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -34,7 +34,7 @@ internal class PatchTypeAttributeConflict
                 descriptor: Descriptor,
                 location: methodData.PatchMethod.Locations[0],
                 additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-                [methodData.PatchMethod, patchTypeAttributeType]));
+                [patchTypeAttributeType]));
 
             return true;
         }

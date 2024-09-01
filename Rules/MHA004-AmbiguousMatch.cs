@@ -13,7 +13,7 @@ internal static class AmbiguousMatch
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA004",
         "Ambiguous match for HarmonyPatch target method",
-        "Ambiguous match for target of patch method '{0}'. Candidate methods: {1}.",
+        "Ambiguous target method for patch. Candidate methods: {0}.",
         nameof(Constants.RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -29,7 +29,7 @@ internal static class AmbiguousMatch
             descriptor: Descriptor,
             location: patchMethodData.PatchMethod.Locations[0],
             additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
-            messageArgs: [patchMethodData.PatchMethod, string.Join(", ", patchMethodData.GetCandidateMethods())]));
+            messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
         return true;
     }

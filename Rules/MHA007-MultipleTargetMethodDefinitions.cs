@@ -12,8 +12,8 @@ internal static class MultipleTargetMethodDefinitions
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA007",
-        "Multiple target method definition in patch class",
-        "Patch class {0} has more than one of: TargetMethod, TargetMethods, parametrized HarmonyPatch attributes",
+        "Conflicting target method definitions in patch class",
+        "Patch class has more than one of: TargetMethod, TargetMethods, parametrized HarmonyPatch attributes",
         nameof(Constants.RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -46,8 +46,7 @@ internal static class MultipleTargetMethodDefinitions
                 context.ReportDiagnostic(Diagnostic.Create(
                     descriptor: Descriptor,
                     location: locations.First(),
-                    additionalLocations: locations.Skip(1),
-                    classSymbol));
+                    additionalLocations: locations.Skip(1)));
 
             report(classSymbol.Locations);
 

@@ -26,7 +26,7 @@ internal static class InvalidPatchMethodReturnType
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA009",
         "Invalid return type",
-        "Method '{0}' has invalid return type '{1}'. Valid return types: {2}.",
+        "Patch method has invalid return type '{0}'. Valid return types: {1}.",
         nameof(Constants.RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -77,7 +77,7 @@ internal static class InvalidPatchMethodReturnType
                 descriptor: Descriptor,
                 location: methodData.PatchMethod.Locations[0],
                 additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-                messageArgs: [methodData.PatchMethod, methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
+                messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
         }
     }
 
@@ -92,7 +92,7 @@ internal static class InvalidPatchMethodReturnType
                 descriptor: Descriptor,
                 location: method.Locations[0],
                 additionalLocations: method.Locations.Skip(1),
-                messageArgs: [method, method.ReturnType, MethodBaseType]));
+                messageArgs: [method.ReturnType, MethodBaseType]));
         }
     }
 
@@ -107,7 +107,7 @@ internal static class InvalidPatchMethodReturnType
                 descriptor: Descriptor,
                 location: method.Locations[0],
                 additionalLocations: method.Locations.Skip(1),
-                messageArgs: [method, method.ReturnType, IEnumerableMethodBaseType]));
+                messageArgs: [method.ReturnType, IEnumerableMethodBaseType]));
         }
     }
 }

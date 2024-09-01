@@ -125,7 +125,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .ToImmutableArray();
 
         // Rules for patch class
-        MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData);
+        MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData, harmonyAttribute);
         NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
 
         // General patch method rules
@@ -203,8 +203,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: TargetMethodMatchFailed.Descriptor,
                 location: patchMethodData.PatchMethod.Locations[0],
-                additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
-                messageArgs: patchMethodData.PatchMethod));
+                additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1)));
         }
     }
 }

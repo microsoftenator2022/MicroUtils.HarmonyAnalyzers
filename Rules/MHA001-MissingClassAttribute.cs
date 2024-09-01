@@ -14,7 +14,7 @@ internal static class MissingClassAttribute
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA001",
         $"Missing {Constants.Attribute_HarmonyLib_HarmonyPatch} class attribute",
-        "Class '{0}' lacks a " + Constants.Attribute_HarmonyLib_HarmonyPatch + " attribute, but has one or more members with a " + Constants.Attribute_HarmonyLib_HarmonyPatch + " attribute",
+        "Class '{0}' lacks a '{1}' attribute, but has one or more members with a '{1}' attribute",
         nameof(Constants.RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
@@ -22,14 +22,15 @@ internal static class MissingClassAttribute
     internal static void Check(
         SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
-        ImmutableArray<AttributeData> classAttributes,
-        ImmutableArray<PatchMethodData> methodAttributes)
+        ImmutableArray<AttributeData> classPatchAttributes,
+        ImmutableArray<PatchMethodData> methodAttributes,
+        INamedTypeSymbol harmonyPatchAttributeType)
     {
-        if (classAttributes.Length == 0 && methodAttributes.Length > 0)
+        if (classPatchAttributes.Length == 0 && methodAttributes.Length > 0)
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: classSymbol.Locations[0],
                 additionalLocations: classSymbol.Locations.Skip(1),
-                messageArgs: [classSymbol]));
+                messageArgs: [classSymbol, harmonyPatchAttributeType]));
     }
 }

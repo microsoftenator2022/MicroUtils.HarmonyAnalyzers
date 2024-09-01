@@ -13,7 +13,7 @@ internal static class MissingMethodType
     internal static readonly DiagnosticDescriptor Descriptor = new(
         "MHA003",
         "Missing MethodType argument for HarmonyPatch attribute",
-        "Cannot find target method for patch method '{2}', but a matching {0} method {1} was found",
+        "Cannot find target method for patch method '{2}', but a matching {0} method '{1}' was found",
         nameof(Constants.RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
