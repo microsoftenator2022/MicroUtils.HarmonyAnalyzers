@@ -11,7 +11,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
 
-using static Constants.HarmonyPatchType;
+using static DiagnosticId;
+using static HarmonyConstants.HarmonyPatchType;
 
 internal static class InvalidPatchMethodReturnType
 {
@@ -24,10 +25,10 @@ internal static class InvalidPatchMethodReturnType
     // TargetMethods: IEnumerable<MethodBase>
 
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA009",
+        nameof(MHA009),
         "Invalid return type",
         "Patch method has invalid return type '{0}'. Valid return types: {1}.",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 

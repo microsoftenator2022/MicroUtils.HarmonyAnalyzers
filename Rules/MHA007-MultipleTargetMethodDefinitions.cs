@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal static class MultipleTargetMethodDefinitions
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA007",
+        nameof(MHA007),
         "Conflicting target method definitions in patch class",
         "Patch class has more than one of: TargetMethod, TargetMethods, parametrized HarmonyPatch attributes",
-        nameof(Constants.RuleCategory.TargetMethod),
+        nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
 

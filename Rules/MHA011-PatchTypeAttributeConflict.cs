@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal class PatchTypeAttributeConflict
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA011",
+        nameof(MHA011),
         "Patch type conflict",
         "Patch method has conflicting patch type attribute {0}",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 

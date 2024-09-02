@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal class MissingPatchTypeAttribute
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA002",
+        nameof(MHA002),
         $"Missing Harmony patch type method attribute",
-        "Patch method requires a Harmony patch type attribute (" + string.Join(", ", Constants.HarmonyPatchTypeAttributeNames) + ")",
-        nameof(Constants.RuleCategory.PatchAttribute),
+        "Patch method requires a Harmony patch type attribute (" + string.Join(", ", HarmonyConstants.HarmonyPatchTypeAttributeNames) + ")",
+        nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
 

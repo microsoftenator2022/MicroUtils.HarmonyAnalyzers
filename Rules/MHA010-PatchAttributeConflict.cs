@@ -9,13 +9,15 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
 
+using static DiagnosticId;
+
 internal static class PatchAttributeConflict
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA010",
+        nameof(MHA010),
         "HarmonyPatch attributes conflict",
         "Conflicting patch attributes: {0}",
-        nameof(Constants.RuleCategory.PatchAttribute),
+        nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
 

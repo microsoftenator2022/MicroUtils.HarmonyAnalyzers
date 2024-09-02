@@ -9,19 +9,21 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
 
+using static DiagnosticId;
+
 class PatchMethodParamterNotFoundOnTargetMethod
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA013",
+        nameof(MHA013),
         "Patch method parameter does not match target",
         "Parameter '{0}' does not match {1}",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 
     internal static void Check(SyntaxNodeAnalysisContext context, PatchMethodData methodData)
     {
-        if (methodData.PatchType is Constants.HarmonyPatchType.Transpiler || methodData.TargetMethod is null)
+        if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler || methodData.TargetMethod is null)
             return;
 
         foreach (var p in methodData.PatchMethod.Parameters

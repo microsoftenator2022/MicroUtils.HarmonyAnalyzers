@@ -9,13 +9,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal static class MissingClassAttribute
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA001",
-        $"Missing {Constants.Attribute_HarmonyLib_HarmonyPatch} class attribute",
+        nameof(MHA001),
+        $"Missing {HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch} class attribute",
         "Class '{0}' lacks a '{1}' attribute, but has one or more members with a '{1}' attribute",
-        nameof(Constants.RuleCategory.PatchAttribute),
+        nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
         true);
 

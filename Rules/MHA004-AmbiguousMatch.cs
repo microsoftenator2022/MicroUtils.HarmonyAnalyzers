@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal static class AmbiguousMatch
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA004",
+        nameof(MHA004),
         "Ambiguous match for HarmonyPatch target method",
         "Ambiguous target method for patch. Candidate methods: {0}.",
-        nameof(Constants.RuleCategory.TargetMethod),
+        nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
 

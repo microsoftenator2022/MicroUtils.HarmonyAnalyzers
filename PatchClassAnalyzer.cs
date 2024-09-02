@@ -92,7 +92,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
                 return (m, attrs);
             })
-            .Where(static pair => pair.attrs.Length > 0 || Constants.HarmonyPatchTypeNames.Contains(pair.m.Name))
+            .Where(static pair => pair.attrs.Length > 0 || HarmonyConstants.HarmonyPatchTypeNames.Contains(pair.m.Name))
             .ToImmutableArray();
         
         if (classAttributes.Length == 0 && patchMethods.Length == 0)
@@ -105,7 +105,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     .AddTargetMethodData(classAttributes)
                     .AddTargetMethodData(pair.attrs);
 
-                if (Enum.TryParse<Constants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
+                if (Enum.TryParse<HarmonyConstants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
                     methodData = methodData with { PatchType = methodNamePatchType };
 
                 //foreach (var pt in Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>())
@@ -155,12 +155,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
 #region Rules for TargetMethod/TargetMethods
         bool isTargetMethodMethod(IMethodSymbol m) =>
-            m.Name is Constants.TargetMethodMethodName ||
+            m.Name is HarmonyConstants.TargetMethodMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
                 attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
         bool isTargetMethodsMethod(IMethodSymbol m) =>
-            m.Name is Constants.TargetMethodsMethodName ||
+            m.Name is HarmonyConstants.TargetMethodsMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
                 attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 

@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal static class MissingMethodType
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA003",
+        nameof(MHA003),
         "Missing MethodType argument for HarmonyPatch attribute",
         "Cannot find target method for patch method '{2}', but a matching {0} method '{1}' was found",
-        nameof(Constants.RuleCategory.TargetMethod),
+        nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
 
@@ -47,7 +50,7 @@ internal static class MissingMethodType
                     context,
                     patchMethodData,
                     locations,
-                    [Constants.PatchTargetMethodType.Getter, getter]);
+                    [HarmonyConstants.PatchTargetMethodType.Getter, getter]);
             }
 
             if (property.SetMethod is { } setter)
@@ -56,7 +59,7 @@ internal static class MissingMethodType
                     context,
                     patchMethodData,
                     locations,
-                    [Constants.PatchTargetMethodType.Setter, setter]);
+                    [HarmonyConstants.PatchTargetMethodType.Setter, setter]);
             }
 
             return true;
@@ -65,13 +68,13 @@ internal static class MissingMethodType
         if (patchMethodData.TargetMethod is null)
         {
             if (patchMethodData.ArgumentTypes is not null &&
-                patchMethodData.GetCandidateMethods(Constants.PatchTargetMethodType.Constructor, patchMethodData.ArgumentTypes).FirstOrDefault() is { } constructor)
+                patchMethodData.GetCandidateMethods(HarmonyConstants.PatchTargetMethodType.Constructor, patchMethodData.ArgumentTypes).FirstOrDefault() is { } constructor)
             {
                 Report(
                     context,
                     patchMethodData,
                     locations,
-                    [Constants.PatchTargetMethodType.Constructor, constructor]);
+                    [HarmonyConstants.PatchTargetMethodType.Constructor, constructor]);
             }
             else if (patchMethodData.ArgumentTypes is { } args &&
                 patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().FirstOrDefault(p => p.IsIndexer) is { } indexer)
@@ -82,7 +85,7 @@ internal static class MissingMethodType
                         context,
                         patchMethodData,
                         locations,
-                        [Constants.PatchTargetMethodType.Getter, getter]);
+                        [HarmonyConstants.PatchTargetMethodType.Getter, getter]);
                 }
 
                 if (indexer.SetMethod is { } setter)
@@ -91,7 +94,7 @@ internal static class MissingMethodType
                         context,
                         patchMethodData,
                         locations,
-                        [Constants.PatchTargetMethodType.Setter, setter]);
+                        [HarmonyConstants.PatchTargetMethodType.Setter, setter]);
                 }
             }
             else return false;

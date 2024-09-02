@@ -9,13 +9,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal class AssignmentToNonRefResultArgument
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA008",
+        nameof(MHA008),
         "Assignment to non-ref patch method argument",
         "Assignment to non-ref argument '{0}'",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 

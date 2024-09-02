@@ -9,13 +9,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal static class NoPatchMethods
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA006",
+        nameof(MHA006),
         "No patch methods in patch class",
         "Patch class contains no patch methods",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 

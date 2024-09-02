@@ -10,15 +10,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers;
 
-using static MicroUtils.HarmonyAnalyzers.Constants.PatchTargetMethodType;
+using static MicroUtils.HarmonyAnalyzers.HarmonyConstants.PatchTargetMethodType;
 
 internal readonly record struct PatchMethodData(
     INamedTypeSymbol PatchClass,
     IMethodSymbol PatchMethod,
-    Constants.HarmonyPatchType? PatchType = null,
+    HarmonyConstants.HarmonyPatchType? PatchType = null,
     INamedTypeSymbol? TargetType = null,
     string? TargetMethodName = null,
-    Constants.PatchTargetMethodType? TargetMethodType = null,
+    HarmonyConstants.PatchTargetMethodType? TargetMethodType = null,
     ImmutableArray<INamedTypeSymbol>? ArgumentTypes = null)
 {
     public ImmutableArray<AttributeData> HarmonyPatchAttributes { get; init; } = [];
@@ -51,7 +51,7 @@ internal readonly record struct PatchMethodData(
 #endif
 
     public bool IsPassthroughPostfix =>
-        this.PatchType is Constants.HarmonyPatchType.Postfix &&
+        this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix &&
         this.PatchMethod.Parameters.Length > 0 &&
         this.PatchMethod.ReturnType.Equals(this.PatchMethod.Parameters[0].Type, SymbolEqualityComparer.Default);
     
@@ -78,7 +78,7 @@ internal readonly record struct PatchMethodData(
     }
 
     public IEnumerable<IMethodSymbol> GetCandidateMethods(
-        Constants.PatchTargetMethodType targetMethodType,
+        HarmonyConstants.PatchTargetMethodType targetMethodType,
         IEnumerable<INamedTypeSymbol>? argumentTypes)
     {
         var @this = this;
@@ -122,29 +122,29 @@ internal readonly record struct PatchMethodData(
         {
             switch (constructor.Parameters[i].Name)
             {
-                case Constants.Parameter_declaringType:
+                case HarmonyConstants.Parameter_declaringType:
                     patchData = patchData with
                     {
                         TargetType = patchAttribute.ConstructorArguments[i].Value as INamedTypeSymbol,
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
-                case Constants.Parameter_methodName:
+                case HarmonyConstants.Parameter_methodName:
                     patchData = patchData with
                     {
                         TargetMethodName = patchAttribute.ConstructorArguments[i].Value as string,
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
-                case Constants.Parameter_methodType:
+                case HarmonyConstants.Parameter_methodType:
                     var value = (int?)patchAttribute.ConstructorArguments[i].Value;
                     patchData = patchData with
                     {
-                        TargetMethodType = value is not null ? (Constants.PatchTargetMethodType)value.Value : null,
+                        TargetMethodType = value is not null ? (HarmonyConstants.PatchTargetMethodType)value.Value : null,
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;
-                case Constants.Parameter_argumentTypes:
+                case HarmonyConstants.Parameter_argumentTypes:
                     patchData = patchData with
                     {
                         ArgumentTypes = patchAttribute.ConstructorArguments[i].Values

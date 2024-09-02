@@ -8,13 +8,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
+
+using static DiagnosticId;
+
 internal class PaasthroughPostfixResultInjection
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
-        "MHA012",
+        nameof(MHA012),
         "__result injection in passthrough Postfix",
         "Unnecessary injected __result parameter in passthrough postfix",
-        nameof(Constants.RuleCategory.PatchMethod),
+        nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Info,
         true);
 
@@ -22,11 +25,11 @@ internal class PaasthroughPostfixResultInjection
         SyntaxNodeAnalysisContext context,
         PatchMethodData methodData)
     {
-        if (methodData.PatchType is not Constants.HarmonyPatchType.Postfix)
+        if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Postfix)
             return;
 
         if (!methodData.PatchMethod.ReturnsVoid &&
-            methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == Constants.Parameter_injection__result) is { } p)
+            methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == HarmonyConstants.Parameter_injection__result) is { } p)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
