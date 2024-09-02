@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 
 namespace MicroUtils.HarmonyAnalyzers;
-internal partial class Util
+public partial class Util
 {
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> source) where T : notnull =>
         source.SelectMany<T?, T>(element => element is not null ? [element] : []);

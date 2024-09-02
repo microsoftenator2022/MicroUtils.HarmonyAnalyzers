@@ -9,7 +9,7 @@ using System.Threading;
 using Microsoft.CodeAnalysis;
 
 namespace MicroUtils.HarmonyAnalyzers;
-internal static partial class Util
+public static partial class Util
 {
     public static IEnumerable<INamespaceSymbol> GetAllNamespaces(this INamespaceSymbol root, CancellationToken ct)
     {
@@ -24,7 +24,7 @@ internal static partial class Util
             }
     }
 
-    internal static IEnumerable<INamedTypeSymbol> AllNestedTypesAndSelf(this INamedTypeSymbol type, CancellationToken ct)
+    public static IEnumerable<INamedTypeSymbol> AllNestedTypesAndSelf(this INamedTypeSymbol type, CancellationToken ct)
     {
         yield return type;
         foreach (var typeMember in type.GetTypeMembers())
@@ -39,7 +39,7 @@ internal static partial class Util
         }
     }
 
-    internal static bool IsAssignable(this INamedTypeSymbol type) =>
+    public static bool IsAssignable(this INamedTypeSymbol type) =>
         type is
         {
             IsStatic: false,
@@ -49,7 +49,7 @@ internal static partial class Util
             DeclaredAccessibility: Accessibility.Public,
         };
 
-    internal static IEnumerable<INamedTypeSymbol> GetTypes(
+    public static IEnumerable<INamedTypeSymbol> GetTypes(
         this INamespaceSymbol ns,
         CancellationToken ct,
         bool includeNested = false)
@@ -63,7 +63,7 @@ internal static partial class Util
             .Where(t => t.CanBeReferencedByName);
     }
 
-    internal static IEnumerable<(INamespaceSymbol @namespace, IEnumerable<INamedTypeSymbol> types)> GetTypesByNamespace(
+    public static IEnumerable<(INamespaceSymbol @namespace, IEnumerable<INamedTypeSymbol> types)> GetTypesByNamespace(
         this Compilation compilation,
         CancellationToken ct,
         bool includeNested = false) =>
