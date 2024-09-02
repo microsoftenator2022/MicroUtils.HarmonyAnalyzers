@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35209.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroUtils.HarmonyAnalyzers", "MicroUtils.HarmonyAnalyzers.csproj", "{35FFCA11-B229-4104-8707-5D6016047842}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroUtils.HarmonyAnalyzers", "Analyzers\MicroUtils.HarmonyAnalyzers.csproj", "{35FFCA11-B229-4104-8707-5D6016047842}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarmonyAnalyzerTest", "..\HarmonyAnalyzerTest\HarmonyAnalyzerTest.csproj", "{E5D91391-8FE0-498A-8D37-2DD41E23A036}"
 EndProject
