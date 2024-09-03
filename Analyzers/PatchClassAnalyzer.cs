@@ -154,33 +154,34 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 #endregion
 
 #region Rules for TargetMethod/TargetMethods
-        bool isTargetMethodMethod(IMethodSymbol m) =>
+        bool isTargetMethod(IMethodSymbol m) =>
             m.Name is HarmonyConstants.TargetMethodMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
                 attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
-        bool isTargetMethodsMethod(IMethodSymbol m) =>
+        bool isTargetMethods(IMethodSymbol m) =>
             m.Name is HarmonyConstants.TargetMethodsMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
                 attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
 
         var targetMethodMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
-            .Where(isTargetMethodMethod)
+            .Where(isTargetMethod)
             .ToImmutableArray();
 
         var targetMethodsMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
-            .Where(isTargetMethodsMethod)
+            .Where(isTargetMethods)
             .ToImmutableArray();
 
         var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
         var IEnumerableMethodBaseType = MethodBaseType is { } mb ? IEnumerableTType?.Construct(mb) : null;
 
-        if (MethodBaseType is not null && IEnumerableMethodBaseType is not null &&
-            targetMethodMethods.Concat(targetMethodsMethods).Count() > 0)
+        var allPatchTargetMethodMembers = targetMethodMethods.Concat(targetMethodsMethods).ToImmutableArray();
+
+        if (MethodBaseType is not null && IEnumerableMethodBaseType is not null && allPatchTargetMethodMembers.Count() > 0)
         {
-            MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, targetMethodMethods);
+            MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers);
 
             foreach (var m in targetMethodMethods)
             {

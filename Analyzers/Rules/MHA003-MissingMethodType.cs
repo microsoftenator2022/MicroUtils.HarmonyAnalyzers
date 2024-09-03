@@ -75,7 +75,7 @@ internal static class MissingMethodType
                     HarmonyConstants.PatchTargetMethodType.Constructor,
                     constructor);
             }
-            else if (patchMethodData.ArgumentTypes is { } args &&
+            else if (patchMethodData.ArgumentTypes is not null &&
                 patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().FirstOrDefault(p => p.IsIndexer) is { } indexer)
             {
                 if (indexer.GetMethod is { } getter)
