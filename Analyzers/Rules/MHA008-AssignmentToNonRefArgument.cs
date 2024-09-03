@@ -40,11 +40,15 @@ internal class AssignmentToNonRefResultArgument
         {
             if (context.CancellationToken.IsCancellationRequested)
                 return;
-
-            context.ReportDiagnostic(Diagnostic.Create(
+            
+            context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                location: node.Left.GetLocation(),
+                locations: ((ImmutableArray<Location>)[node.Left.GetLocation()]).AddRange(symbol?.Locations ?? []),
                 messageArgs: [symbol]));
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: node.Left.GetLocation(),
+            //    messageArgs: [symbol]));
         }
     }
 }

@@ -33,11 +33,10 @@ internal class PatchTypeAttributeConflict
                 .Any(t => patchTypeAttributeType.Equals(t, SymbolEqualityComparer.Default) &&
                     !t.Equals(patchType.GetPatchTypeAttributeType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default)))
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                location: methodData.PatchMethod.Locations[0],
-                additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-                [patchTypeAttributeType]));
+                locations: methodData.PatchMethod.Locations,
+                messageArgs: [patchTypeAttributeType]));
 
             return true;
         }

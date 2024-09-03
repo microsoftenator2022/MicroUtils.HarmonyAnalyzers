@@ -31,10 +31,9 @@ internal class PaasthroughPostfixResultInjection
         if (!methodData.PatchMethod.ReturnsVoid &&
             methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == HarmonyConstants.Parameter_injection__result) is { } p)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                location: p.Locations[0],
-                additionalLocations: p.Locations.Skip(1)));
+                locations: p.Locations));
         }
     }
 }

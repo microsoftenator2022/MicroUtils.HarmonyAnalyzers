@@ -23,18 +23,18 @@ internal class MissingPatchTypeAttribute
 
     internal static void Check(
         SyntaxNodeAnalysisContext context,
-        PatchMethodData methodData,
-        ImmutableArray<INamedTypeSymbol> patchTypeAttributeTypes)
+        PatchMethodData methodData)
     {
         if (methodData.PatchType is null)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: methodData.PatchMethod.Locations[0],
-                additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-                properties: ImmutableDictionary<string, string?>.Empty
-                    .Add("TargetType", methodData.TargetType?.GetFullMetadataName())
-                    .Add("TargetMethod", methodData.TargetMethod?.MetadataName)));
+            context.ReportDiagnostic(methodData.CreateDiagnostic(descriptor: Descriptor));
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: methodData.PatchMethod.Locations[0],
+            //    additionalLocations: methodData.PatchMethod.Locations.Skip(1),
+            //    properties: ImmutableDictionary<string, string?>.Empty
+            //        .Add("TargetType", methodData.TargetType?.GetFullMetadataName())
+            //        .Add("TargetMethod", methodData.TargetMethod?.MetadataName)));
         }
     }
 }

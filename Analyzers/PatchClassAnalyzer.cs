@@ -123,7 +123,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     }
                 }
 
-                MissingPatchTypeAttribute.Check(context, methodData, patchTypeAttributeTypes);
+                MissingPatchTypeAttribute.Check(context, methodData);
 
                 return methodData;
             })

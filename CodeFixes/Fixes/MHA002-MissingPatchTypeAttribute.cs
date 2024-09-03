@@ -62,17 +62,17 @@ internal class MissingPatchTypeAttribute
     {
         var patchTypeAttributes = HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(sm.Compilation, ct);
         
-        IEnumerable<IMethodSymbol> targetMethods = [];
+        IEnumerable<IMethodSymbol> targetMethodCandidates = [];
 
-        if (diagnostic.Properties.TryGetValue("TargetType", out var targetTypeName) && targetTypeName is not null &&
-            diagnostic.Properties.TryGetValue("TargetMethod", out var targetMethodName) && targetMethodName is not null)
+        if (diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetType), out var targetTypeName) && targetTypeName is not null &&
+            diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetMethod), out var targetMethodName) && targetMethodName is not null)
         {
-            targetMethods = sm.Compilation.GetTypeByMetadataName(targetTypeName)?.GetMembers()
+            targetMethodCandidates = sm.Compilation.GetTypeByMetadataName(targetTypeName)?.GetMembers()
                 .OfType<IMethodSymbol>().Where(m => m.MetadataName == targetMethodName) ?? [];
         }
 
         foreach (var ((patchType, attributeType), targetMethod) in patchTypeAttributes
-            .Join(targetMethods.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
+            .Join(targetMethodCandidates.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
         {
             if (HarmonyHelpers.ValidReturnTypes(patchType, sm.Compilation, ct, targetMethod, symbol.ReturnTypeMatchesFirstParameter())
                 .Contains(symbol.ReturnType, SymbolEqualityComparer.Default))

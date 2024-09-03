@@ -28,11 +28,15 @@ internal static class AmbiguousMatch
         if (!patchMethodData.IsAmbiguousMatch)
             return false;
 
-        context.ReportDiagnostic(Diagnostic.Create(
+        context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
             descriptor: Descriptor,
-            location: patchMethodData.PatchMethod.Locations[0],
-            additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
             messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
+
+        //context.ReportDiagnostic(Diagnostic.Create(
+        //    descriptor: Descriptor,
+        //    location: patchMethodData.PatchMethod.Locations[0],
+        //    additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
+        //    messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
         return true;
     }

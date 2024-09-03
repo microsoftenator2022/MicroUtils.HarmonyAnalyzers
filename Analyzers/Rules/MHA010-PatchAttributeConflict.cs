@@ -30,10 +30,15 @@ internal static class PatchAttributeConflict
         if (conflicts.Length < 1)
             return;
 
-        context.ReportDiagnostic(Diagnostic.Create(
+        context.ReportDiagnostic(methodData.CreateDiagnostic(
             descriptor: Descriptor,
-            location: methodData.PatchMethod.Locations[0],
-            additionalLocations: methodData.PatchMethod.Locations.Skip(1),
+            locations: methodData.PatchMethod.Locations,
             messageArgs: [string.Join(", ", conflicts)]));
+
+        //context.ReportDiagnostic(Diagnostic.Create(
+        //    descriptor: Descriptor,
+        //    location: methodData.PatchMethod.Locations[0],
+        //    additionalLocations: methodData.PatchMethod.Locations.Skip(1),
+        //    messageArgs: [string.Join(", ", conflicts)]));
     }
 }

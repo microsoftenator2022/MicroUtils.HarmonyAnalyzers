@@ -60,10 +60,9 @@ class PatchMethodParamterNotFoundOnTargetMethod
                 context.Compilation.ClassifyConversion(tp.element.Type, p.Type).IsImplicit))
                 continue;
 
-            context.ReportDiagnostic(Diagnostic.Create(
+            context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                location: p.Locations[0],
-                additionalLocations: p.Locations.Skip(1),
+                locations: p.Locations,
                 messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]));
         }
     }

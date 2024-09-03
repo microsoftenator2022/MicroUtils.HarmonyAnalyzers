@@ -7,6 +7,7 @@ using System.Text;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
@@ -79,11 +80,22 @@ internal static class InvalidPatchMethodReturnType
         if ((methodData.TargetMethod is not null || !methodData.IsPassthroughPostfix) &&
             !validReturnTypes.Any(t => context.Compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            var locations = methodData.PatchMethod.DeclaringSyntaxReferences
+                .Select(s => s.GetSyntax() as MethodDeclarationSyntax)
+                .NotNull()
+                .Select(s => s.ReturnType.GetLocation())
+                .ToImmutableArray();
+
+            context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                location: methodData.PatchMethod.Locations[0],
-                additionalLocations: methodData.PatchMethod.Locations.Skip(1),
+                locations: locations.AddRange(methodData.PatchMethod.Locations),
                 messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
+            
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: methodData.PatchMethod.Locations[0],
+            //    additionalLocations: methodData.PatchMethod.Locations,
+            //    messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
         }
     }
 

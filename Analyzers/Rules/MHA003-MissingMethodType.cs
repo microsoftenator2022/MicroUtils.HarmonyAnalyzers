@@ -24,13 +24,14 @@ internal static class MissingMethodType
     private static void Report(
         SyntaxNodeAnalysisContext context, 
         PatchMethodData patchMethodData,
-        ImmutableArray<Location> locations,
-        object?[] messageArgs) =>
-        context.ReportDiagnostic(Diagnostic.Create(
+        HarmonyConstants.PatchTargetMethodType methodType,
+        IMethodSymbol methodSymbol) =>
+        context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
             descriptor: Descriptor,
-            location: locations[0],
-            additionalLocations: locations.Skip(1),
-            messageArgs: messageArgs.Append(patchMethodData.PatchMethod).ToArray()));
+            additionalProperties: dict => dict
+                .SetItem(nameof(PatchMethodData.TargetMethodType), methodType.ToString())
+                .SetItem(nameof(PatchMethodData.TargetMethod), methodSymbol.MetadataName),
+            messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]));
 
     internal static bool Check(
         SyntaxNodeAnalysisContext context,
@@ -38,8 +39,6 @@ internal static class MissingMethodType
     {
         if (patchMethodData.TargetMethodType is not null)
             return false;
-
-        var locations = patchMethodData.PatchMethod.Locations;
 
         if (patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is { } property)
         {
@@ -49,8 +48,8 @@ internal static class MissingMethodType
                 Report(
                     context,
                     patchMethodData,
-                    locations,
-                    [HarmonyConstants.PatchTargetMethodType.Getter, getter]);
+                    HarmonyConstants.PatchTargetMethodType.Getter,
+                    getter);
             }
 
             if (property.SetMethod is { } setter)
@@ -58,8 +57,8 @@ internal static class MissingMethodType
                 Report(
                     context,
                     patchMethodData,
-                    locations,
-                    [HarmonyConstants.PatchTargetMethodType.Setter, setter]);
+                    HarmonyConstants.PatchTargetMethodType.Setter,
+                    setter);
             }
 
             return true;
@@ -73,8 +72,8 @@ internal static class MissingMethodType
                 Report(
                     context,
                     patchMethodData,
-                    locations,
-                    [HarmonyConstants.PatchTargetMethodType.Constructor, constructor]);
+                    HarmonyConstants.PatchTargetMethodType.Constructor,
+                    constructor);
             }
             else if (patchMethodData.ArgumentTypes is { } args &&
                 patchMethodData.GetAllTargetTypeMembers<IPropertySymbol>().FirstOrDefault(p => p.IsIndexer) is { } indexer)
@@ -84,8 +83,8 @@ internal static class MissingMethodType
                     Report(
                         context,
                         patchMethodData,
-                        locations,
-                        [HarmonyConstants.PatchTargetMethodType.Getter, getter]);
+                        HarmonyConstants.PatchTargetMethodType.Getter,
+                        getter);
                 }
 
                 if (indexer.SetMethod is { } setter)
@@ -93,8 +92,8 @@ internal static class MissingMethodType
                     Report(
                         context,
                         patchMethodData,
-                        locations,
-                        [HarmonyConstants.PatchTargetMethodType.Setter, setter]);
+                        HarmonyConstants.PatchTargetMethodType.Setter,
+                        setter);
                 }
             }
             else return false;

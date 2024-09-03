@@ -12,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers;
 
 using static MicroUtils.HarmonyAnalyzers.HarmonyConstants.PatchTargetMethodType;
 
-internal readonly record struct PatchMethodData(
+public readonly record struct PatchMethodData(
     INamedTypeSymbol PatchClass,
     IMethodSymbol PatchMethod,
     HarmonyConstants.HarmonyPatchType? PatchType = null,
@@ -53,9 +53,7 @@ internal readonly record struct PatchMethodData(
 
     public bool IsPassthroughPostfix =>
         this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix && this.PatchMethod.ReturnTypeMatchesFirstParameter();
-        //this.PatchMethod.Parameters.Length > 0 &&
-        //this.PatchMethod.ReturnType.Equals(this.PatchMethod.Parameters[0].Type, SymbolEqualityComparer.Default);
-    
+       
     public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];
 
@@ -65,16 +63,16 @@ internal readonly record struct PatchMethodData(
         return @this.GetAllTargetTypeMembers<TSymbol>().Where(s => s.Name == @this.TargetMethodName);
     }
 
-    private TSymbol? GetTargetMember<TSymbol>() where TSymbol : ISymbol
-    {
-        var @this = this;
-        return @this.GetCandidateTargetMembers<TSymbol>().TryExactlyOne();
-    }
+    //private TSymbol? GetTargetMember<TSymbol>() where TSymbol : ISymbol
+    //{
+    //    var @this = this;
+    //    return @this.GetCandidateTargetMembers<TSymbol>().TryExactlyOne();
+    //}
 
     private IEnumerable<IPropertySymbol> GetTargetProperties()
     {
         var @this = this;
-        return GetAllTargetTypeMembers<IPropertySymbol>()
+        return @this.GetAllTargetTypeMembers<IPropertySymbol>()
             .Where(s => string.IsNullOrEmpty(@this.TargetMethodName) ? s.IsIndexer : s.Name == @this.TargetMethodName);
     }
 
@@ -171,5 +169,36 @@ internal readonly record struct PatchMethodData(
         }
 
         return patchData;
+    }
+
+    internal Diagnostic CreateDiagnostic(
+        DiagnosticDescriptor descriptor,
+        ImmutableArray<Location> locations = default,
+        Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
+        ImmutableArray<object?> messageArgs = default)
+    {
+        if (locations.IsDefaultOrEmpty)
+            locations = this.PatchMethod.Locations;
+
+        if (messageArgs.IsDefault)
+            messageArgs = [];
+
+        var properties = ImmutableDictionary<string, string?>.Empty
+            .Add(nameof(this.PatchClass), this.PatchClass.GetFullMetadataName())
+            .Add(nameof(this.PatchMethod), this.PatchMethod.GetFullMetadataName())
+            .Add(nameof(this.PatchType), this.PatchType?.ToString())
+            .Add(nameof(this.TargetType), this.TargetType?.GetFullMetadataName())
+            .Add(nameof(this.TargetMethod), this.TargetMethod?.MetadataName)
+            .Add(nameof(this.TargetMethodType), this.TargetMethodType?.ToString())
+            .Add(nameof(this.ArgumentTypes), string.Join(",", (this.ArgumentTypes ?? []).Select(t => t.GetFullMetadataName())));
+
+        properties = additionalProperties?.Invoke(properties) ?? properties;
+
+        return Diagnostic.Create(
+            descriptor: descriptor,
+            location: locations[0],
+            additionalLocations: locations.Skip(1),
+            properties: properties,
+            messageArgs: messageArgs.ToArray());
     }
 }
