@@ -23,13 +23,12 @@ public class PatchClassCodeFixes : CodeFixProvider
 
     public override ImmutableArray<string> FixableDiagnosticIds =>
     [
-        nameof(MHA001)
+        nameof(MHA001),
+        nameof(MHA002)
     ];
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
-        //var sm = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-
         var syntax = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
         if (syntax is null) return;
@@ -42,47 +41,23 @@ public class PatchClassCodeFixes : CodeFixProvider
             switch (id)
             {
                 case MHA001:
-                    if (syntax.FindNode(diagnostic.Location.SourceSpan) is not ClassDeclarationSyntax node) continue;
+                    if (syntax.FindNode(diagnostic.Location.SourceSpan) is not ClassDeclarationSyntax cds) continue;
 
-                    context.RegisterCodeFix(CodeAction.Create(
-                        Title,
-                        ct => this.FixMHA001Async(context.Document, node, ct),
-                        equivalenceKey: Title),
-                        diagnostic);
+                    context.RegisterCodeFix(MissingClassAttribute.AddHarmonyPatchAttribute(context.Document, cds), diagnostic);
+                    break;
+
+                case MHA002:
+                    if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
+
+                    foreach (var action in await MissingPatchTypeAttribute.GetFixes(context, diagnostic, mds))
+                    {
+                        context.RegisterCodeFix(action, diagnostic);
+                    }
                     break;
 
                 default:
                     break;
             }
         }
-    }
-
-    const string Title = "Add HarmonyPatch Attribute";
-
-    private async Task<Document> FixMHA001Async(Document document, ClassDeclarationSyntax cds, CancellationToken ct)
-    {
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
-            return document;
-
-        if (sm.Compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)
-            return document;
-
-        var newCds = cds.WithAttributeLists(
-            List(
-            [
-                AttributeList(
-                    SeparatedList(
-                    [
-                        Attribute(
-                            IdentifierName(patchAttributeType.Name)
-                        )
-                    ])
-                )
-            ]));
-
-        if ((await document.GetSyntaxRootAsync(ct))?.ReplaceNode(cds, newCds) is not { } newRoot)
-            return document;
-
-        return document.WithSyntaxRoot(newRoot);
     }
 }
