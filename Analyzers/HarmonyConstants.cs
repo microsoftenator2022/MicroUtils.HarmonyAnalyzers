@@ -36,7 +36,7 @@ public static partial class HarmonyConstants
     public const string TargetMethodMethodName = "TargetMethod";
     public const string TargetMethodsMethodName = "TargetMethods";
 
-    internal enum HarmonyPatchType
+    public enum HarmonyPatchType
     {
         Prefix,
         Postfix,
@@ -50,10 +50,10 @@ public static partial class HarmonyConstants
     public static readonly ImmutableArray<string> HarmonyPatchTypeAttributeNames =
         HarmonyPatchTypeNames.Select(n => $"Harmony{n}").ToImmutableArray();
 
-    internal static INamedTypeSymbol? GetPatchTypeAttributeType(this HarmonyPatchType patchType, Compilation compilation, CancellationToken ct) =>
+    public static INamedTypeSymbol? GetPatchTypeAttributeType(this HarmonyPatchType patchType, Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Namespace_HarmonyLib, $"Harmony{patchType}", ct);
 
-    internal enum PatchTargetMethodType
+    public enum PatchTargetMethodType
     {
         Normal,
         Getter,

@@ -48,12 +48,13 @@ internal readonly record struct PatchMethodData(
 
 #if DEBUG
     public int Conflicts => this.GetConflicts(default).Length;
+    public string? TargetMetadataName => this.TargetMethod?.GetFullMetadataName();
 #endif
 
     public bool IsPassthroughPostfix =>
-        this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix &&
-        this.PatchMethod.Parameters.Length > 0 &&
-        this.PatchMethod.ReturnType.Equals(this.PatchMethod.Parameters[0].Type, SymbolEqualityComparer.Default);
+        this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix && this.PatchMethod.ReturnTypeMatchesFirstParameter();
+        //this.PatchMethod.Parameters.Length > 0 &&
+        //this.PatchMethod.ReturnType.Equals(this.PatchMethod.Parameters[0].Type, SymbolEqualityComparer.Default);
     
     public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];

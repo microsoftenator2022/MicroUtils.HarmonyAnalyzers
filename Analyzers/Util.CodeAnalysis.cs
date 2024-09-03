@@ -79,6 +79,7 @@ public static partial class Util
         compilation.GetTypesByNamespace(ct, includeNested)
             .SelectMany(pair => pair.types);
 
+    // probably doesn't work for nested types?
     public static INamedTypeSymbol? GetType(
         this Compilation compilation,
         string @namespace,
@@ -152,5 +153,39 @@ public static partial class Util
                     .Distinct()
                     .Count();
         }
+    }
+
+    public static string GetFullMetadataName(this ISymbol s)
+    {
+        static bool IsRootNamespace(ISymbol symbol) =>
+            symbol is INamespaceSymbol ns && ns.IsGlobalNamespace;
+
+        if (s is null || IsRootNamespace(s))
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder(s.MetadataName);
+        var last = s;
+
+        s = s.ContainingSymbol;
+
+        while (!IsRootNamespace(s))
+        {
+            if (s is ITypeSymbol && last is ITypeSymbol)
+            {
+                sb.Insert(0, '+');
+            }
+            else
+            {
+                sb.Insert(0, '.');
+            }
+
+            sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
+            //sb.Insert(0, s.MetadataName);
+            s = s.ContainingSymbol;
+        }
+
+        return sb.ToString();
     }
 }

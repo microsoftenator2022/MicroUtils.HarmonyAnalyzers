@@ -74,7 +74,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             return;
 
         var patchTypeAttributeTypesMap =
-            HarmonyHelpers.GetHarmonyPatchMethodAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
+            HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
         
         var patchTypeAttributeTypes = patchTypeAttributeTypesMap.Select(pair => pair.Item2).ToImmutableArray();
 
