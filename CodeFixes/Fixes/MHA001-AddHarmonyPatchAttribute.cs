@@ -11,21 +11,21 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
+namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 
 using static SyntaxFactory;
 
-internal class MissingClassAttribute
+internal class AddHarmonyPatchAttribute
 {
     const string Title = "Add HarmonyPatch Attribute";
 
-    internal static CodeAction AddHarmonyPatchAttribute(Document document, ClassDeclarationSyntax node) =>
+    internal static CodeAction GetAction(Document document, ClassDeclarationSyntax node) =>
         CodeAction.Create(
             Title,
-            ct => AddHarmonyPatchAttribute(document, node, ct),
+            ct => AddHarmonyPatchAttributeAsync(document, node, ct),
             equivalenceKey: Title);
 
-    private static async Task<Document> AddHarmonyPatchAttribute(Document document, ClassDeclarationSyntax cds, CancellationToken ct)
+    private static async Task<Document> AddHarmonyPatchAttributeAsync(Document document, ClassDeclarationSyntax cds, CancellationToken ct)
     {
         if (await document.GetSemanticModelAsync(ct) is not { } sm)
             return document;

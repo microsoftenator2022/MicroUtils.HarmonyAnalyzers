@@ -12,13 +12,13 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
+namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA002;
 
 using static SyntaxFactory;
 
-internal class MissingPatchTypeAttribute
+internal class AddPatchTypeAttribute
 {
-    internal static async Task<ImmutableArray<CodeAction>> GetFixes(CodeFixContext context, Diagnostic diagnostic, MethodDeclarationSyntax mds)
+    internal static async Task<ImmutableArray<CodeAction>> GetActions(CodeFixContext context, Diagnostic diagnostic, MethodDeclarationSyntax mds)
     {
         var document = context.Document;
         var ct = context.CancellationToken;

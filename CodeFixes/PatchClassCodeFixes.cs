@@ -13,13 +13,12 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
 
-using static DiagnosticId;
 using static SyntaxFactory;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
 public class PatchClassCodeFixes : CodeFixProvider
 {
-    public override FixAllProvider GetFixAllProvider() => null!;
+    public override FixAllProvider? GetFixAllProvider() => null;
 
     public override ImmutableArray<string> FixableDiagnosticIds =>
     [
@@ -40,23 +39,32 @@ public class PatchClassCodeFixes : CodeFixProvider
 
             switch (id)
             {
-                case MHA001:
+                case DiagnosticId.MHA001:
+                {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not ClassDeclarationSyntax cds) continue;
 
-                    context.RegisterCodeFix(MissingClassAttribute.AddHarmonyPatchAttribute(context.Document, cds), diagnostic);
+                    context.RegisterCodeFix(MHA001.AddHarmonyPatchAttribute.GetAction(context.Document, cds), diagnostic);
                     break;
+                }
 
-                case MHA002:
+                case DiagnosticId.MHA002:
+                {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
 
-                    foreach (var action in await MissingPatchTypeAttribute.GetFixes(context, diagnostic, mds))
+                    foreach (var action in await MHA002.AddPatchTypeAttribute.GetActions(context, diagnostic, mds))
                     {
                         context.RegisterCodeFix(action, diagnostic);
                     }
                     break;
+                }
 
-                default:
+                case DiagnosticId.MHA003:
+                {
+                    if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
+
+
                     break;
+                }
             }
         }
     }
