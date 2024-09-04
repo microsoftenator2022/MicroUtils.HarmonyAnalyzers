@@ -38,7 +38,7 @@ internal class AddHarmonyPatchAttribute
                 SeparatedList(
                 [
                     Attribute(
-                        IdentifierName(patchAttributeType.Name)
+                        IdentifierName(patchAttributeType.ToMinimalDisplayString(sm, cds.SpanStart))
                     )
                 ])
             )

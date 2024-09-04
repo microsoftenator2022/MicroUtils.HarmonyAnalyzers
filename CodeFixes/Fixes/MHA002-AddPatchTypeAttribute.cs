@@ -46,7 +46,7 @@ internal class AddPatchTypeAttribute
                 SeparatedList(
                 [
                     Attribute(
-                        IdentifierName(t.Name)
+                        IdentifierName(t.ToMinimalDisplayString(sm, mds.SpanStart))
                     )
                 ])
             )
