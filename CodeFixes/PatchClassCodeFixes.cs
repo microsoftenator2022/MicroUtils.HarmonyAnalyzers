@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +25,8 @@ public class PatchClassCodeFixes : CodeFixProvider
     [
         nameof(MHA001),
         nameof(MHA002),
-        nameof(MHA003)
+        nameof(MHA003),
+        nameof(MHA008)
     ];
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -65,6 +67,16 @@ public class PatchClassCodeFixes : CodeFixProvider
 
                     if (await MHA003.MissingMethodType.GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken) is { } action)
                         context.RegisterCodeFix(action, diagnostic);
+
+                    break;
+                }
+
+                case DiagnosticId.MHA008:
+                {
+                    if (diagnostic.AdditionalLocations.FirstOrDefault() is not { } paramLocation ||
+                        syntax.FindNode(paramLocation.SourceSpan) is not ParameterSyntax ps) continue;
+
+                    context.RegisterCodeFix(MHA008.AddRefKeyword.GetAction(context.Document, ps), diagnostic);
 
                     break;
                 }

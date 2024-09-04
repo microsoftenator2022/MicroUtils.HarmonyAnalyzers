@@ -43,12 +43,8 @@ internal class AssignmentToNonRefResultArgument
             
             context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                locations: ((ImmutableArray<Location>)[node.Left.GetLocation()]).AddRange(symbol?.Locations is { } ls ? [ls[0]] : ImmutableArray<Location>.Empty),
+                locations: symbol is not null ? [node.Left.GetLocation(), symbol.Locations[0]] : [node.Left.GetLocation()],
                 messageArgs: [symbol]));
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: node.Left.GetLocation(),
-            //    messageArgs: [symbol]));
         }
     }
 }
