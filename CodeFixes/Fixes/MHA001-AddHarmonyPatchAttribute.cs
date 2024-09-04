@@ -15,7 +15,7 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 
 using static SyntaxFactory;
 
-internal class AddHarmonyPatchAttribute
+internal static class AddHarmonyPatchAttribute
 {
     const string Title = "Add HarmonyPatch Attribute";
 

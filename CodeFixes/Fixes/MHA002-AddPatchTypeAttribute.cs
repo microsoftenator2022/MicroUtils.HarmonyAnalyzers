@@ -16,7 +16,7 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA002;
 
 using static SyntaxFactory;
 
-internal class AddPatchTypeAttribute
+internal static class AddPatchTypeAttribute
 {
     internal static async Task<ImmutableArray<CodeAction>> GetActions(CodeFixContext context, Diagnostic diagnostic, MethodDeclarationSyntax mds)
     {
