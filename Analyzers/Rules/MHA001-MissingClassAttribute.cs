@@ -33,7 +33,6 @@ internal static class MissingClassAttribute
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: classSymbol.Locations[0],
-                additionalLocations: classSymbol.Locations.Skip(1),
                 messageArgs: [classSymbol, harmonyPatchAttributeType]));
     }
 }

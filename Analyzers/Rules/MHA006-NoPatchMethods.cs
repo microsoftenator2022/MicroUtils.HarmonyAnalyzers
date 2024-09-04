@@ -31,7 +31,6 @@ internal static class NoPatchMethods
         if (classAttributes.Length > 0 && methodAttributes.Length == 0)
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
-                location: classSymbol.Locations[0],
-                additionalLocations: classSymbol.Locations.Skip(1)));
+                location: classSymbol.Locations[0]));
     }
 }

@@ -47,7 +47,6 @@ class PatchMethodParamterNotFoundOnTargetMethod
                 context.ReportDiagnostic(Diagnostic.Create(
                     descriptor: Descriptor,
                     location: p.Locations[0],
-                    additionalLocations: p.Locations.Skip(1),
                     messageArgs: [p, $"any field for target type {methodData.TargetType}"]));
 
                 continue;
@@ -62,7 +61,7 @@ class PatchMethodParamterNotFoundOnTargetMethod
 
             context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                locations: p.Locations,
+                locations: [p.Locations[0]],
                 messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]));
         }
     }

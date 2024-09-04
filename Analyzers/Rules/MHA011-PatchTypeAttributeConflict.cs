@@ -35,7 +35,7 @@ internal class PatchTypeAttributeConflict
         {
             context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                locations: methodData.PatchMethod.Locations,
+                locations: [methodData.PatchMethod.Locations[0]],
                 messageArgs: [patchTypeAttributeType]));
 
             return true;

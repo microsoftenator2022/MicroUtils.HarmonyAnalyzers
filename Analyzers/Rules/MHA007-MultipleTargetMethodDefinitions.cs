@@ -48,8 +48,7 @@ internal static class MultipleTargetMethodDefinitions
             void report(IEnumerable<Location> locations) =>
                 context.ReportDiagnostic(Diagnostic.Create(
                     descriptor: Descriptor,
-                    location: locations.First(),
-                    additionalLocations: locations.Skip(1)));
+                    location: locations.First()));
 
             report(classSymbol.Locations);
 

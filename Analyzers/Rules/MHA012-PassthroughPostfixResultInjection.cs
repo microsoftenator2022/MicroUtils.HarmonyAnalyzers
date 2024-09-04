@@ -33,7 +33,7 @@ internal class PaasthroughPostfixResultInjection
         {
             context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                locations: p.Locations));
+                locations: [p.Locations[0]]));
         }
     }
 }

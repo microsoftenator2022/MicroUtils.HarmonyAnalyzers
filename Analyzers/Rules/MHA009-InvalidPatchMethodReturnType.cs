@@ -68,15 +68,6 @@ internal static class InvalidPatchMethodReturnType
 
         var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, context.Compilation, context.CancellationToken, methodData.TargetMethod);
 
-        //ImmutableArray<ITypeSymbol> validReturnTypes = methodData.PatchType switch
-        //{
-        //    Prefix => [voidType, boolType],
-        //    Postfix => methodData.TargetMethod?.ReturnType is { } returnType ? [voidType, returnType] : [voidType],
-        //    Transpiler => [IEnumerableTType.Construct(CodeInstrctionType)],
-        //    Finalizer => [voidType, ExceptionType],
-        //    _ => []
-        //};
-
         if ((methodData.TargetMethod is not null || !methodData.IsPassthroughPostfix) &&
             !validReturnTypes.Any(t => context.Compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
         {
@@ -88,14 +79,8 @@ internal static class InvalidPatchMethodReturnType
 
             context.ReportDiagnostic(methodData.CreateDiagnostic(
                 descriptor: Descriptor,
-                locations: locations.AddRange(methodData.PatchMethod.Locations),
+                locations: locations.Add(methodData.PatchMethod.Locations[0]),
                 messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
-            
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: methodData.PatchMethod.Locations[0],
-            //    additionalLocations: methodData.PatchMethod.Locations,
-            //    messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
         }
     }
 
@@ -109,7 +94,6 @@ internal static class InvalidPatchMethodReturnType
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: method.Locations[0],
-                additionalLocations: method.Locations.Skip(1),
                 messageArgs: [method.ReturnType, MethodBaseType]));
         }
     }
@@ -124,7 +108,6 @@ internal static class InvalidPatchMethodReturnType
             context.ReportDiagnostic(Diagnostic.Create(
                 descriptor: Descriptor,
                 location: method.Locations[0],
-                additionalLocations: method.Locations.Skip(1),
                 messageArgs: [method.ReturnType, IEnumerableMethodBaseType]));
         }
     }

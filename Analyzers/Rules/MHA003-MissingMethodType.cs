@@ -42,7 +42,6 @@ internal static class MissingMethodType
 
         if (patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is { } property)
         {
-
             if (property.GetMethod is { } getter)
             {
                 Report(
