@@ -23,7 +23,8 @@ public class PatchClassCodeFixes : CodeFixProvider
     public override ImmutableArray<string> FixableDiagnosticIds =>
     [
         nameof(MHA001),
-        nameof(MHA002)
+        nameof(MHA002),
+        nameof(MHA003)
     ];
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -62,6 +63,8 @@ public class PatchClassCodeFixes : CodeFixProvider
                 {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
 
+                    if (await MHA003.MissingMethodType.GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken) is { } action)
+                        context.RegisterCodeFix(action, diagnostic);
 
                     break;
                 }

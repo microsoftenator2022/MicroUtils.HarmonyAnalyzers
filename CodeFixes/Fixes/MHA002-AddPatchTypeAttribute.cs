@@ -34,13 +34,19 @@ internal class AddPatchTypeAttribute
             .Select(t =>
             {
                 var title = $"Add {t.Name} attribute";
-                return CodeAction.Create(title, ct => AddAttributeAction(document, mds, t, ct), equivalenceKey: title);
+                return GetAction(title, document, mds, t);
             })
             .ToImmutableArray();
     }
-    
+
+    internal static CodeAction GetAction(string title, Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t) =>
+        CodeAction.Create(title, ct => AddAttributeAction(document, mds, t, ct), equivalenceKey: title);
+
     private static async Task<Document> AddAttributeAction(Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t, CancellationToken ct)
     {
+        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+            return document;
+
         var newMds = mds.AddAttributeLists(
             AttributeList(
                 SeparatedList(
@@ -75,7 +81,7 @@ internal class AddPatchTypeAttribute
             .Join(targetMethodCandidates.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
         {
             if (HarmonyHelpers.ValidReturnTypes(patchType, sm.Compilation, ct, targetMethod, symbol.ReturnTypeMatchesFirstParameter())
-                .Contains(symbol.ReturnType, SymbolEqualityComparer.Default))
+                .Any(validReturnType => sm.Compilation.ClassifyConversion(symbol.ReturnType, validReturnType).IsImplicit))
             {
                 yield return attributeType;
             }
