@@ -136,7 +136,7 @@ public readonly record struct PatchMethodData(
                     };
                     break;
                 case HarmonyConstants.Parameter_methodType:
-                    var value = (int?)patchAttribute.ConstructorArguments[i].Value;
+                    var value = patchAttribute.ConstructorArguments[i].Value as int?;
                     patchData = patchData with
                     {
                         TargetMethodType = value is not null ? (HarmonyConstants.PatchTargetMethodType)value.Value : null,
@@ -178,7 +178,7 @@ public readonly record struct PatchMethodData(
         ImmutableArray<object?> messageArgs = default)
     {
         if (locations.IsDefaultOrEmpty)
-            locations = this.PatchMethod.Locations;
+            locations = [this.PatchMethod.Locations[0]];
 
         if (messageArgs.IsDefault)
             messageArgs = [];

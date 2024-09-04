@@ -16,7 +16,7 @@ public static class HarmonyHelpers
         compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct);
 
     public static INamedTypeSymbol? GetHarmonyMethodTypeType(Compilation compilation, CancellationToken ct) =>
-        compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct);
+        compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Type_HarmonyLib_MethodType, ct);
 
     public static IEnumerable<(HarmonyConstants.HarmonyPatchType, INamedTypeSymbol)> GetHarmonyPatchTypeAttributeTypes(Compilation compilation, CancellationToken ct) =>
         Enum.GetValues(typeof(HarmonyConstants.HarmonyPatchType)).Cast<HarmonyConstants.HarmonyPatchType>()
