@@ -22,15 +22,21 @@ internal static class NoPatchMethods
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> Check(
+        //SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
         ImmutableArray<PatchMethodData> methodAttributes)
     {
         if (classAttributes.Length > 0 && methodAttributes.Length == 0)
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: classSymbol.Locations[0]));
+        { 
+            return new DiagnosticBuilder(Descriptor).ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
+
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: classSymbol.Locations[0]));
+        }
+
+        return [];
     }
 }

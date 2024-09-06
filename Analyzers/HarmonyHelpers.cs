@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace MicroUtils.HarmonyAnalyzers;
@@ -79,7 +80,20 @@ public static class HarmonyHelpers
         };
     }
 
-    public static bool ReturnTypeMatchesFirstParameter(this IMethodSymbol method) =>
-        method.Parameters.Length > 0 &&
-        method.ReturnType.Equals(method.Parameters[0].Type, SymbolEqualityComparer.Default);
+    public static bool MayBePassthroughPostfix(this IMethodSymbol patchMethod, IMethodSymbol? targetMethod, Compilation compilation)
+    {
+        if (targetMethod is null)
+        {
+            return patchMethod.Parameters.Length > 0 &&
+                compilation.ClassifyConversion(patchMethod.Parameters[0].Type, patchMethod.ReturnType).IsImplicit;
+        }    
+
+        return patchMethod.Parameters.Length > 0 &&
+            compilation.ClassifyConversion(patchMethod.ReturnType, targetMethod.ReturnType).IsImplicit &&
+            compilation.ClassifyConversion(targetMethod.ReturnType, patchMethod.Parameters[0].Type).IsImplicit;
+    }
+
+    //public static bool ReturnTypeMatchesFirstParameter(this IMethodSymbol method) =>
+    //    method.Parameters.Length > 0 &&
+    //    method.ReturnType.Equals(method.Parameters[0].Type, SymbolEqualityComparer.Default);
 }

@@ -47,4 +47,10 @@ public partial class Util
             i++;
         }
     }
+
+    /// <summary>
+    /// Returns a singleton collection containg the source element or an empty collection if the source element is null
+    /// </summary>
+    public static IEnumerable<T> EmptyIfNull<T>(this T? source) where T : notnull =>
+        source is not null ? [source] : [];
 }

@@ -11,7 +11,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal class MissingPatchTypeAttribute
+internal static class MissingPatchTypeAttribute
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA002),
@@ -21,20 +21,17 @@ internal class MissingPatchTypeAttribute
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> Check(
+        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData)
     {
         if (methodData.PatchType is null)
         {
-            context.ReportDiagnostic(methodData.CreateDiagnostic(descriptor: Descriptor));
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: methodData.PatchMethod.Locations[0],
-            //    additionalLocations: methodData.PatchMethod.Locations.Skip(1),
-            //    properties: ImmutableDictionary<string, string?>.Empty
-            //        .Add("TargetType", methodData.TargetType?.GetFullMetadataName())
-            //        .Add("TargetMethod", methodData.TargetMethod?.MetadataName)));
+            return methodData.CreateDiagnostics(Descriptor);
+
+            //context.ReportDiagnostic(methodData.CreateDiagnostic(descriptor: Descriptor));
         }
+
+        return [];
     }
 }

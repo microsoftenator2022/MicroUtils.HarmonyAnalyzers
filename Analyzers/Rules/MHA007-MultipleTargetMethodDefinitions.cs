@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -21,12 +22,13 @@ internal static class MultipleTargetMethodDefinitions
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
+    private static IEnumerable<Diagnostic> CheckInternal(
+        //SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
         ImmutableArray<PatchMethodData> patchMethods,
-        ImmutableArray<IMethodSymbol> targetMethodMethods)
+        ImmutableArray<IMethodSymbol> targetMethodMethods,
+        CancellationToken ct)
     {
         var targetMethodMethodLocations =
                 targetMethodMethods
@@ -45,20 +47,33 @@ internal static class MultipleTargetMethodDefinitions
 
         if (allTargetMethodLocations.Length > 1)
         {
-            void report(IEnumerable<Location> locations) =>
-                context.ReportDiagnostic(Diagnostic.Create(
-                    descriptor: Descriptor,
-                    location: locations.First()));
+            //void report(IEnumerable<Location> locations) =>
+            //    context.ReportDiagnostic(Diagnostic.Create(
+            //        descriptor: Descriptor,
+            //        location: locations.First()));
 
-            report(classSymbol.Locations);
+            //report(classSymbol.Locations);
 
-            for (var i = 0; i < allTargetMethodLocations.Length; i++)
-            {
-                if (context.CancellationToken.IsCancellationRequested)
-                    return;
+            //for (var i = 0; i < allTargetMethodLocations.Length; i++)
+            //{
+            //    if (ct.IsCancellationRequested)
+            //        yield break;
 
-                report([allTargetMethodLocations[i]]);
-            }
+            //    report([allTargetMethodLocations[i]]);
+            //}
+
+            foreach (var d in new DiagnosticBuilder(Descriptor)
+                .ForAllLocations(classSymbol.Locations.Concat(allTargetMethodLocations).ToImmutableArray())
+                .CreateAll())
+                yield return d;
         }
     }
+
+    internal static ImmutableArray<Diagnostic> Check(
+        INamedTypeSymbol classSymbol,
+        ImmutableArray<AttributeData> classAttributes,
+        ImmutableArray<PatchMethodData> patchMethods,
+        ImmutableArray<IMethodSymbol> targetMethodMethods,
+        CancellationToken ct) =>
+            CheckInternal(classSymbol, classAttributes, patchMethods, targetMethodMethods, ct).ToImmutableArray();
 }

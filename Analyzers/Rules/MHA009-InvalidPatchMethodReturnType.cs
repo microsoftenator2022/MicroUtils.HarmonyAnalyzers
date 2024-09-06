@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -33,18 +34,20 @@ internal static class InvalidPatchMethodReturnType
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void CheckPatchMethod(
-        SyntaxNodeAnalysisContext context,
+    private static IEnumerable<Diagnostic> CheckPatchMethodInternal(
+        //SyntaxNodeAnalysisContext context,
+        Compilation compilation,
         PatchMethodData methodData,
-        INamedTypeSymbol IEnumerableTType)
+        INamedTypeSymbol IEnumerableTType,
+        CancellationToken ct)
     {
         if (methodData.PatchType is null)
-            return;
+            yield break;
 
-        var voidType = context.Compilation.GetTypeByMetadataName(typeof(void).ToString());
-        var boolType = context.Compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(context.Compilation, context.CancellationToken);
-        var ExceptionType = context.Compilation.GetTypeByMetadataName(typeof(Exception).ToString());
+        var voidType = compilation.GetTypeByMetadataName(typeof(void).ToString());
+        var boolType = compilation.GetTypeByMetadataName(typeof(bool).ToString());
+        var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
+        var ExceptionType = compilation.GetTypeByMetadataName(typeof(Exception).ToString());
 
         if (voidType is null ||
             boolType is null ||
@@ -52,24 +55,24 @@ internal static class InvalidPatchMethodReturnType
             ExceptionType is null)
         {
 #if DEBUG
-            context.ReportDiagnostic(Diagnostic.Create(
+            yield return Diagnostic.Create(
                 PatchClassAnalyzer.DebugMessage,
                 methodData.PatchMethod.Locations[0],
                 $"void = {voidType}, " +
                 $"bool = {boolType}, " +
                 $"CodeInstruction = {CodeInstrctionType}, " +
-                $"Exception = {ExceptionType}"));
+                $"Exception = {ExceptionType}");
 #endif
-            return;
+            yield break;
         }
 
         if (methodData.PatchType is not { } patchType)
-            return;
+            yield break;
 
-        var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, context.Compilation, context.CancellationToken, methodData.TargetMethod);
+        var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, compilation, ct, methodData.TargetMethod);
 
-        if ((methodData.TargetMethod is not null || !methodData.IsPassthroughPostfix) &&
-            !validReturnTypes.Any(t => context.Compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
+        if ((methodData.TargetMethod is not null || !methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation)) &&
+            !validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences
                 .Select(s => s.GetSyntax() as MethodDeclarationSyntax)
@@ -77,38 +80,70 @@ internal static class InvalidPatchMethodReturnType
                 .Select(s => s.ReturnType.GetLocation())
                 .ToImmutableArray();
 
-            context.ReportDiagnostic(methodData.CreateDiagnostic(
+            foreach (var d in methodData.CreateDiagnostics(
                 descriptor: Descriptor,
-                locations: locations.Add(methodData.PatchMethod.Locations[0]),
-                messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]));
+                primaryLocations: methodData.PatchMethod.DeclaringSyntaxReferences
+                    .Select(sr => sr.GetSyntax())
+                    .OfType<MethodDeclarationSyntax>()
+                    .Select(mds => mds.ReturnType.GetLocation()).ToImmutableArray(),
+                messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]))
+            {
+                yield return d;
+            }
         }
     }
 
-    internal static void CheckTargetMethod(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> CheckPatchMethod(
+        Compilation compilation,
+        PatchMethodData methodData,
+        INamedTypeSymbol IEnumerableTType,
+        CancellationToken ct) => CheckPatchMethodInternal(compilation, methodData, IEnumerableTType, ct).ToImmutableArray();
+
+    internal static ImmutableArray<Diagnostic> CheckTargetMethod(
+        //SyntaxNodeAnalysisContext context,
+        Compilation compilation,
         IMethodSymbol method,
         INamedTypeSymbol MethodBaseType)
     {
-        if (!context.Compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsImplicit)
+        if (!compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsImplicit)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: method.Locations[0],
-                messageArgs: [method.ReturnType, MethodBaseType]));
+            var diagnostic = new DiagnosticBuilder(Descriptor)
+            {
+                MessageArgs = [method.ReturnType, MethodBaseType]
+            };
+
+            return diagnostic.ForAllLocations(method.Locations).CreateAll();
+
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: method.Locations[0],
+            //    messageArgs: [method.ReturnType, MethodBaseType]));
         }
+
+        return [];
     }
 
-    internal static void CheckTargetMethods(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> CheckTargetMethods(
+        //SyntaxNodeAnalysisContext context,
+        Compilation compilation,
         IMethodSymbol method,
         INamedTypeSymbol IEnumerableMethodBaseType)
     {
-        if (!context.Compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsImplicit)
+        if (!compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsImplicit)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: method.Locations[0],
-                messageArgs: [method.ReturnType, IEnumerableMethodBaseType]));
+            var diagnostic = new DiagnosticBuilder(Descriptor)
+            {
+                MessageArgs = [method.ReturnType, IEnumerableMethodBaseType]
+            };
+
+            return diagnostic.ForAllLocations(method.Locations).CreateAll();
+
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: method.Locations[0],
+            //    messageArgs: [method.ReturnType, IEnumerableMethodBaseType]));
         }
+
+        return [];
     }
 }

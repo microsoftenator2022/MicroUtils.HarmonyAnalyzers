@@ -21,23 +21,19 @@ internal static class AmbiguousMatch
         DiagnosticSeverity.Warning,
         true);
 
-    internal static bool Check(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> Check(
+        //SyntaxNodeAnalysisContext context,
         PatchMethodData patchMethodData)
     {
         if (!patchMethodData.IsAmbiguousMatch)
-            return false;
+            return [];
 
-        context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
-            descriptor: Descriptor,
-            messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
-
-        //context.ReportDiagnostic(Diagnostic.Create(
+        //context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
         //    descriptor: Descriptor,
-        //    location: patchMethodData.PatchMethod.Locations[0],
-        //    additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1),
         //    messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
-        return true;
+        return patchMethodData.CreateDiagnostics(
+            descriptor: Descriptor,
+            messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]);
     }
 }

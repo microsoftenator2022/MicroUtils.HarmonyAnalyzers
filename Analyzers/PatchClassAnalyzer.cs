@@ -98,6 +98,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (classAttributes.Length == 0 && patchMethods.Length == 0)
             return;
 
+        var diagnostics = ImmutableArray<Diagnostic>.Empty;
+
         var patchMethodsData = patchMethods
             .Select(pair =>
             {
@@ -108,30 +110,36 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 if (Enum.TryParse<HarmonyConstants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
                     methodData = methodData with { PatchType = methodNamePatchType };
 
-                //foreach (var pt in Enum.GetValues(typeof(Constants.HarmonyPatchType)).Cast<Constants.HarmonyPatchType>())
                 foreach (var (pt, attributeType) in patchTypeAttributeTypesMap)
                 {
-                    //var attributeType = pt.GetPatchTypeAttributeType(context.Compilation, context.CancellationToken);
-
-                    if (/*attributeType is not null &&*/
-                        pair.m.GetAttributes()
+                    if (pair.m.GetAttributes()
                             .Select(attr => attr.AttributeClass)
                             .Contains(attributeType, SymbolEqualityComparer.Default))
                     {
-                        if (!PatchTypeAttributeConflict.Check(context, methodData, attributeType))
+                        var conflicts = PatchTypeAttributeConflict
+                            .Check(context.Compilation, methodData, attributeType, context.CancellationToken)
+                            .ToImmutableArray();
+
+                        if (conflicts.Length < 1)
+                        {
                             methodData = methodData with { PatchType = pt };
+
+                            diagnostics = diagnostics.AddRange(conflicts);
+
+                        }
                     }
                 }
 
-                MissingPatchTypeAttribute.Check(context, methodData);
+                diagnostics = diagnostics.AddRange(MissingPatchTypeAttribute.Check(methodData));
 
                 return methodData;
             })
             .ToImmutableArray();
 
 #region Rules for patch class
-        MissingClassAttribute.Check(context, classSymbol, classAttributes, patchMethodsData, harmonyAttribute);
-        NoPatchMethods.Check(context, classSymbol, classAttributes, patchMethodsData);
+        diagnostics = diagnostics
+            .AddRange(MissingClassAttribute.Check(classSymbol, classAttributes, patchMethodsData, harmonyAttribute))
+            .AddRange(NoPatchMethods.Check(classSymbol, classAttributes, patchMethodsData));
 #endregion
 
 #region General patch method rules
@@ -140,16 +148,22 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             if (context.CancellationToken.IsCancellationRequested)
                 break;
 #if DEBUG
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: DebugMessage,
-                location: patchMethodData.PatchMethod.Locations[0],
-                messageArgs: patchMethodData));
+            context.ReportAll(patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]));
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: DebugMessage,
+            //    location: patchMethodData.PatchMethod.Locations[0],
+            //    messageArgs: patchMethodData));
 #endif
-            InvalidPatchMethodReturnType.CheckPatchMethod(context, patchMethodData, IEnumerableTType);
-            PaasthroughPostfixResultInjection.Check(context, patchMethodData);
-            AssignmentToNonRefResultArgument.Check(context, patchMethodData);
-            PatchMethodParamterNotFoundOnTargetMethod.Check(context, patchMethodData);
-            PatchAttributeConflict.Check(context, patchMethodData);
+            diagnostics = diagnostics
+                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(
+                    context.Compilation, patchMethodData, IEnumerableTType, context.CancellationToken))
+                .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
+                .AddRange(AssignmentToNonRefResultArgument.Check(
+                    context.SemanticModel, patchMethodData, context.CancellationToken))
+                .AddRange(PatchMethodParamterNotFoundOnTargetMethod.Check(
+                    context.Compilation, patchMethodData, context.CancellationToken))
+                .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken));
+
         }
 #endregion
 
@@ -181,42 +195,69 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
         if (MethodBaseType is not null && IEnumerableMethodBaseType is not null && allPatchTargetMethodMembers.Count() > 0)
         {
-            MultipleTargetMethodDefinitions.Check(context, classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers);
+            diagnostics = diagnostics
+                .AddRange(MultipleTargetMethodDefinitions.Check(
+                    classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers, context.CancellationToken));
 
             foreach (var m in targetMethodMethods)
             {
-                InvalidPatchMethodReturnType.CheckTargetMethod(context, m, MethodBaseType);
+                diagnostics = diagnostics
+                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethod(context.Compilation, m, MethodBaseType));
             }
 
             foreach (var m in targetMethodsMethods)
             {
-                InvalidPatchMethodReturnType.CheckTargetMethods(context, m, IEnumerableMethodBaseType);
+                diagnostics = diagnostics
+                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethods(context.Compilation, m, IEnumerableMethodBaseType));
             }
+        }
+#endregion
+        
+#region Rules for target method resolution
+        else
+        {
+            foreach (var patchMethodData in patchMethodsData)
+            {
+                if (context.CancellationToken.IsCancellationRequested)
+                    break;
 
-            return;
+                if (patchMethodData.TargetMethod is not null)
+                    continue;
+
+                var missingMethodTypes = MissingMethodType.Check(patchMethodData, context.CancellationToken);
+
+                if (missingMethodTypes.Length > 0)
+                {
+                    diagnostics = diagnostics.AddRange(missingMethodTypes);
+
+                    continue;
+                }
+
+                var ambiguous = AmbiguousMatch.Check(patchMethodData);
+
+                if (ambiguous.Length > 0)
+                {
+                    diagnostics = diagnostics.AddRange(ambiguous);
+
+                    continue;
+                }
+
+                diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
+
+                //context.ReportDiagnostic(Diagnostic.Create(
+                //    descriptor: TargetMethodMatchFailed.Descriptor,
+                //    location: patchMethodData.PatchMethod.Locations[0],
+                //    additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1)));
+            }
         }
 #endregion
 
-#region Rules for target method resolution
-        foreach (var patchMethodData in patchMethodsData)
+        foreach (var diagnostic in diagnostics)
         {
             if (context.CancellationToken.IsCancellationRequested)
-                break;
+                return;
 
-            if (patchMethodData.TargetMethod is not null)
-                continue;
-
-            if (MissingMethodType.Check(context, patchMethodData))
-                continue;
-
-            if (AmbiguousMatch.Check(context, patchMethodData))
-                continue;
-
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: TargetMethodMatchFailed.Descriptor,
-                location: patchMethodData.PatchMethod.Locations[0],
-                additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1)));
+            context.ReportDiagnostic(diagnostic);
         }
-#endregion
     }
 }

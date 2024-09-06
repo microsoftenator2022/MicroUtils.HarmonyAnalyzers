@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -21,31 +22,40 @@ internal static class MissingMethodType
         DiagnosticSeverity.Warning,
         true);
 
-    private static void Report(
-        SyntaxNodeAnalysisContext context, 
+    private static IEnumerable<Diagnostic> Report(
+        //SyntaxNodeAnalysisContext context, 
         PatchMethodData patchMethodData,
         HarmonyConstants.PatchTargetMethodType methodType,
-        IMethodSymbol methodSymbol) =>
-        context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
+        IMethodSymbol methodSymbol)
+    {
+        return patchMethodData.CreateDiagnostics(
             descriptor: Descriptor,
-            additionalProperties: dict => dict
+            additionalProperties: properties => properties
                 .SetItem(nameof(PatchMethodData.TargetMethodType), methodType.ToString())
                 .SetItem(nameof(PatchMethodData.TargetMethod), methodSymbol.MetadataName),
-            messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]));
+            messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]);
 
-    internal static bool Check(
-        SyntaxNodeAnalysisContext context,
-        PatchMethodData patchMethodData)
+            //return context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
+            //    descriptor: Descriptor,
+            //    additionalProperties: dict => dict
+            //        .SetItem(nameof(PatchMethodData.TargetMethodType), methodType.ToString())
+            //        .SetItem(nameof(PatchMethodData.TargetMethod), methodSymbol.MetadataName),
+            //    messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]));
+    }
+
+    private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
+        //SyntaxNodeAnalysisContext context,
+        PatchMethodData patchMethodData,
+        CancellationToken ct)
     {
         if (patchMethodData.TargetMethodType is not null)
-            return false;
+            yield break;
 
         if (patchMethodData.GetCandidateTargetMembers<IPropertySymbol>().FirstOrDefault() is { } property)
         {
             if (property.GetMethod is { } getter)
             {
-                Report(
-                    context,
+                yield return Report(
                     patchMethodData,
                     HarmonyConstants.PatchTargetMethodType.Getter,
                     getter);
@@ -53,23 +63,25 @@ internal static class MissingMethodType
 
             if (property.SetMethod is { } setter)
             {
-                Report(
-                    context,
+                yield return Report(
                     patchMethodData,
                     HarmonyConstants.PatchTargetMethodType.Setter,
                     setter);
             }
 
-            return true;
+            yield break;
         }
+
+        if (ct.IsCancellationRequested)
+            yield break;
 
         if (patchMethodData.TargetMethod is null)
         {
             if (patchMethodData.ArgumentTypes is not null &&
-                patchMethodData.GetCandidateMethods(HarmonyConstants.PatchTargetMethodType.Constructor, patchMethodData.ArgumentTypes).FirstOrDefault() is { } constructor)
+                patchMethodData.GetCandidateMethods(HarmonyConstants.PatchTargetMethodType.Constructor, patchMethodData.ArgumentTypes)
+                    .FirstOrDefault() is { } constructor)
             {
-                Report(
-                    context,
+                yield return Report(
                     patchMethodData,
                     HarmonyConstants.PatchTargetMethodType.Constructor,
                     constructor);
@@ -79,8 +91,7 @@ internal static class MissingMethodType
             {
                 if (indexer.GetMethod is { } getter)
                 {
-                    Report(
-                        context,
+                    yield return Report(
                         patchMethodData,
                         HarmonyConstants.PatchTargetMethodType.Getter,
                         getter);
@@ -88,18 +99,17 @@ internal static class MissingMethodType
 
                 if (indexer.SetMethod is { } setter)
                 {
-                    Report(
-                        context,
+                    yield return Report(
                         patchMethodData,
                         HarmonyConstants.PatchTargetMethodType.Setter,
                         setter);
                 }
             }
-            else return false;
-
-            return true;
         }
-
-        return false;
     }
+
+    internal static ImmutableArray<Diagnostic> Check(
+        PatchMethodData patchMethodData,
+        CancellationToken ct) =>
+        CheckInternal(patchMethodData, ct).SelectMany(d => d).ToImmutableArray();
 }

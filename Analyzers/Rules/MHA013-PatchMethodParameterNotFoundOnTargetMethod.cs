@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-class PatchMethodParamterNotFoundOnTargetMethod
+internal static class PatchMethodParamterNotFoundOnTargetMethod
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA013),
@@ -21,16 +23,20 @@ class PatchMethodParamterNotFoundOnTargetMethod
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(SyntaxNodeAnalysisContext context, PatchMethodData methodData)
+    private static IEnumerable<Diagnostic> CheckInternal(
+        //SyntaxNodeAnalysisContext context,
+        Compilation compilation,
+        PatchMethodData methodData,
+        CancellationToken ct)
     {
         if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler || methodData.TargetMethod is null)
-            return;
+            yield break;
 
         foreach (var p in methodData.PatchMethod.Parameters
-            .Skip(methodData.IsPassthroughPostfix ? 1 : 0))
+            .Skip(methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation) ? 1 : 0))
         {
-            if (context.CancellationToken.IsCancellationRequested)
-                return;
+            if (ct.IsCancellationRequested)
+                yield break;
 
             if (HarmonyHelpers.IsInjectionNameConstant(p.Name))
                 continue;
@@ -41,13 +47,17 @@ class PatchMethodParamterNotFoundOnTargetMethod
                 if (fieldInjectionMatch.Success &&
                     methodData.TargetType.GetMembers().OfType<IFieldSymbol>().Any(f =>
                         f.Name == fieldInjectionMatch.Groups[1].Value &&
-                        context.Compilation.ClassifyConversion(f.Type, p.Type).IsImplicit))
+                        compilation.ClassifyConversion(f.Type, p.Type).IsImplicit))
                     continue;
 
-                context.ReportDiagnostic(Diagnostic.Create(
-                    descriptor: Descriptor,
-                    location: p.Locations[0],
-                    messageArgs: [p, $"any field for target type {methodData.TargetType}"]));
+                foreach (var d in methodData.CreateDiagnostics(
+                    Descriptor, p.Locations, messageArgs: [p, $"any field for target type {methodData.TargetType}"]))
+                    yield return d;
+
+                //context.ReportDiagnostic(Diagnostic.Create(
+                //    descriptor: Descriptor,
+                //    location: p.Locations[0],
+                //    messageArgs: [p, $"any field for target type {methodData.TargetType}"]));
 
                 continue;
             }
@@ -56,13 +66,23 @@ class PatchMethodParamterNotFoundOnTargetMethod
 
             if (methodData.TargetMethod.Parameters.Indexed().Any(tp =>
                 (tp.element.Name == p.Name || (argInjectionMatch.Success && tp.index == int.Parse(argInjectionMatch.Groups[1].Value))) &&
-                context.Compilation.ClassifyConversion(tp.element.Type, p.Type).IsImplicit))
+                compilation.ClassifyConversion(tp.element.Type, p.Type).IsImplicit))
                 continue;
 
-            context.ReportDiagnostic(methodData.CreateDiagnostic(
-                descriptor: Descriptor,
-                locations: [p.Locations[0]],
-                messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]));
+            foreach (var d in methodData.CreateDiagnostics(
+                Descriptor, p.Locations, messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]))
+                yield return d;
+
+            //context.ReportDiagnostic(methodData.CreateDiagnostic(
+            //    descriptor: Descriptor,
+            //    locations: [p.Locations[0]],
+            //    messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]));
         }
     }
+
+    internal static ImmutableArray<Diagnostic> Check(
+        //SyntaxNodeAnalysisContext context,
+        Compilation compilation,
+        PatchMethodData methodData,
+        CancellationToken ct) => CheckInternal(compilation, methodData, ct).ToImmutableArray();
 }

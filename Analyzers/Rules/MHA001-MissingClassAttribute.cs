@@ -22,17 +22,27 @@ internal static class MissingClassAttribute
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> Check(
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classPatchAttributes,
         ImmutableArray<PatchMethodData> methodAttributes,
         INamedTypeSymbol harmonyPatchAttributeType)
     {
         if (classPatchAttributes.Length == 0 && methodAttributes.Length > 0)
-            context.ReportDiagnostic(Diagnostic.Create(
-                descriptor: Descriptor,
-                location: classSymbol.Locations[0],
-                messageArgs: [classSymbol, harmonyPatchAttributeType]));
+        {
+            var diagnostic = new DiagnosticBuilder(Descriptor)
+            {
+                MessageArgs = [classSymbol, harmonyPatchAttributeType]
+            };
+
+            //context.ReportDiagnostic(Diagnostic.Create(
+            //    descriptor: Descriptor,
+            //    location: classSymbol.Locations[0],
+            //    messageArgs: [classSymbol, harmonyPatchAttributeType]));
+
+            return diagnostic.ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
+        }
+
+        return [];
     }
 }

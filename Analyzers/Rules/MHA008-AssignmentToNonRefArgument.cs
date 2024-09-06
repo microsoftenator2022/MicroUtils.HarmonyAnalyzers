@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal class AssignmentToNonRefResultArgument
+internal static class AssignmentToNonRefResultArgument
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA008),
@@ -22,29 +23,39 @@ internal class AssignmentToNonRefResultArgument
         DiagnosticSeverity.Warning,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
-        PatchMethodData methodData)
+    private static IEnumerable<Diagnostic> CheckInternal(
+        //SyntaxNodeAnalysisContext context,
+        SemanticModel semanticModel,
+        PatchMethodData methodData,
+        CancellationToken ct)
     {
         var nonRefParameters = methodData.PatchMethod.Parameters.Where(p => p.RefKind is not RefKind.Ref).ToImmutableArray();
 
         if (nonRefParameters.Length < 1)
-            return;
+            yield break;
 
         var assignments = methodData.PatchMethod.DeclaringSyntaxReferences.SelectMany(n => n.GetSyntax().DescendantNodes(_ => true))
             .OfType<AssignmentExpressionSyntax>()
-            .Select(node => (node, symbol: context.SemanticModel.GetSymbolInfo(node.Left, context.CancellationToken).Symbol))
+            .Select(node => (node, symbol: semanticModel.GetSymbolInfo(node.Left, ct).Symbol))
             .Where(n => n.symbol is not null && nonRefParameters.Contains(n.symbol, SymbolEqualityComparer.Default));
 
         foreach (var (node, symbol) in assignments)
         {
-            if (context.CancellationToken.IsCancellationRequested)
-                return;
+            if (ct.IsCancellationRequested)
+                yield break;
+
+            foreach (var d in methodData.CreateDiagnostics(Descriptor, [node.Left.GetLocation()], symbol?.Locations ?? default))
+                yield return d;
             
-            context.ReportDiagnostic(methodData.CreateDiagnostic(
-                descriptor: Descriptor,
-                locations: symbol is not null ? [node.Left.GetLocation(), symbol.Locations[0]] : [node.Left.GetLocation()],
-                messageArgs: [symbol]));
+            //context.ReportDiagnostic(methodData.CreateDiagnostic(
+            //    descriptor: Descriptor,
+            //    locations: symbol is not null ? [node.Left.GetLocation(), symbol.Locations[0]] : [node.Left.GetLocation()],
+            //    messageArgs: [symbol]));
         }
     }
+
+    internal static ImmutableArray<Diagnostic> Check(
+        SemanticModel semanticModel,
+        PatchMethodData methodData,
+        CancellationToken ct) => CheckInternal(semanticModel, methodData, ct).ToImmutableArray();
 }

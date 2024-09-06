@@ -28,5 +28,7 @@ public enum DiagnosticId
     MHA010,
     MHA011,
     MHA012,
-    MHA013
+    MHA013,
+    MHA014,
+    MHA015
 }

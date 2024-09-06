@@ -7,8 +7,7 @@
     <!--<IsPackable>false</IsPackable>-->
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <VersionPrefix>0.0.2</VersionPrefix>
-    <NoWarn>NU5128</NoWarn>
+    <VersionPrefix>1.0.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +19,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0-1.final" PrivateAssets="all" />
-    <!--<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.12.0-1.final" PrivateAssets="all" />-->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 

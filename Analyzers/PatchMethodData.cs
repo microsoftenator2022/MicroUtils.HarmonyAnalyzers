@@ -51,8 +51,8 @@ public readonly record struct PatchMethodData(
     public string? TargetMetadataName => this.TargetMethod?.GetFullMetadataName();
 #endif
 
-    public bool IsPassthroughPostfix =>
-        this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix && this.PatchMethod.ReturnTypeMatchesFirstParameter();
+    //public bool IsPassthroughPostfix =>
+    //    this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix && this.PatchMethod.ReturnTypeMatchesFirstParameter();
        
     public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];
@@ -171,18 +171,8 @@ public readonly record struct PatchMethodData(
         return patchData;
     }
 
-    internal Diagnostic CreateDiagnostic(
-        DiagnosticDescriptor descriptor,
-        ImmutableArray<Location> locations = default,
-        Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
-        ImmutableArray<object?> messageArgs = default)
+    internal DiagnosticBuilder CreateDiagnosticBuilder(DiagnosticDescriptor descriptor)
     {
-        if (locations.IsDefaultOrEmpty)
-            locations = [this.PatchMethod.Locations[0]];
-
-        if (messageArgs.IsDefault)
-            messageArgs = [];
-
         var properties = ImmutableDictionary<string, string?>.Empty
             .Add(nameof(this.PatchClass), this.PatchClass.GetFullMetadataName())
             .Add(nameof(this.PatchMethod), this.PatchMethod.GetFullMetadataName())
@@ -192,13 +182,58 @@ public readonly record struct PatchMethodData(
             .Add(nameof(this.TargetMethodType), this.TargetMethodType?.ToString())
             .Add(nameof(this.ArgumentTypes), string.Join(",", (this.ArgumentTypes ?? []).Select(t => t.GetFullMetadataName())));
 
+        return new DiagnosticBuilder(descriptor)
+        {
+            Properties = properties
+        };
+    }
+
+    internal DiagnosticBuilder CreateDiagnosticBuilder(
+        DiagnosticDescriptor descriptor,
+        Location primaryLocation,
+        ImmutableArray<Location> additionalLocations = default,
+        Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
+        ImmutableArray<object?> messageArgs = default)
+    {
+        if (messageArgs.IsDefault)
+            messageArgs = [];
+
+        var diagnostic = this.CreateDiagnosticBuilder(descriptor);
+
+        var properties = diagnostic.Properties;
+
         properties = additionalProperties?.Invoke(properties) ?? properties;
 
-        return Diagnostic.Create(
-            descriptor: descriptor,
-            location: locations[0],
-            additionalLocations: locations.Skip(1),
-            properties: properties,
-            messageArgs: messageArgs.ToArray());
+        return diagnostic with
+        {
+            PrimaryLocation = primaryLocation,
+            AdditionalLocations = additionalLocations.IsDefault ? [] : additionalLocations,
+            Properties = properties,
+            MessageArgs = messageArgs.IsDefault ? [] : messageArgs
+        };
+    }
+
+    internal ImmutableArray<Diagnostic> CreateDiagnostics(
+        DiagnosticDescriptor descriptor,
+        ImmutableArray<Location> primaryLocations = default,
+        ImmutableArray<Location> additionalLocations = default,
+        Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
+        ImmutableArray<object?> messageArgs = default)
+    {
+        if (primaryLocations.IsDefaultOrEmpty)
+            primaryLocations = this.PatchMethod.Locations;
+
+        var @this = this;
+        
+        return primaryLocations
+            .Select(location => @this.CreateDiagnosticBuilder(descriptor, location, additionalLocations, additionalProperties, messageArgs))
+            .CreateAll();
+
+        //return Diagnostic.Create(
+        //    descriptor: descriptor,
+        //    location: locations[0],
+        //    additionalLocations: locations.Skip(1),
+        //    properties: properties,
+        //    messageArgs: messageArgs.ToArray());
     }
 }

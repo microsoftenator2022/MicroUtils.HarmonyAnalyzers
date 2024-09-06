@@ -11,7 +11,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal class PaasthroughPostfixResultInjection
+internal static class PaasthroughPostfixResultInjection
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA012),
@@ -21,19 +21,23 @@ internal class PaasthroughPostfixResultInjection
         DiagnosticSeverity.Info,
         true);
 
-    internal static void Check(
-        SyntaxNodeAnalysisContext context,
+    internal static ImmutableArray<Diagnostic> Check(
+        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Postfix)
-            return;
+            return [];
 
         if (!methodData.PatchMethod.ReturnsVoid &&
             methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == HarmonyConstants.Parameter_injection__result) is { } p)
         {
-            context.ReportDiagnostic(methodData.CreateDiagnostic(
-                descriptor: Descriptor,
-                locations: [p.Locations[0]]));
+            return methodData.CreateDiagnostics(Descriptor, primaryLocations: p.Locations);
+
+            //context.ReportDiagnostic(methodData.CreateDiagnostic(
+            //    descriptor: Descriptor,
+            //    locations: [p.Locations[0]]));
         }
+
+        return [];
     }
 }
