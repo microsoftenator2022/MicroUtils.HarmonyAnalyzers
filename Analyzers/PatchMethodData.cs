@@ -23,11 +23,6 @@ public readonly record struct PatchMethodData(
 {
     public ImmutableArray<AttributeData> HarmonyPatchAttributes { get; init; } = [];
 
-    //public MethodDeclarationSyntax? SyntaxNode => this.PatchMethod.DeclaringSyntaxReferences
-    //    .Select(sr => sr.GetSyntax())
-    //    .OfType<MethodDeclarationSyntax>()
-    //    .FirstOrDefault();
-
     public ImmutableArray<AttributeData> GetConflicts(CancellationToken ct)
     {
         ImmutableArray<AttributeData> conflicts = [];
@@ -51,9 +46,6 @@ public readonly record struct PatchMethodData(
     public string? TargetMetadataName => this.TargetMethod?.GetFullMetadataName();
 #endif
 
-    //public bool IsPassthroughPostfix =>
-    //    this.PatchType is HarmonyConstants.HarmonyPatchType.Postfix && this.PatchMethod.ReturnTypeMatchesFirstParameter();
-       
     public IEnumerable<TSymbol> GetAllTargetTypeMembers<TSymbol>() where TSymbol : ISymbol =>
         this.TargetType?.GetMembers().OfType<TSymbol>() ?? [];
 
@@ -62,12 +54,6 @@ public readonly record struct PatchMethodData(
         var @this = this;
         return @this.GetAllTargetTypeMembers<TSymbol>().Where(s => s.Name == @this.TargetMethodName);
     }
-
-    //private TSymbol? GetTargetMember<TSymbol>() where TSymbol : ISymbol
-    //{
-    //    var @this = this;
-    //    return @this.GetCandidateTargetMembers<TSymbol>().TryExactlyOne();
-    //}
 
     private IEnumerable<IPropertySymbol> GetTargetProperties()
     {

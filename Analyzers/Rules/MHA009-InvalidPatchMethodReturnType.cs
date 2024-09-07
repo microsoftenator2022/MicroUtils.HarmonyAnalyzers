@@ -31,8 +31,9 @@ internal static class InvalidPatchMethodReturnType
         "Invalid return type",
         "Patch method has invalid return type '{0}'. Valid return types: {1}."
 #if DEBUG
-        + " DEBUG: [{2}].",
+        + " DEBUG: [{2}]."
 #endif
+        ,
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);

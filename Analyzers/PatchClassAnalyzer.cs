@@ -57,10 +57,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(snContext => AnalyzeClassDeclaration(snContext, context), SyntaxKind.ClassDeclaration);
+        context.RegisterSyntaxNodeAction(AnalyzeClassDeclaration, SyntaxKind.ClassDeclaration);
     }
 
-    private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context, AnalysisContext analContext)
+    private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context)
     {
         if (context.Node is not ClassDeclarationSyntax cds)
             return;
@@ -83,12 +83,17 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Select(m =>
             {
                 var attrs = m.GetAttributes()
-                    .Where(attr => attr.AttributeClass is { } type && type.Equals(harmonyAttribute, SymbolEqualityComparer.Default))
+                    .Where(attr => attr.AttributeClass is { } type && 
+                        (type.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ||
+                        HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken)
+                            .Any(at => at.Item2.Equals(type, SymbolEqualityComparer.Default))
+                        ))
                     .ToImmutableArray();
 
                 return (m, attrs);
             })
-            .Where(static pair => pair.attrs.Length > 0 || HarmonyConstants.HarmonyPatchTypeNames.Contains(pair.m.Name))
+            .Where(pair => pair.attrs.Length > 0 || 
+                (classAttributes.Length > 0 && HarmonyConstants.HarmonyPatchTypeNames.Contains(pair.m.Name)))
             .ToImmutableArray();
         
         if (classAttributes.Length == 0 && patchMethods.Length == 0)

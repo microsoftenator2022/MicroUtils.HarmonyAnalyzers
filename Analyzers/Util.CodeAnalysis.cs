@@ -103,57 +103,59 @@ public static partial class Util
         if (!typedConstants.Any())
             return 0;
 
-        if (typedConstants.Select(c => c.Kind).Distinct().Count() > 1)
-        {
-            return typedConstants
-                .GroupBy(c => c.Kind)
-                .Select(cs => Math.Max(1, DistinctTypedConstantsCount(cs, ct)))
-                .Sum();
-        }
+        return typedConstants.Distinct().Count();
 
-        switch (typedConstants.First().Kind)
-        {
-            case TypedConstantKind.Array:
-                var lengthGroups = typedConstants
-                    .GroupBy(c => c.IsNull ? -1 : c.Values.Length);
+        //if (typedConstants.Select(c => c.Kind).Distinct().Count() > 1)
+        //{
+        //    return typedConstants
+        //        .GroupBy(c => c.Kind)
+        //        .Select(cs => Math.Max(1, DistinctTypedConstantsCount(cs, ct)))
+        //        .Sum();
+        //}
 
-                var count = 0;
+        //switch (typedConstants.First().Kind)
+        //{
+        //    case TypedConstantKind.Array:
+        //        var lengthGroups = typedConstants
+        //            .GroupBy(c => c.IsNull ? -1 : c.Values.Length);
 
-                foreach (var lg in lengthGroups)
-                {
-                    if (ct.IsCancellationRequested)
-                        return 0;
+        //        var count = 0;
 
-                    if (lg.Key < 1)
-                    {
-                        count++;
-                        continue;
-                    }
+        //        foreach (var lg in lengthGroups)
+        //        {
+        //            if (ct.IsCancellationRequested)
+        //                return 0;
 
-                    for (var i = 0; i < lg.Key; i++)
-                    {
-                        if (ct.IsCancellationRequested)
-                            return 0;
+        //            if (lg.Key < 1)
+        //            {
+        //                count++;
+        //                continue;
+        //            }
+
+        //            for (var i = 0; i < lg.Key; i++)
+        //            {
+        //                if (ct.IsCancellationRequested)
+        //                    return 0;
                         
-                        count += Math.Max(1, DistinctTypedConstantsCount(lg.Select(c => c.Values[i]), ct));
-                    }
-                }
+        //                count += Math.Max(1, DistinctTypedConstantsCount(lg.Select(c => c.Values[i]), ct));
+        //            }
+        //        }
 
-                return count;
+        //        return count;
 
-            case TypedConstantKind.Type:
-                return typedConstants
-                    .Select(c => c.Value)
-                    .OfType<ITypeSymbol>()
-                    .Distinct(SymbolEqualityComparer.Default)
-                    .Count();
+        //    case TypedConstantKind.Type:
+        //        return typedConstants
+        //            .Select(c => c.Value)
+        //            .OfType<ITypeSymbol>()
+        //            .Distinct(SymbolEqualityComparer.Default)
+        //            .Count();
 
-            default:
-                return typedConstants
-                    .Select(c => c.Value)
-                    .Distinct()
-                    .Count();
-        }
+        //    default:
+        //        return typedConstants
+        //            .Select(c => c.Value)
+        //            .Distinct()
+        //            .Count();
+        //}
     }
 
     public static string GetFullMetadataName(this ISymbol s)
