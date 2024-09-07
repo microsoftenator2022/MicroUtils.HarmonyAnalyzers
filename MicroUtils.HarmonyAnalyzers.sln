@@ -9,6 +9,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HarmonyAnalyzerTest", "..\H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroUtils.HarmonyAnalyzers.CodeFixes", "CodeFixes\MicroUtils.HarmonyAnalyzers.CodeFixes.csproj", "{2FBCC4FD-32F2-4EA5-B0D0-C26C1DEACB93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroUtils.HarmonyAnalyzers.Nuget", "Nuget\MicroUtils.HarmonyAnalyzers.Nuget.csproj", "{B5926858-1964-4F05-A8CF-3387D995C578}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{239756E4-4AF6-4A46-918B-4632248F330D}"
+	ProjectSection(SolutionItems) = preProject
+		common.props = common.props
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +35,10 @@ Global
 		{2FBCC4FD-32F2-4EA5-B0D0-C26C1DEACB93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FBCC4FD-32F2-4EA5-B0D0-C26C1DEACB93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FBCC4FD-32F2-4EA5-B0D0-C26C1DEACB93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5926858-1964-4F05-A8CF-3387D995C578}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5926858-1964-4F05-A8CF-3387D995C578}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5926858-1964-4F05-A8CF-3387D995C578}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5926858-1964-4F05-A8CF-3387D995C578}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

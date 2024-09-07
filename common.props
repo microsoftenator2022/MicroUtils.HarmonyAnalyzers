@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Authors>https://github.com/microsoftenator2022</Authors>
+    <PackageProjectUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <VersionSuffix>debug-$([System.DateTimeOffset]::UtcNow.ToString(yyyyMMdd-HHmm))</VersionSuffix>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <VersionSuffix>prerelease-$([System.DateTimeOffset]::UtcNow.ToString(yyyyMMdd-HHmm))</VersionSuffix>
+  </PropertyGroup>
+</Project>
