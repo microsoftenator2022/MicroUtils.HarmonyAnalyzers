@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace MicroUtils.HarmonyAnalyzers;
 public static partial class Util
@@ -188,4 +189,6 @@ public static partial class Util
 
         return sb.ToString();
     }
+
+    public static bool IsStandardImplicit(this Conversion conversion) => conversion.IsImplicit && !conversion.IsUserDefined;
 }

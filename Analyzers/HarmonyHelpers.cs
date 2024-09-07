@@ -85,15 +85,11 @@ public static class HarmonyHelpers
         if (targetMethod is null)
         {
             return patchMethod.Parameters.Length > 0 &&
-                compilation.ClassifyConversion(patchMethod.Parameters[0].Type, patchMethod.ReturnType).IsImplicit;
+                compilation.ClassifyConversion(patchMethod.Parameters[0].Type, patchMethod.ReturnType).IsStandardImplicit();
         }    
 
         return patchMethod.Parameters.Length > 0 &&
-            compilation.ClassifyConversion(patchMethod.ReturnType, targetMethod.ReturnType).IsImplicit &&
-            compilation.ClassifyConversion(targetMethod.ReturnType, patchMethod.Parameters[0].Type).IsImplicit;
+            compilation.ClassifyConversion(patchMethod.ReturnType, targetMethod.ReturnType).IsStandardImplicit() &&
+            compilation.ClassifyConversion(targetMethod.ReturnType, patchMethod.Parameters[0].Type).IsStandardImplicit();
     }
-
-    //public static bool ReturnTypeMatchesFirstParameter(this IMethodSymbol method) =>
-    //    method.Parameters.Length > 0 &&
-    //    method.ReturnType.Equals(method.Parameters[0].Type, SymbolEqualityComparer.Default);
 }

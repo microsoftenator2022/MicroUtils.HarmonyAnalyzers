@@ -72,7 +72,7 @@ internal static class InvalidPatchMethodReturnType
         var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, compilation, ct, methodData.TargetMethod);
 
         if ((methodData.TargetMethod is not null || !methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation)) &&
-            !validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsImplicit))
+            !validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit()))
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences
                 .Select(s => s.GetSyntax() as MethodDeclarationSyntax)
@@ -105,7 +105,7 @@ internal static class InvalidPatchMethodReturnType
         IMethodSymbol method,
         INamedTypeSymbol MethodBaseType)
     {
-        if (!compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsImplicit)
+        if (!compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsStandardImplicit())
         {
             var diagnostic = new DiagnosticBuilder(Descriptor)
             {
@@ -129,7 +129,7 @@ internal static class InvalidPatchMethodReturnType
         IMethodSymbol method,
         INamedTypeSymbol IEnumerableMethodBaseType)
     {
-        if (!compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsImplicit)
+        if (!compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsStandardImplicit())
         {
             var diagnostic = new DiagnosticBuilder(Descriptor)
             {

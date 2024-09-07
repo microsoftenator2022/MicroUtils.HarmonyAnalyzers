@@ -81,7 +81,7 @@ internal static class AddPatchTypeAttribute
             .Join(targetMethodCandidates.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
         {
             if (HarmonyHelpers.ValidReturnTypes(patchType, sm.Compilation, ct, targetMethod, symbol.MayBePassthroughPostfix(targetMethod, sm.Compilation))
-                .Any(validReturnType => sm.Compilation.ClassifyConversion(symbol.ReturnType, validReturnType).IsImplicit))
+                .Any(validReturnType => sm.Compilation.ClassifyConversion(symbol.ReturnType, validReturnType).IsStandardImplicit()))
             {
                 yield return attributeType;
             }

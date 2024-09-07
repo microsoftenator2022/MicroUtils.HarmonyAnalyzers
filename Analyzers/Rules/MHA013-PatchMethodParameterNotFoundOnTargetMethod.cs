@@ -47,7 +47,7 @@ internal static class PatchMethodParamterNotFoundOnTargetMethod
                 if (fieldInjectionMatch.Success &&
                     methodData.TargetType.GetMembers().OfType<IFieldSymbol>().Any(f =>
                         f.Name == fieldInjectionMatch.Groups[1].Value &&
-                        compilation.ClassifyConversion(f.Type, p.Type).IsImplicit))
+                        compilation.ClassifyConversion(f.Type, p.Type).IsStandardImplicit()))
                     continue;
 
                 foreach (var d in methodData.CreateDiagnostics(
@@ -66,7 +66,7 @@ internal static class PatchMethodParamterNotFoundOnTargetMethod
 
             if (methodData.TargetMethod.Parameters.Indexed().Any(tp =>
                 (tp.element.Name == p.Name || (argInjectionMatch.Success && tp.index == int.Parse(argInjectionMatch.Groups[1].Value))) &&
-                compilation.ClassifyConversion(tp.element.Type, p.Type).IsImplicit))
+                compilation.ClassifyConversion(tp.element.Type, p.Type).IsStandardImplicit()))
                 continue;
 
             foreach (var d in methodData.CreateDiagnostics(
