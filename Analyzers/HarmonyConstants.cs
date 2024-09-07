@@ -25,14 +25,15 @@ public static partial class HarmonyConstants
     public const string Parameter_argumentVariations = "argumentVariations";
     public const string Parameter_methodType = "methodType";
 
+    public const string Parameter_injection__args = "__args";
+    public const string Parameter_injection__exception = "__exception";
     public const string Parameter_injection__instance = "__instance";
+    public const string Parameter_injection__originalMethod = "__originalMethod";
     public const string Parameter_injection__result = "__result";
     public const string Parameter_injection__resultRef = "__resultRef";
-    public const string Parameter_injection__state = "__state";
-    public const string Parameter_injection__args = "__args";
-    public const string Parameter_injection__originalMethod = "__originalMethod";
     public const string Parameter_injection__runOriginal = "__runOriginal";
-
+    public const string Parameter_injection__state = "__state";
+    
     public const string TargetMethodMethodName = "TargetMethod";
     public const string TargetMethodsMethodName = "TargetMethods";
 

@@ -191,6 +191,17 @@ public static partial class Util
     }
 
     public static bool IsStandardImplicit(this Conversion conversion) => conversion.IsImplicit && !conversion.IsUserDefined;
+
+    static readonly Regex TypeNameRegex = new(@"^([\w\.`]+)(?:\[.+?\])?(\[\])?$");
+    public static string GetMetadataName(this Type type)
+    {
+        var match = TypeNameRegex.Match(type.ToString());
+
+        return match.Groups[1].Value + match.Groups[2].Value;
+    }
+
+    public static INamedTypeSymbol? ToNamedTypeSymbol(this Type type, Compilation compilation) =>
+        compilation.GetTypeByMetadataName(type.GetMetadataName());
 }
 
 public static class Optional

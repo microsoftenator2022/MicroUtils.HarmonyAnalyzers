@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -42,6 +43,7 @@ public static class HarmonyHelpers
     public static bool IsInjectionNameConstant(string name) => name switch
     {
         HarmonyConstants.Parameter_injection__args => true,
+        HarmonyConstants.Parameter_injection__exception => true,
         HarmonyConstants.Parameter_injection__instance => true,
         HarmonyConstants.Parameter_injection__originalMethod => true,
         HarmonyConstants.Parameter_injection__result => true,
@@ -50,6 +52,20 @@ public static class HarmonyHelpers
         HarmonyConstants.Parameter_injection__state => true,
         _ => false
     };
+
+    public static INamedTypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null)
+    {
+        return parameterName switch
+        {
+            HarmonyConstants.Parameter_injection__args => typeof(object[]).ToNamedTypeSymbol(compilation),
+            HarmonyConstants.Parameter_injection__exception => typeof(Exception).ToNamedTypeSymbol(compilation),
+            HarmonyConstants.Parameter_injection__instance => targetMethod?.ContainingType,
+            HarmonyConstants.Parameter_injection__originalMethod => typeof(MethodBase).ToNamedTypeSymbol(compilation),
+            HarmonyConstants.Parameter_injection__result => targetMethod?.ReturnType as INamedTypeSymbol,
+            HarmonyConstants.Parameter_injection__runOriginal => typeof(bool).ToNamedTypeSymbol(compilation),
+            _ => null
+        };
+    }
 
     public static ImmutableArray<INamedTypeSymbol> ValidReturnTypes(
         HarmonyConstants.HarmonyPatchType patchType,
