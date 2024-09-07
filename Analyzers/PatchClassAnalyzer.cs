@@ -73,11 +73,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
             return;
 
-        //var patchTypeAttributeTypesMap =
-        //    HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
-        
-        //var patchTypeAttributeTypes = patchTypeAttributeTypesMap.Select(pair => pair.Item2).ToImmutableArray();
-
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
             .ToImmutableArray();
@@ -114,29 +109,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
                 if (maybeAttr.HasValue)
                     methodData = methodData with { PatchType = maybeAttr.Value.Item2 };
-
-                //foreach (var (pt, attributeType) in patchTypeAttributeTypesMap)
-                //{
-                //    if (pair.m.GetAttributes()
-                //            .Select(attr => attr.AttributeClass)
-                //            .Contains(attributeType, SymbolEqualityComparer.Default))
-                //    {
-                //        var conflicts = PatchTypeAttributeConflict
-                //            .Check(context.Compilation, methodData, attributeType, context.CancellationToken)
-                //            .ToImmutableArray();
-
-                //        if (conflicts.Length < 1)
-                //        {
-                //            methodData = methodData with { PatchType = pt };
-                //        }
-                //        else
-                //        {
-                //            diagnostics = diagnostics.AddRange(conflicts);
-                //        }
-                //    }
-                //}
-
-                //diagnostics = diagnostics.AddRange(MissingPatchTypeAttribute.Check(methodData));
 
                 return methodData;
             })

@@ -24,7 +24,6 @@ internal static class PatchMethodParamterNotFoundOnTargetMethod
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        //SyntaxNodeAnalysisContext context,
         Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct)
@@ -54,11 +53,6 @@ internal static class PatchMethodParamterNotFoundOnTargetMethod
                     Descriptor, p.Locations, messageArgs: [p, $"any field for target type {methodData.TargetType}"]))
                     yield return d;
 
-                //context.ReportDiagnostic(Diagnostic.Create(
-                //    descriptor: Descriptor,
-                //    location: p.Locations[0],
-                //    messageArgs: [p, $"any field for target type {methodData.TargetType}"]));
-
                 continue;
             }
 
@@ -72,16 +66,10 @@ internal static class PatchMethodParamterNotFoundOnTargetMethod
             foreach (var d in methodData.CreateDiagnostics(
                 Descriptor, p.Locations, messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]))
                 yield return d;
-
-            //context.ReportDiagnostic(methodData.CreateDiagnostic(
-            //    descriptor: Descriptor,
-            //    locations: [p.Locations[0]],
-            //    messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]));
         }
     }
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct) => CheckInternal(compilation, methodData, ct).ToImmutableArray();
