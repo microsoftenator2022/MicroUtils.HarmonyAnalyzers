@@ -73,10 +73,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
             return;
 
-        var patchTypeAttributeTypesMap =
-            HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
+        //var patchTypeAttributeTypesMap =
+        //    HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken).ToImmutableArray();
         
-        var patchTypeAttributeTypes = patchTypeAttributeTypesMap.Select(pair => pair.Item2).ToImmutableArray();
+        //var patchTypeAttributeTypes = patchTypeAttributeTypesMap.Select(pair => pair.Item2).ToImmutableArray();
 
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
@@ -107,30 +107,36 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     .AddTargetMethodData(classAttributes)
                     .AddTargetMethodData(pair.attrs);
 
-                if (Enum.TryParse<HarmonyConstants.HarmonyPatchType>(pair.m.Name, out var methodNamePatchType))
+                if (HarmonyHelpers.TryParseHarmonyPatchType(pair.m.Name, out var methodNamePatchType))
                     methodData = methodData with { PatchType = methodNamePatchType };
 
-                foreach (var (pt, attributeType) in patchTypeAttributeTypesMap)
-                {
-                    if (pair.m.GetAttributes()
-                            .Select(attr => attr.AttributeClass)
-                            .Contains(attributeType, SymbolEqualityComparer.Default))
-                    {
-                        var conflicts = PatchTypeAttributeConflict
-                            .Check(context.Compilation, methodData, attributeType, context.CancellationToken)
-                            .ToImmutableArray();
+                var maybeAttr = methodData.GetPatchTypeAttributes(context.Compilation, context.CancellationToken).TryFirst();
 
-                        if (conflicts.Length < 1)
-                        {
-                            methodData = methodData with { PatchType = pt };
+                if (maybeAttr.HasValue)
+                    methodData = methodData with { PatchType = maybeAttr.Value.Item2 };
 
-                            diagnostics = diagnostics.AddRange(conflicts);
+                //foreach (var (pt, attributeType) in patchTypeAttributeTypesMap)
+                //{
+                //    if (pair.m.GetAttributes()
+                //            .Select(attr => attr.AttributeClass)
+                //            .Contains(attributeType, SymbolEqualityComparer.Default))
+                //    {
+                //        var conflicts = PatchTypeAttributeConflict
+                //            .Check(context.Compilation, methodData, attributeType, context.CancellationToken)
+                //            .ToImmutableArray();
 
-                        }
-                    }
-                }
+                //        if (conflicts.Length < 1)
+                //        {
+                //            methodData = methodData with { PatchType = pt };
+                //        }
+                //        else
+                //        {
+                //            diagnostics = diagnostics.AddRange(conflicts);
+                //        }
+                //    }
+                //}
 
-                diagnostics = diagnostics.AddRange(MissingPatchTypeAttribute.Check(methodData));
+                //diagnostics = diagnostics.AddRange(MissingPatchTypeAttribute.Check(methodData));
 
                 return methodData;
             })
@@ -149,12 +155,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 break;
 #if DEBUG
             context.ReportAll(patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]));
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: DebugMessage,
-            //    location: patchMethodData.PatchMethod.Locations[0],
-            //    messageArgs: patchMethodData));
 #endif
             diagnostics = diagnostics
+                .AddRange(MissingPatchTypeAttribute.Check(patchMethodData))
+                .AddRange(PatchTypeAttributeConflict.Check(context.Compilation, patchMethodData, context.CancellationToken))
                 .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(
                     context.Compilation, patchMethodData, IEnumerableTType, context.CancellationToken))
                 .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
@@ -243,11 +247,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 }
 
                 diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
-
-                //context.ReportDiagnostic(Diagnostic.Create(
-                //    descriptor: TargetMethodMatchFailed.Descriptor,
-                //    location: patchMethodData.PatchMethod.Locations[0],
-                //    additionalLocations: patchMethodData.PatchMethod.Locations.Skip(1)));
             }
         }
 #endregion

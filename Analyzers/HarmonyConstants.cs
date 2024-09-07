@@ -50,9 +50,6 @@ public static partial class HarmonyConstants
     public static readonly ImmutableArray<string> HarmonyPatchTypeAttributeNames =
         HarmonyPatchTypeNames.Select(n => $"Harmony{n}").ToImmutableArray();
 
-    public static INamedTypeSymbol? GetPatchTypeAttributeType(this HarmonyPatchType patchType, Compilation compilation, CancellationToken ct) =>
-        compilation.GetType(Namespace_HarmonyLib, $"Harmony{patchType}", ct);
-
     public enum PatchTargetMethodType
     {
         Normal,

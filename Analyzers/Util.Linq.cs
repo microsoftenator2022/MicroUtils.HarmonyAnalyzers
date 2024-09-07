@@ -53,4 +53,30 @@ public partial class Util
     /// </summary>
     public static IEnumerable<T> EmptyIfNull<T>(this T? source) where T : notnull =>
         source is not null ? [source] : [];
+
+    public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> keySelector, IEqualityComparer<TKey>? comparer = null)
+    {
+        comparer ??= EqualityComparer<TKey>.Default;
+
+        foreach (var group in source.GroupBy(keySelector, comparer))
+        {
+            yield return group.First();
+        }
+    }
+
+    public static IEnumerable<U> Upcast<T, U>(this IEnumerable<T> source) where T : U =>
+        source.Select<T, U>(element => element);
+
+    public static IEnumerable<U> SelectWhere<T, U>(
+        this IEnumerable<T> source, Func<T, U> selector, Func<U, bool> predicate) =>
+        source.Select(selector).Where(predicate);
+
+    public static IEnumerable<TValue> SelectWhere<T, TKey, TValue>(
+        this IEnumerable<T> source,
+        Func<T, TKey> keySelector,
+        Func<TKey, bool> predicate,
+        Func<T, TValue> valueSelector) =>
+        source
+            .Where(element => predicate(keySelector(element)))
+            .Select(valueSelector);
 }

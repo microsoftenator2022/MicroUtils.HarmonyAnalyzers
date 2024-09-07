@@ -10,6 +10,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
+using MicroUtils.HarmonyAnalyzers;
+
 namespace MicroUtils.HarmonyAnalyzers;
 public static class HarmonyHelpers
 {
@@ -22,7 +24,7 @@ public static class HarmonyHelpers
     public static IEnumerable<(HarmonyConstants.HarmonyPatchType, INamedTypeSymbol)> GetHarmonyPatchTypeAttributeTypes(Compilation compilation, CancellationToken ct) =>
         Enum.GetValues(typeof(HarmonyConstants.HarmonyPatchType)).Cast<HarmonyConstants.HarmonyPatchType>()
             .SelectMany<HarmonyConstants.HarmonyPatchType, (HarmonyConstants.HarmonyPatchType, INamedTypeSymbol)>(pt =>
-                pt.GetPatchTypeAttributeType(compilation, ct) is { } t ? [(pt, t)] : []);
+                GetPatchTypeAttributeType(pt, compilation, ct) is { } t ? [(pt, t)] : []);
 
     public static INamedTypeSymbol? GetHarmonyTargetMethodType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyTargetMethod, ct);
@@ -92,4 +94,33 @@ public static class HarmonyHelpers
             compilation.ClassifyConversion(patchMethod.ReturnType, targetMethod.ReturnType).IsStandardImplicit() &&
             compilation.ClassifyConversion(targetMethod.ReturnType, patchMethod.Parameters[0].Type).IsStandardImplicit();
     }
+
+    public static bool TryParseHarmonyPatchType(string name, out HarmonyConstants.HarmonyPatchType patchType) => Enum.TryParse(name, out patchType);
+
+    public static IEnumerable<(AttributeData, HarmonyConstants.HarmonyPatchType)> GetPatchTypeAttributes(
+        this PatchMethodData methodData, Compilation compilation, CancellationToken ct)
+    {
+        var patchTypeAttributesTypes = GetHarmonyPatchTypeAttributeTypes(compilation, ct);
+
+        if (ct.IsCancellationRequested)
+            return [];
+
+        return methodData.PatchMethod.GetAttributes()
+            .Choose(attr =>
+            {
+                foreach (var (patchType, attributeType) in patchTypeAttributesTypes)
+                {
+                    if (ct.IsCancellationRequested)
+                        return default;
+
+                    if (attributeType.Equals(attr.AttributeClass, SymbolEqualityComparer.Default))
+                        return Optional.Value((attr, patchType));
+                }
+
+                return default;
+            });
+    }
+
+    public static INamedTypeSymbol? GetPatchTypeAttributeType(this HarmonyConstants.HarmonyPatchType patchType, Compilation compilation, CancellationToken ct) =>
+        compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, $"Harmony{patchType}", ct);
 }

@@ -192,3 +192,51 @@ public static partial class Util
 
     public static bool IsStandardImplicit(this Conversion conversion) => conversion.IsImplicit && !conversion.IsUserDefined;
 }
+
+public static class Optional
+{
+    public static Optional<T> Value<T>(T value) => new(value);
+    public static Optional<T> NoValue<T>() => new();
+    public static Optional<T> MaybeValue<T>(T? maybeValue) => maybeValue is { } value ? Value(value) : NoValue<T>();
+
+    public static Optional<T> TryFirst<T>(this IEnumerable<T> source)
+    {
+        foreach (var element in source)
+            return element;
+
+        return default;
+    }
+
+    public static Optional<T> TryFirst<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+    {
+        foreach (var element in source.Where(predicate))
+            return element;
+
+        return default;
+    }
+
+    public static Optional<T> TrySingle<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+    {
+        Optional<T> value = default;
+
+        foreach (var element in source.Where(predicate))
+        {
+            if (value.HasValue)
+                return default;
+
+            value = element;
+        }
+
+        return value;
+    }
+
+    public static Optional<T> TrySingle<T>(this IEnumerable<T> source) => source.TrySingle(_ => true);
+
+    public static IEnumerable<U> Choose<T, U>(this IEnumerable<T> source, Func<T, Optional<U>> chooser) =>
+        source
+            .SelectWhere(chooser, maybeElement => maybeElement.HasValue)
+            .Select(element => element.Value);
+
+    public static Optional<U> TryPick<T, U>(this IEnumerable<T> source, Func<T, Optional<U>> picker) =>
+        source.Choose(picker).TryFirst();
+}
