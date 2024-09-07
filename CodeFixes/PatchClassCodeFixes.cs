@@ -65,7 +65,7 @@ public class PatchClassCodeFixes : CodeFixProvider
                 {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
 
-                    if (await MHA003.MissingMethodType.GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken) is { } action)
+                    if (await MHA003.AddMissingMethodType.GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken) is { } action)
                         context.RegisterCodeFix(action, diagnostic);
 
                     break;

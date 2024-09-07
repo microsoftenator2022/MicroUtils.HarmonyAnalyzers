@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 using static SyntaxFactory;
-internal static class MissingMethodType
+internal static class AddMissingMethodType
 {
     internal static async Task<CodeAction?> GetActionAsync(Document document, MethodDeclarationSyntax mds, Diagnostic diagnostic, CancellationToken ct)
     {
