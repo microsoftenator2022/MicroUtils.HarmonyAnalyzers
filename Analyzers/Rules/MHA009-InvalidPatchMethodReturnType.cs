@@ -29,13 +29,15 @@ internal static class InvalidPatchMethodReturnType
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA009),
         "Invalid return type",
-        "Patch method has invalid return type '{0}'. Valid return types: {1}.",
+        "Patch method has invalid return type '{0}'. Valid return types: {1}."
+#if DEBUG
+        + " DEBUG: [{2}].",
+#endif
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
 
     private static IEnumerable<Diagnostic> CheckPatchMethodInternal(
-        //SyntaxNodeAnalysisContext context,
         Compilation compilation,
         PatchMethodData methodData,
         INamedTypeSymbol IEnumerableTType,
@@ -69,9 +71,11 @@ internal static class InvalidPatchMethodReturnType
         if (methodData.PatchType is not { } patchType)
             yield break;
 
-        var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, compilation, ct, methodData.TargetMethod);
+        var maybePassthrough = methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
 
-        if ((methodData.TargetMethod is not null || !methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation)) &&
+        var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, compilation, ct, methodData.TargetMethod, maybePassthrough);
+
+        if ((methodData.TargetMethod is not null || !maybePassthrough) &&
             !validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit()))
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences
@@ -86,7 +90,17 @@ internal static class InvalidPatchMethodReturnType
                     .Select(sr => sr.GetSyntax())
                     .OfType<MethodDeclarationSyntax>()
                     .Select(mds => mds.ReturnType.GetLocation()).ToImmutableArray(),
-                messageArgs: [methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes)]))
+                messageArgs:
+                [
+                    methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes),
+#if DEBUG
+                    maybePassthrough ?
+                    $"Return type: {methodData.PatchMethod.ReturnType} -> {methodData.TargetMethod?.ReturnType}. " +
+                    $@"Conversion: {(methodData.TargetMethod is not null ?
+                        compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, methodData.TargetMethod.ReturnType) :
+                        null)}" : ""
+#endif
+                ]))
             {
                 yield return d;
             }
@@ -100,7 +114,6 @@ internal static class InvalidPatchMethodReturnType
         CancellationToken ct) => CheckPatchMethodInternal(compilation, methodData, IEnumerableTType, ct).ToImmutableArray();
 
     internal static ImmutableArray<Diagnostic> CheckTargetMethod(
-        //SyntaxNodeAnalysisContext context,
         Compilation compilation,
         IMethodSymbol method,
         INamedTypeSymbol MethodBaseType)
@@ -109,22 +122,22 @@ internal static class InvalidPatchMethodReturnType
         {
             var diagnostic = new DiagnosticBuilder(Descriptor)
             {
-                MessageArgs = [method.ReturnType, MethodBaseType]
+                MessageArgs =
+                [
+                    method.ReturnType, MethodBaseType,
+#if DEBUG
+                    null
+#endif
+                ]
             };
 
             return diagnostic.ForAllLocations(method.Locations).CreateAll();
-
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: method.Locations[0],
-            //    messageArgs: [method.ReturnType, MethodBaseType]));
         }
 
         return [];
     }
 
     internal static ImmutableArray<Diagnostic> CheckTargetMethods(
-        //SyntaxNodeAnalysisContext context,
         Compilation compilation,
         IMethodSymbol method,
         INamedTypeSymbol IEnumerableMethodBaseType)
@@ -133,15 +146,16 @@ internal static class InvalidPatchMethodReturnType
         {
             var diagnostic = new DiagnosticBuilder(Descriptor)
             {
-                MessageArgs = [method.ReturnType, IEnumerableMethodBaseType]
+                MessageArgs =
+                [
+                    method.ReturnType, IEnumerableMethodBaseType,
+#if DEBUG
+                    null
+#endif
+                ]
             };
 
             return diagnostic.ForAllLocations(method.Locations).CreateAll();
-
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: method.Locations[0],
-            //    messageArgs: [method.ReturnType, IEnumerableMethodBaseType]));
         }
 
         return [];
