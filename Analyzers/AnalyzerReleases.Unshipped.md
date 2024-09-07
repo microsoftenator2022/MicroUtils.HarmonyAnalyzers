@@ -18,5 +18,5 @@ MHA010  | PatchAttribute   | Warning  | HarmonyPatch attribute conflict
 MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the same method
 MHA012  | PatchMethod      | Info     | __result injection in passthrough Postfix
 MHA013  | PatchMethod      | Warning  | No matching parameter on target method
-MHA014  | PatchMethod      | Warning  | Invalid injected parameter
-MHA015  | PatchMethod      | Info     | Use out for __result and __state in prefix patches
+MHA014  | PatchMethod      | Warning  | Invalid injected parameter type
+MHA015  | PatchMethod      | Info     | Use out for __result and __state in prefix patches. TODO: What if checking for other prefix patches setting __result?

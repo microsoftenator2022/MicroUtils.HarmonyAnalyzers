@@ -11,7 +11,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class InvalidInjectedParameter
+internal static class InvalidInjectedParameterType
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA014),
