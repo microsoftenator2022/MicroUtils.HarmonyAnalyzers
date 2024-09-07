@@ -34,13 +34,6 @@ internal static class MissingMethodType
                 .SetItem(nameof(PatchMethodData.TargetMethodType), methodType.ToString())
                 .SetItem(nameof(PatchMethodData.TargetMethod), methodSymbol.MetadataName),
             messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]);
-
-            //return context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
-            //    descriptor: Descriptor,
-            //    additionalProperties: dict => dict
-            //        .SetItem(nameof(PatchMethodData.TargetMethodType), methodType.ToString())
-            //        .SetItem(nameof(PatchMethodData.TargetMethod), methodSymbol.MetadataName),
-            //    messageArgs: [methodType, methodSymbol, patchMethodData.PatchMethod]));
     }
 
     private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(

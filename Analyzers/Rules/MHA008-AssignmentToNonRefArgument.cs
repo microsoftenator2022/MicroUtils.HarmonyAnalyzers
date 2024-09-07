@@ -24,7 +24,6 @@ internal static class AssignmentToNonRefResultArgument
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        //SyntaxNodeAnalysisContext context,
         SemanticModel semanticModel,
         PatchMethodData methodData,
         CancellationToken ct)
@@ -44,13 +43,11 @@ internal static class AssignmentToNonRefResultArgument
             if (ct.IsCancellationRequested)
                 yield break;
 
-            foreach (var d in methodData.CreateDiagnostics(Descriptor, [node.Left.GetLocation()], symbol?.Locations ?? default))
+            foreach (var d in methodData.CreateDiagnostics(
+                Descriptor,
+                primaryLocations: [node.Left.GetLocation()],
+                additionalLocations: symbol?.Locations ?? default))
                 yield return d;
-            
-            //context.ReportDiagnostic(methodData.CreateDiagnostic(
-            //    descriptor: Descriptor,
-            //    locations: symbol is not null ? [node.Left.GetLocation(), symbol.Locations[0]] : [node.Left.GetLocation()],
-            //    messageArgs: [symbol]));
         }
     }
 

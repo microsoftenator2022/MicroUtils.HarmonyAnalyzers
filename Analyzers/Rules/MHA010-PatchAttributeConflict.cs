@@ -23,7 +23,6 @@ internal static class PatchAttributeConflict
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData,
         CancellationToken ct)
     {
@@ -40,17 +39,10 @@ internal static class PatchAttributeConflict
 
             foreach (var d in methodData.CreateDiagnostics(Descriptor, locations, messageArgs: [string.Join(", ", conflicts)]))
                 yield return d;
-
-            //context.ReportDiagnostic(methodData.CreateDiagnostic(
-            //    descriptor: Descriptor,
-            //    locations: ((IEnumerable<Location?>)[c.ApplicationSyntaxReference?.GetSyntax().GetLocation()])
-            //        .Concat([methodData.PatchMethod.Locations[0]]).NotNull().ToImmutableArray(),
-            //    messageArgs: [string.Join(", ", conflicts)]));
         }
     }
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData,
         CancellationToken ct) => CheckInternal(methodData, ct).ToImmutableArray();
 }

@@ -191,6 +191,7 @@ public readonly record struct PatchMethodData(
     internal DiagnosticBuilder CreateDiagnosticBuilder(
         DiagnosticDescriptor descriptor,
         Location primaryLocation,
+        DiagnosticSeverity? severity = null,
         ImmutableArray<Location> additionalLocations = default,
         Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
         ImmutableArray<object?> messageArgs = default)
@@ -207,6 +208,7 @@ public readonly record struct PatchMethodData(
         return diagnostic with
         {
             PrimaryLocation = primaryLocation,
+            EffectiveSeverity = severity,
             AdditionalLocations = additionalLocations.IsDefault ? [] : additionalLocations,
             Properties = properties,
             MessageArgs = messageArgs.IsDefault ? [] : messageArgs
@@ -216,6 +218,7 @@ public readonly record struct PatchMethodData(
     internal ImmutableArray<Diagnostic> CreateDiagnostics(
         DiagnosticDescriptor descriptor,
         ImmutableArray<Location> primaryLocations = default,
+        DiagnosticSeverity? severity = null,
         ImmutableArray<Location> additionalLocations = default,
         Func<ImmutableDictionary<string, string?>, ImmutableDictionary<string, string?>>? additionalProperties = null,
         ImmutableArray<object?> messageArgs = default)
@@ -226,7 +229,7 @@ public readonly record struct PatchMethodData(
         var @this = this;
         
         return primaryLocations
-            .Select(location => @this.CreateDiagnosticBuilder(descriptor, location, additionalLocations, additionalProperties, messageArgs))
+            .Select(location => @this.CreateDiagnosticBuilder(descriptor, location, severity, additionalLocations, additionalProperties, messageArgs))
             .CreateAll();
 
         //return Diagnostic.Create(

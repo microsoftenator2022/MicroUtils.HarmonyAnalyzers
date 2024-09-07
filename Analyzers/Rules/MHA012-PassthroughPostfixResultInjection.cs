@@ -22,7 +22,6 @@ internal static class PaasthroughPostfixResultInjection
         true);
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Postfix)
@@ -32,10 +31,6 @@ internal static class PaasthroughPostfixResultInjection
             methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == HarmonyConstants.Parameter_injection__result) is { } p)
         {
             return methodData.CreateDiagnostics(Descriptor, primaryLocations: p.Locations);
-
-            //context.ReportDiagnostic(methodData.CreateDiagnostic(
-            //    descriptor: Descriptor,
-            //    locations: [p.Locations[0]]));
         }
 
         return [];

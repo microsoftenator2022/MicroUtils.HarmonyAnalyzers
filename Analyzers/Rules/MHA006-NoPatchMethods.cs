@@ -31,10 +31,6 @@ internal static class NoPatchMethods
         if (classAttributes.Length > 0 && methodAttributes.Length == 0)
         { 
             return new DiagnosticBuilder(Descriptor).ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
-
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: classSymbol.Locations[0]));
         }
 
         return [];

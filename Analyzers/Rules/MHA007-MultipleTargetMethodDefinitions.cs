@@ -23,7 +23,6 @@ internal static class MultipleTargetMethodDefinitions
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        //SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
         ImmutableArray<PatchMethodData> patchMethods,
@@ -47,21 +46,6 @@ internal static class MultipleTargetMethodDefinitions
 
         if (allTargetMethodLocations.Length > 1)
         {
-            //void report(IEnumerable<Location> locations) =>
-            //    context.ReportDiagnostic(Diagnostic.Create(
-            //        descriptor: Descriptor,
-            //        location: locations.First()));
-
-            //report(classSymbol.Locations);
-
-            //for (var i = 0; i < allTargetMethodLocations.Length; i++)
-            //{
-            //    if (ct.IsCancellationRequested)
-            //        yield break;
-
-            //    report([allTargetMethodLocations[i]]);
-            //}
-
             foreach (var d in new DiagnosticBuilder(Descriptor)
                 .ForAllLocations(classSymbol.Locations.Concat(allTargetMethodLocations).ToImmutableArray())
                 .CreateAll())

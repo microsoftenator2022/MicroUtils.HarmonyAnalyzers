@@ -22,15 +22,10 @@ internal static class AmbiguousMatch
         true);
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData patchMethodData)
     {
         if (!patchMethodData.IsAmbiguousMatch)
             return [];
-
-        //context.ReportDiagnostic(patchMethodData.CreateDiagnostic(
-        //    descriptor: Descriptor,
-        //    messageArgs: [string.Join(", ", patchMethodData.GetCandidateMethods())]));
 
         return patchMethodData.CreateDiagnostics(
             descriptor: Descriptor,
