@@ -13,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class PatchMethodParamterNotFoundOnTargetMethod
+internal static class InjectedParamterNotFoundOnTargetMethod
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA013),
