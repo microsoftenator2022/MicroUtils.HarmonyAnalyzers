@@ -28,7 +28,7 @@ internal static class AssignmentToNonRefResultArgument
         PatchMethodData methodData,
         CancellationToken ct)
     {
-        var nonRefParameters = methodData.PatchMethod.Parameters.Where(p => p.RefKind is not RefKind.Ref).ToImmutableArray();
+        var nonRefParameters = methodData.PatchMethod.Parameters.Where(p => p.RefKind is not RefKind.Ref and not RefKind.Out).ToImmutableArray();
 
         if (nonRefParameters.Length < 1)
             yield break;
