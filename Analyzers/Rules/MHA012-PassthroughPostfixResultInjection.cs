@@ -30,6 +30,9 @@ internal static class PaasthroughPostfixResultInjection
         if (!methodData.PatchMethod.ReturnsVoid &&
             methodData.PatchMethod.Parameters.Skip(1).FirstOrDefault(p => p.Name == HarmonyConstants.Parameter_injection__result) is { } p)
         {
+            if (p.RefKind is RefKind.Ref)
+                return methodData.CreateDiagnostics(Descriptor, primaryLocations: p.Locations, severity: DiagnosticSeverity.Warning);
+
             return methodData.CreateDiagnostics(Descriptor, primaryLocations: p.Locations);
         }
 
