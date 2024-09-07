@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>true</IncludeSourceRevisionInInformationalVersion>
     <Authors>https://github.com/microsoftenator2022</Authors>
     <PackageProjectUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</PackageProjectUrl>
     <RepositoryUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</RepositoryUrl>
@@ -18,7 +18,7 @@
     <VersionSuffix>debug-$([System.DateTimeOffset]::UtcNow.ToString(yyyyMMdd-HHmm))</VersionSuffix>
   </PropertyGroup>
   
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+  <!--<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <VersionSuffix>prerelease-$([System.DateTimeOffset]::UtcNow.ToString(yyyyMMdd-HHmm))</VersionSuffix>
-  </PropertyGroup>
+  </PropertyGroup>-->
 </Project>
