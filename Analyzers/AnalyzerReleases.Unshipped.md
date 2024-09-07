@@ -19,4 +19,6 @@ MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the sa
 MHA012  | PatchMethod      | Info     | __result injection in passthrough Postfix
 MHA013  | PatchMethod      | Warning  | No matching parameter on target method
 MHA014  | PatchMethod      | Warning  | Invalid injected parameter type
-MHA015  | PatchMethod      | Info     | Use out for __result and __state in prefix patches. TODO: What if checking for other prefix patches setting __result?
+MHA015  | PatchMethod      | Warning  | Invalid injection for patch method type
+MHA016  | PatchMethod      | Info     | Use out for __result and __state in prefix patches. TODO: What if checking for other prefix patches setting __result?
+MHA017  | PatchMethod      | Info     | Using __0, __1, etc. injections over parameter names
