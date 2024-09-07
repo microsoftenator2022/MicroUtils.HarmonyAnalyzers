@@ -26,7 +26,8 @@ public class PatchClassCodeFixes : CodeFixProvider
         nameof(MHA001),
         nameof(MHA002),
         nameof(MHA003),
-        nameof(MHA008)
+        nameof(MHA008),
+        nameof(MHA012)
     ];
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -77,6 +78,16 @@ public class PatchClassCodeFixes : CodeFixProvider
                         syntax.FindNode(paramLocation.SourceSpan) is not ParameterSyntax ps) continue;
 
                     context.RegisterCodeFix(MHA008.AddRefKeyword.GetAction(context.Document, ps), diagnostic);
+
+                    break;
+                }
+
+                case DiagnosticId.MHA012:
+                {
+                    if (diagnostic.Location is not { } paramLocation ||
+                        syntax.FindNode(paramLocation.SourceSpan) is not ParameterSyntax ps) continue;
+
+                    context.RegisterCodeFix(MHA012.RemoveResultInjection.GetAction(context.Document, ps), diagnostic);
 
                     break;
                 }
