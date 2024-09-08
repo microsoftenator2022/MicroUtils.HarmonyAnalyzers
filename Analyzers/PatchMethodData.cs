@@ -215,14 +215,8 @@ public readonly record struct PatchMethodData(
         var @this = this;
         
         return primaryLocations
+            .Distinct()
             .Select(location => @this.CreateDiagnosticBuilder(descriptor, location, severity, additionalLocations, additionalProperties, messageArgs))
             .CreateAll();
-
-        //return Diagnostic.Create(
-        //    descriptor: descriptor,
-        //    location: locations[0],
-        //    additionalLocations: locations.Skip(1),
-        //    properties: properties,
-        //    messageArgs: messageArgs.ToArray());
     }
 }
