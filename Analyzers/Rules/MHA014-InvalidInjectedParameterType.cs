@@ -16,7 +16,7 @@ internal static class InvalidInjectedParameterType
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA014),
         "Invalid injected parameter type",
-        "Invalid type '{0}' for injected parameter '{1}'",
+        "Invalid type '{0}' for injected parameter '{1}'. Expected '{2}'.",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
@@ -29,9 +29,9 @@ internal static class InvalidInjectedParameterType
             return [];
 
         return methodData.PatchMethod.Parameters
-            .Where(p => HarmonyHelpers.GetInjectionParameterType(p.Name, compilation, methodData.TargetMethod) is { } s &&
-                !compilation.ClassifyConversion(s, p.Type).IsStandardImplicit())
-            .SelectMany(p => methodData.CreateDiagnostics(Descriptor, p.Locations, messageArgs: [p.Type, p]))
+            .Select(p => (param: p, expected: HarmonyHelpers.GetInjectionParameterType(p.Name, compilation, methodData.TargetMethod)))
+            .Where(p => p.expected is { } s && !compilation.ClassifyConversion(s, p.param.Type).IsStandardImplicit())
+            .SelectMany(p => methodData.CreateDiagnostics(Descriptor, p.param.Locations, messageArgs: [p.param.Type, p.param.Name, p.expected]))
             .ToImmutableArray();
     }
 }
