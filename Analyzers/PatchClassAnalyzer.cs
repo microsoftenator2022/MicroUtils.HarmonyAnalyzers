@@ -49,7 +49,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         AssignmentToNonRefResultArgument.Descriptor,
         InjectedParamterNotFoundOnTargetMethod.Descriptor,
         PatchAttributeConflict.Descriptor,
-        InvalidInjectedParameterType.Descriptor
+        InvalidInjectedParameterType.Descriptor,
+        InvalidTranspilerParameter.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -145,7 +146,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(
                     context.Compilation, patchMethodData, context.CancellationToken))
                 .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken))
-                .AddRange(InvalidInjectedParameterType.Check(context.Compilation, patchMethodData));
+                .AddRange(InvalidInjectedParameterType.Check(context.Compilation, patchMethodData))
+                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.Compilation, context.CancellationToken));
         }
 #endregion
 

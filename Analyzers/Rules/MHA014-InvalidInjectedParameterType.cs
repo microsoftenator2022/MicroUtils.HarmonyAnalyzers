@@ -25,6 +25,9 @@ internal static class InvalidInjectedParameterType
         Compilation compilation,
         PatchMethodData methodData)
     {
+        if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler or HarmonyConstants.HarmonyPatchType.ReversePatch)
+            return [];
+
         return methodData.PatchMethod.Parameters
             .Where(p => HarmonyHelpers.GetInjectionParameterType(p.Name, compilation, methodData.TargetMethod) is { } s &&
                 !compilation.ClassifyConversion(s, p.Type).IsStandardImplicit())

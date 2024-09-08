@@ -74,10 +74,11 @@ internal static class InvalidPatchMethodReturnType
 
         var maybePassthrough = methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
 
-        var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, compilation, ct, methodData.TargetMethod, maybePassthrough);
+        var (hasValidReturnType, validReturnTypes) = HarmonyHelpers.HasValidReturnType(methodData, compilation, ct);
 
-        if ((methodData.TargetMethod is not null || !maybePassthrough) &&
-            !validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit()))
+        if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
+            //!validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit())
+            )
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences
                 .Select(s => s.GetSyntax() as MethodDeclarationSyntax)

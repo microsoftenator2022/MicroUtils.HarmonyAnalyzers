@@ -28,7 +28,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
         PatchMethodData methodData,
         CancellationToken ct)
     {
-        if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler || methodData.TargetMethod is null)
+        if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler or HarmonyConstants.HarmonyPatchType.ReversePatch || methodData.TargetMethod is null)
             yield break;
 
         foreach (var p in methodData.PatchMethod.Parameters

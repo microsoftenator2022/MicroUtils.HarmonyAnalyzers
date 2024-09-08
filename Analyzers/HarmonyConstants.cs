@@ -42,7 +42,8 @@ public static partial class HarmonyConstants
         Prefix,
         Postfix,
         Transpiler,
-        Finalizer
+        Finalizer,
+        ReversePatch
     }
 
     public static readonly ImmutableArray<string> HarmonyPatchTypeNames =

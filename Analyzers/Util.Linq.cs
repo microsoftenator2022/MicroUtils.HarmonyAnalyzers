@@ -79,4 +79,6 @@ public partial class Util
         source
             .Where(element => predicate(keySelector(element)))
             .Select(valueSelector);
+
+    public static IEnumerable<T> Concat<T>(this IEnumerable<IEnumerable<T>> source) => source.SelectMany(element => element);
 }
