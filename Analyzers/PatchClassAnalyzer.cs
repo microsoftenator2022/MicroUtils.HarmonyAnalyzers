@@ -242,7 +242,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
+                // TODO: find a less ugly way to handle this case
+                if (!patchMethodData.HarmonyPatchAttributes.Any(attr => attr.AttributeConstructor?.Parameters.FirstOrDefault()?.Name == "typeName"))
+                    diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
             }
         }
 #endregion
