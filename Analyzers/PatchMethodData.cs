@@ -73,8 +73,8 @@ public readonly record struct PatchMethodData(
         {
             (Getter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
             (Getter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
-            (Setter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
-            (Setter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
+            (Setter, null) => @this.GetTargetProperties().Select(p => p.SetMethod).NotNull(),
+            (Setter, _) => @this.GetTargetProperties().Select(p => p.SetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
             (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
             (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
