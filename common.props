@@ -22,7 +22,7 @@
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <!--<VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>-->
-    <VersionSuffix>rc2</VersionSuffix>
+    <VersionSuffix>rc3</VersionSuffix>
   </PropertyGroup>
   
 </Project>
