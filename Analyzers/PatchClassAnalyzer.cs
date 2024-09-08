@@ -58,7 +58,23 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(AnalyzeClassDeclaration, SyntaxKind.ClassDeclaration);
+        context.RegisterSyntaxNodeAction(
+#if DEBUG
+        context =>
+        {
+            try
+            {
+                AnalyzeClassDeclaration(context);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.StackTrace);
+            }
+        }
+#else
+        AnalyzeClassDeclaration
+#endif
+        , SyntaxKind.ClassDeclaration);
     }
 
     private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context)
@@ -105,7 +121,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         var patchMethodsData = patchMethods
             .Select(pair =>
             {
-                var methodData = new PatchMethodData(classSymbol, pair.m)
+                var methodData = new PatchMethodData(classSymbol, pair.m, context.Compilation)
                     .AddTargetMethodData(classAttributes)
                     .AddTargetMethodData(pair.attrs);
 

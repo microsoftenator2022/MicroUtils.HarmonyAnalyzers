@@ -56,7 +56,7 @@ public static class HarmonyHelpers
         _ => false
     };
 
-    public static INamedTypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null)
+    public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null)
     {
         return parameterName switch
         {
@@ -64,13 +64,13 @@ public static class HarmonyHelpers
             Parameter_injection__exception => typeof(Exception).ToNamedTypeSymbol(compilation),
             Parameter_injection__instance => targetMethod?.ContainingType,
             Parameter_injection__originalMethod => typeof(MethodBase).ToNamedTypeSymbol(compilation),
-            Parameter_injection__result => targetMethod?.ReturnType as INamedTypeSymbol,
+            Parameter_injection__result => targetMethod?.ReturnType,
             Parameter_injection__runOriginal => typeof(bool).ToNamedTypeSymbol(compilation),
             _ => null
         };
     }
 
-    public static ImmutableArray<INamedTypeSymbol> ValidReturnTypes(
+    public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         HarmonyPatchType patchType,
         Compilation compilation,
         CancellationToken ct,
@@ -94,15 +94,15 @@ public static class HarmonyHelpers
         {
             HarmonyPatchType.Prefix => [voidType, boolType],
             HarmonyPatchType.Postfix =>
-                passthrough && targetMethod?.ReturnType is INamedTypeSymbol returnType ? [voidType, returnType] : [voidType],
+                passthrough && targetMethod?.ReturnType is { }  returnType ? [voidType, returnType] : [voidType],
             HarmonyPatchType.Transpiler => [IEnumerableTType.Construct(CodeInstructionType)],
             HarmonyPatchType.Finalizer => [voidType, ExceptionType],
-            HarmonyPatchType.ReversePatch => [targetMethod?.ReturnType is INamedTypeSymbol returnType ? returnType : voidType],
+            HarmonyPatchType.ReversePatch => [targetMethod?.ReturnType is { } returnType ? returnType : voidType],
             _ => []
         };
     }
 
-    public static ImmutableArray<INamedTypeSymbol> ValidReturnTypes(
+    public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         PatchMethodData methodData,
         Compilation compilation,
         CancellationToken ct)
@@ -118,7 +118,7 @@ public static class HarmonyHelpers
             methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation));
     }
 
-    public static (bool, ImmutableArray<INamedTypeSymbol>) HasValidReturnType(
+    public static (bool, ImmutableArray<ITypeSymbol>) HasValidReturnType(
         this PatchMethodData methodData,
         Compilation compilation,
         CancellationToken ct)

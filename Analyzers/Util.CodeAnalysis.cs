@@ -90,13 +90,21 @@ public static partial class Util
             .FirstOrDefault(pair => pair.@namespace.Name == @namespace).types
             ?.FirstOrDefault(t => t.Name == name);
 
-    public static IEnumerable<IMethodSymbol> FindMethodsWithArgs(this IEnumerable<IMethodSymbol> source, IEnumerable<ITypeSymbol> argTypes) =>
+    public static IEnumerable<IMethodSymbol> FindMethodsWithArgs(
+        this IEnumerable<IMethodSymbol> source,
+        IEnumerable<ITypeSymbol> argTypes,
+        Compilation compilation) =>
         source.Where(m =>
             m.Parameters.Length == argTypes.Count() &&
-            m.Parameters.Zip(argTypes, (p, arg) => p.Type.Equals(arg, SymbolEqualityComparer.Default)).All(b => b));
+            m.Parameters.Zip(argTypes, (p, arg) =>
+                compilation.ClassifyConversion(arg, p.Type)).All(c => c.IsStandardImplicit()));
+                //p.Type.Equals(arg, SymbolEqualityComparer.Default)).All(b => b));
 
-    public static IMethodSymbol? FindMethodWithArgs(this IEnumerable<IMethodSymbol> source, IEnumerable<ITypeSymbol> argTypes) =>
-        source.FindMethodsWithArgs(argTypes).TryExactlyOne();
+    public static IMethodSymbol? FindMethodWithArgs(
+        this IEnumerable<IMethodSymbol> source,
+        IEnumerable<ITypeSymbol> argTypes,
+        Compilation compilation) =>
+        source.FindMethodsWithArgs(argTypes, compilation).TryExactlyOne();
 
     public static int DistinctTypedConstantsCount(IEnumerable<TypedConstant> typedConstants, CancellationToken ct)
     {
@@ -117,6 +125,13 @@ public static partial class Util
         }
 
         var sb = new StringBuilder(s.MetadataName);
+
+        if (s is IArrayTypeSymbol ats)
+        {
+            sb.Insert(0, "[]");
+            s = ats.ElementType;
+        }
+
         var last = s;
 
         s = s.ContainingSymbol;
@@ -133,7 +148,6 @@ public static partial class Util
             }
 
             sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
-            //sb.Insert(0, s.MetadataName);
             s = s.ContainingSymbol;
         }
 

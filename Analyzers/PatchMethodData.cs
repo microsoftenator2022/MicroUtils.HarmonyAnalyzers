@@ -15,11 +15,12 @@ using static MicroUtils.HarmonyAnalyzers.HarmonyConstants.PatchTargetMethodType;
 public readonly record struct PatchMethodData(
     INamedTypeSymbol PatchClass,
     IMethodSymbol PatchMethod,
+    Compilation Compilation,
     HarmonyConstants.HarmonyPatchType? PatchType = null,
     INamedTypeSymbol? TargetType = null,
     string? TargetMethodName = null,
     HarmonyConstants.PatchTargetMethodType? TargetMethodType = null,
-    ImmutableArray<INamedTypeSymbol>? ArgumentTypes = null)
+    ImmutableArray<ITypeSymbol>? ArgumentTypes = null)
 {
     public ImmutableArray<AttributeData> HarmonyPatchAttributes { get; init; } = [];
 
@@ -64,24 +65,23 @@ public readonly record struct PatchMethodData(
 
     public IEnumerable<IMethodSymbol> GetCandidateMethods(
         HarmonyConstants.PatchTargetMethodType targetMethodType,
-        IEnumerable<INamedTypeSymbol>? argumentTypes)
+        IEnumerable<ITypeSymbol>? argumentTypes)
     {
         var @this = this;
 
         return (targetMethodType, argumentTypes) switch
         {
-            (Normal, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
-            (Normal, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes),
             (Getter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
-            (Getter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes),
+            (Getter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
             (Setter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
-            (Setter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes),
+            (Setter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
             (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
-            (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes) ?? [],
+            (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
             //(Enumerator, _) => null,
             //(Async, _) => null,
-            _ => []
+            (_, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
+            (_, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes, this.Compilation)
         };
     }
 
@@ -133,7 +133,7 @@ public readonly record struct PatchMethodData(
                     patchData = patchData with
                     {
                         ArgumentTypes = patchAttribute.ConstructorArguments[i].Values
-                            .Select(c => c.Value as INamedTypeSymbol)
+                            .Select(c => c.Value as ITypeSymbol)
                             .NotNull()
                             .ToImmutableArray(),
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
