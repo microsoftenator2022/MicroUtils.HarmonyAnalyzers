@@ -16,10 +16,10 @@ MHA008  | PatchMethod      | Warning  | Assignment to non-ref patch method argum
 MHA009  | PatchMethod      | Warning  | Invalid patch method return type
 MHA010  | PatchAttribute   | Warning  | HarmonyPatch attribute conflict
 MHA011  | PatchMethod      | Warning  | Multiple patch type attributes on the same method
-MHA012  | PatchMethod      | Info     | __result injection in passthrough Postfix
+MHA012  | PatchMethod      | Info     | `__result` injection in passthrough Postfix
 MHA013  | PatchMethod      | Warning  | No matching parameter on target method
 MHA014  | PatchMethod      | Warning  | Invalid injected parameter type
 MHA015  | PatchMethod      | Warning  | Injections in Transpiler patch method
-MHA016  | PatchMethod      | Info     | Use out for __state in prefix patches
-MHA017  | PatchMethod      | Info     | Using __0, __1, etc. injections over parameter names
+MHA016  | PatchMethod      | Info     | Use `out` for `__state` in prefix patches
+MHA017  | PatchMethod      | Info     | Using `__0`, `__1`, etc. injections over parameter names
 MHA018  | PatchMethod      | Warning  | Reverse patch method signature does not match target method
