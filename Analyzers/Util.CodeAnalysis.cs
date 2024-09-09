@@ -98,7 +98,6 @@ public static partial class Util
             m.Parameters.Length == argTypes.Count() &&
             m.Parameters.Zip(argTypes, (p, arg) =>
                 compilation.ClassifyConversion(arg, p.Type)).All(c => c.IsStandardImplicit()));
-                //p.Type.Equals(arg, SymbolEqualityComparer.Default)).All(b => b));
 
     public static IMethodSymbol? FindMethodWithArgs(
         this IEnumerable<IMethodSymbol> source,

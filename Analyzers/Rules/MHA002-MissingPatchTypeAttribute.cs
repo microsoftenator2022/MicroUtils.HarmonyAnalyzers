@@ -22,14 +22,11 @@ internal static class MissingPatchTypeAttribute
         true);
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData methodData)
     {
         if (methodData.PatchType is null)
         {
             return methodData.CreateDiagnostics(Descriptor);
-
-            //context.ReportDiagnostic(methodData.CreateDiagnostic(descriptor: Descriptor));
         }
 
         return [];

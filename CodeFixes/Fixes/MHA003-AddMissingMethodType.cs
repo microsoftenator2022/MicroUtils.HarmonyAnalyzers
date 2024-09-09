@@ -40,7 +40,6 @@ internal static class AddMissingMethodType
 
     private static async Task<Document> AddMethodTypeAttributeAsync(
         Document document,
-        //AttributeSyntax node,
         MethodDeclarationSyntax mds,
         HarmonyConstants.PatchTargetMethodType methodType,
         INamedTypeSymbol methodTypeType,

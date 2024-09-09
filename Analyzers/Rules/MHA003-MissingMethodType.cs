@@ -23,7 +23,6 @@ internal static class MissingMethodType
         true);
 
     private static IEnumerable<Diagnostic> Report(
-        //SyntaxNodeAnalysisContext context, 
         PatchMethodData patchMethodData,
         HarmonyConstants.PatchTargetMethodType methodType,
         IMethodSymbol methodSymbol)
@@ -37,7 +36,6 @@ internal static class MissingMethodType
     }
 
     private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
-        //SyntaxNodeAnalysisContext context,
         PatchMethodData patchMethodData,
         CancellationToken ct)
     {

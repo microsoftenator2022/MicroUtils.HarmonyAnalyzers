@@ -35,11 +35,6 @@ internal static class MissingClassAttribute
                 MessageArgs = [classSymbol, harmonyPatchAttributeType]
             };
 
-            //context.ReportDiagnostic(Diagnostic.Create(
-            //    descriptor: Descriptor,
-            //    location: classSymbol.Locations[0],
-            //    messageArgs: [classSymbol, harmonyPatchAttributeType]));
-
             return diagnostic.ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
         }
 

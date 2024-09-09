@@ -77,7 +77,6 @@ internal static class InvalidPatchMethodReturnType
         var (hasValidReturnType, validReturnTypes) = HarmonyHelpers.HasValidReturnType(methodData, compilation, ct);
 
         if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
-            //!validReturnTypes.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit())
             )
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences

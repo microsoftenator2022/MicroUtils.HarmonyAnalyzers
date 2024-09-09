@@ -23,7 +23,6 @@ internal static class NoPatchMethods
         true);
 
     internal static ImmutableArray<Diagnostic> Check(
-        //SyntaxNodeAnalysisContext context,
         INamedTypeSymbol classSymbol,
         ImmutableArray<AttributeData> classAttributes,
         ImmutableArray<PatchMethodData> methodAttributes)
