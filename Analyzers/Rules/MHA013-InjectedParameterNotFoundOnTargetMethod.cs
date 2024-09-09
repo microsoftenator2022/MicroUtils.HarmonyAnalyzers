@@ -64,7 +64,15 @@ internal static class InjectedParamterNotFoundOnTargetMethod
                 continue;
 
             foreach (var d in methodData.CreateDiagnostics(
-                Descriptor, p.Locations, messageArgs: [p, $"any parameter for target method {methodData.TargetMethod}"]))
+                Descriptor,
+                p.Locations,
+                messageArgs:
+                [
+                    p,
+                    $"any parameter for target method {methodData.TargetMethod.ToDisplayString(
+                        SymbolDisplayFormat.CSharpShortErrorMessageFormat.RemoveMemberOptions(SymbolDisplayMemberOptions.IncludeParameters))}" +
+                    $"({string.Join(", ", methodData.TargetMethod.Parameters)})"
+                ]))
                 yield return d;
         }
     }
