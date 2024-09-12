@@ -50,7 +50,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         InjectedParamterNotFoundOnTargetMethod.Descriptor,
         PatchAttributeConflict.Descriptor,
         InvalidInjectedParameterType.Descriptor,
-        InvalidTranspilerParameter.Descriptor
+        InvalidTranspilerParameter.Descriptor,
+        UseOutForPrefixStateInjection.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -163,7 +164,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     context.Compilation, patchMethodData, context.CancellationToken))
                 .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken))
                 .AddRange(InvalidInjectedParameterType.Check(context.Compilation, patchMethodData))
-                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.Compilation, context.CancellationToken));
+                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.Compilation, context.CancellationToken))
+                .AddRange(UseOutForPrefixStateInjection.Check(patchMethodData));
         }
 #endregion
 
