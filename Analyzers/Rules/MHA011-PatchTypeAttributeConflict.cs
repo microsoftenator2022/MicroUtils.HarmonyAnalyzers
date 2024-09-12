@@ -35,7 +35,6 @@ internal static class PatchTypeAttributeConflict
         if (HarmonyHelpers.TryParseHarmonyPatchType(methodData.PatchMethod.Name, out var patchType))
             methodNamePatchType = patchType;
 
-        
         var patchTypeAttributes =
             methodData.GetPatchTypeAttributes(compilation, ct)
                 .ToImmutableArray();
