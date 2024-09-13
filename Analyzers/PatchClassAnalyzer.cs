@@ -53,6 +53,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         InvalidTranspilerParameter.Descriptor,
         UseOutForPrefixStateInjection.Descriptor,
         ParameterIndexInjection.Descriptor,
+        ReversePatchType.Descriptor
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -165,7 +166,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 .AddRange(InvalidInjectedParameterType.Check(patchMethodData))
                 .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.CancellationToken))
                 .AddRange(UseOutForPrefixStateInjection.Check(patchMethodData))
-                .AddRange(ParameterIndexInjection.Check(patchMethodData));
+                .AddRange(ParameterIndexInjection.Check(patchMethodData))
+                .AddRange(ReversePatchType.Check(patchMethodData, context.CancellationToken));
         }
 #endregion
 

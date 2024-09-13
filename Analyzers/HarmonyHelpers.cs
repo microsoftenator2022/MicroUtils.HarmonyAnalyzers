@@ -77,8 +77,7 @@ public static class HarmonyHelpers
 
         return compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1")?.Construct(ci);
     }
-        
-
+    
     public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         HarmonyPatchType patchType,
         Compilation compilation,
@@ -109,7 +108,7 @@ public static class HarmonyHelpers
                 passthrough && targetMethod?.ReturnType is { }  returnType ? [voidType, returnType] : [voidType],
             HarmonyPatchType.Transpiler => [IEnumerableCodeInstructionType],
             HarmonyPatchType.Finalizer => [voidType, ExceptionType],
-            HarmonyPatchType.ReversePatch => [targetMethod?.ReturnType is { } returnType ? returnType : voidType],
+            //HarmonyPatchType.ReversePatch => targetMethod?.ReturnType is { } returnType ? [returnType] : [],
             _ => []
         };
     }
@@ -138,7 +137,8 @@ public static class HarmonyHelpers
         return (methodData.PatchType, ValidReturnTypes(methodData, compilation, ct)) switch
         {
             (null, _) => (true, []),
-            (HarmonyPatchType.ReversePatch, var types) => (types.Any(t => t.Equals(methodData.TargetMethod?.ReturnType, SymbolEqualityComparer.Default)), types),
+            //(HarmonyPatchType.ReversePatch, var types) => (types.Any(t => t.Equals(methodData.TargetMethod.ReturnType, SymbolEqualityComparer.Default)), types),
+            (HarmonyPatchType.ReversePatch, _) => (true, []),
             (_, var types) => (types.Any(t => compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, t).IsStandardImplicit()), types)
         };
     }
