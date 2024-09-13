@@ -226,6 +226,11 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 if (patchMethodData.TargetMethod is not null)
                     continue;
 
+                // typeName target type may not exist within a reference of this compilation. Assume the user knows what they're doing
+                // TODO: Consider an analyzer that recommends using typeof if the type *is* in a referenced assembly
+                if (!patchMethodData.HarmonyPatchAttributes.Any(attr => attr.AttributeConstructor?.Parameters.FirstOrDefault()?.Name == "typeName"))
+                    diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
+
                 var missingMethodTypes = MissingMethodType.Check(patchMethodData, context.CancellationToken);
 
                 if (missingMethodTypes.Length > 0)
@@ -243,10 +248,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
                     continue;
                 }
-
-                // TODO: find a less ugly way to handle this case
-                if (!patchMethodData.HarmonyPatchAttributes.Any(attr => attr.AttributeConstructor?.Parameters.FirstOrDefault()?.Name == "typeName"))
-                    diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
             }
         }
 #endregion
