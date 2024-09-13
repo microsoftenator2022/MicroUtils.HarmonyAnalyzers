@@ -39,22 +39,24 @@ internal static class InvalidPatchMethodReturnType
         true);
 
     private static IEnumerable<Diagnostic> CheckPatchMethodInternal(
-        Compilation compilation,
+        //Compilation compilation,
         PatchMethodData methodData,
-        INamedTypeSymbol IEnumerableTType,
+        //INamedTypeSymbol IEnumerableTType,
         CancellationToken ct)
     {
         if (methodData.PatchType is null)
             yield break;
 
+        var compilation = methodData.Compilation;
+
         var voidType = compilation.GetTypeByMetadataName(typeof(void).ToString());
         var boolType = compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
+        //var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
         var ExceptionType = compilation.GetTypeByMetadataName(typeof(Exception).ToString());
 
         if (voidType is null ||
             boolType is null ||
-            CodeInstrctionType is null ||
+            //CodeInstrctionType is null ||
             ExceptionType is null)
         {
 #if DEBUG
@@ -63,7 +65,7 @@ internal static class InvalidPatchMethodReturnType
                 methodData.PatchMethod.Locations[0],
                 $"void = {voidType}, " +
                 $"bool = {boolType}, " +
-                $"CodeInstruction = {CodeInstrctionType}, " +
+                //$"CodeInstruction = {CodeInstrctionType}, " +
                 $"Exception = {ExceptionType}");
 #endif
             yield break;
@@ -109,10 +111,10 @@ internal static class InvalidPatchMethodReturnType
     }
 
     internal static ImmutableArray<Diagnostic> CheckPatchMethod(
-        Compilation compilation,
+        //Compilation compilation,
         PatchMethodData methodData,
-        INamedTypeSymbol IEnumerableTType,
-        CancellationToken ct) => CheckPatchMethodInternal(compilation, methodData, IEnumerableTType, ct).ToImmutableArray();
+        //INamedTypeSymbol IEnumerableTType,
+        CancellationToken ct) => CheckPatchMethodInternal(methodData, ct).ToImmutableArray();
 
     internal static ImmutableArray<Diagnostic> CheckTargetMethod(
         Compilation compilation,

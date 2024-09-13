@@ -70,6 +70,15 @@ public static class HarmonyHelpers
         };
     }
 
+    public static ITypeSymbol? GetIEnumerableCodeInstructionType(Compilation compilation, CancellationToken ct)
+    {
+        if (GetHarmonyCodeInstructionType(compilation, ct) is not { } ci)
+            return null;
+
+        return compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1")?.Construct(ci);
+    }
+        
+
     public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         HarmonyPatchType patchType,
         Compilation compilation,
@@ -79,15 +88,18 @@ public static class HarmonyHelpers
     {
         var voidType = compilation.GetTypeByMetadataName(typeof(void).ToString());
         var boolType = compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        var CodeInstructionType = GetHarmonyCodeInstructionType(compilation, ct);
+        //var CodeInstructionType = GetHarmonyCodeInstructionType(compilation, ct);
         var ExceptionType = compilation.GetTypeByMetadataName(typeof(Exception).ToString());
-        var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
+        //var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
+
+        var IEnumerableCodeInstructionType = GetIEnumerableCodeInstructionType(compilation, ct);
 
         if (voidType is null ||
             boolType is null ||
-            CodeInstructionType is null ||
-            ExceptionType is null ||
-            IEnumerableTType is null)
+            IEnumerableCodeInstructionType is null ||
+            //CodeInstructionType is null ||
+            //IEnumerableTType is null ||
+            ExceptionType is null)
             return [];
 
         return patchType switch
@@ -95,7 +107,7 @@ public static class HarmonyHelpers
             HarmonyPatchType.Prefix => [voidType, boolType],
             HarmonyPatchType.Postfix =>
                 passthrough && targetMethod?.ReturnType is { }  returnType ? [voidType, returnType] : [voidType],
-            HarmonyPatchType.Transpiler => [IEnumerableTType.Construct(CodeInstructionType)],
+            HarmonyPatchType.Transpiler => [IEnumerableCodeInstructionType],
             HarmonyPatchType.Finalizer => [voidType, ExceptionType],
             HarmonyPatchType.ReversePatch => [targetMethod?.ReturnType is { } returnType ? returnType : voidType],
             _ => []

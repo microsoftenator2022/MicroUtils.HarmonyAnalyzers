@@ -24,7 +24,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        Compilation compilation,
+        //Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct)
     {
@@ -32,7 +32,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
             yield break;
 
         foreach (var p in methodData.PatchMethod.Parameters
-            .Skip(methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation) ? 1 : 0))
+            .Skip(methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, methodData.Compilation) ? 1 : 0))
         {
             if (ct.IsCancellationRequested)
                 yield break;
@@ -46,7 +46,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
                 if (fieldInjectionMatch.Success &&
                     methodData.TargetType.GetMembers().OfType<IFieldSymbol>().Any(f =>
                         f.Name == fieldInjectionMatch.Groups[1].Value &&
-                        compilation.ClassifyConversion(f.Type, p.Type).IsStandardImplicit()))
+                        methodData.Compilation.ClassifyConversion(f.Type, p.Type).IsStandardImplicit()))
                     continue;
 
                 foreach (var d in methodData.CreateDiagnostics(
@@ -60,7 +60,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
 
             if (methodData.TargetMethod.Parameters.Indexed().Any(tp =>
                 (tp.element.Name == p.Name || (argInjectionMatch.Success && tp.index == int.Parse(argInjectionMatch.Groups[1].Value))) &&
-                compilation.ClassifyConversion(tp.element.Type, p.Type).IsStandardImplicit()))
+                methodData.Compilation.ClassifyConversion(tp.element.Type, p.Type).IsStandardImplicit()))
                 continue;
 
             foreach (var d in methodData.CreateDiagnostics(
@@ -78,7 +78,7 @@ internal static class InjectedParamterNotFoundOnTargetMethod
     }
 
     internal static ImmutableArray<Diagnostic> Check(
-        Compilation compilation,
+        //Compilation compilation,
         PatchMethodData methodData,
-        CancellationToken ct) => CheckInternal(compilation, methodData, ct).ToImmutableArray();
+        CancellationToken ct) => CheckInternal(methodData, ct).ToImmutableArray();
 }

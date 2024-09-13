@@ -24,27 +24,30 @@ internal static class InvalidTranspilerParameter
 
     private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
         PatchMethodData methodData,
-        Compilation compilation,
+        //Compilation compilation,
         CancellationToken ct)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Transpiler)
             yield break;
 
-        var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
-        var CodeInstructionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
+        var compilation = methodData.Compilation;
+
+        //var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
+        //var CodeInstructionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
         var MethodBaseType = compilation.GetTypeByMetadataName(typeof(MethodBase).GetMetadataName());
         var ILGeneratorType = compilation.GetTypeByMetadataName("System.Reflection.Emit.ILGenerator");
+        var IEnumerableCodeInstructionType = HarmonyHelpers.GetIEnumerableCodeInstructionType(compilation, ct);
 
-        if (IEnumerableTType is null ||
-            CodeInstructionType is null ||
-            MethodBaseType is null || 
+        if (MethodBaseType is null ||
+            //IEnumerableTType is null ||
+            //CodeInstructionType is null ||
+            IEnumerableCodeInstructionType is null ||
             ILGeneratorType is null)
             yield break;
 
-        var IEnumerableCodeInstructionType = IEnumerableTType.Construct(CodeInstructionType);
+        //var IEnumerableCodeInstructionType = IEnumerableTType.Construct(CodeInstructionType);
 
-
-        ImmutableArray<INamedTypeSymbol> validParameterTypes = [IEnumerableCodeInstructionType, MethodBaseType, ILGeneratorType];
+        ImmutableArray<ITypeSymbol> validParameterTypes = [IEnumerableCodeInstructionType, MethodBaseType, ILGeneratorType];
 
         foreach (var p in methodData.PatchMethod.Parameters.Where(p => !validParameterTypes.Contains(p.Type, SymbolEqualityComparer.Default)))
         {
@@ -57,7 +60,7 @@ internal static class InvalidTranspilerParameter
 
     internal static ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
-        Compilation compilation,
+        //Compilation compilation,
         CancellationToken ct) =>
-        CheckInternal(methodData, compilation, ct).Concat().ToImmutableArray();
+        CheckInternal(methodData, ct).Concat().ToImmutableArray();
 }

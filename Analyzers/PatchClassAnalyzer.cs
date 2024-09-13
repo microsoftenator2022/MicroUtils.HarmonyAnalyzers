@@ -155,17 +155,15 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 #endif
             diagnostics = diagnostics
                 .AddRange(MissingPatchTypeAttribute.Check(patchMethodData))
-                .AddRange(PatchTypeAttributeConflict.Check(context.Compilation, patchMethodData, context.CancellationToken))
-                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(
-                    context.Compilation, patchMethodData, IEnumerableTType, context.CancellationToken))
+                .AddRange(PatchTypeAttributeConflict.Check(patchMethodData, context.CancellationToken))
+                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(patchMethodData, context.CancellationToken))
                 .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
                 .AddRange(AssignmentToNonRefResultArgument.Check(
                     context.SemanticModel, patchMethodData, context.CancellationToken))
-                .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(
-                    context.Compilation, patchMethodData, context.CancellationToken))
+                .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(patchMethodData, context.CancellationToken))
                 .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken))
-                .AddRange(InvalidInjectedParameterType.Check(context.Compilation, patchMethodData))
-                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.Compilation, context.CancellationToken))
+                .AddRange(InvalidInjectedParameterType.Check(patchMethodData))
+                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.CancellationToken))
                 .AddRange(UseOutForPrefixStateInjection.Check(patchMethodData))
                 .AddRange(ParameterIndexInjection.Check(patchMethodData));
         }
