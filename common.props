@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Authors>https://github.com/microsoftenator2022</Authors>
     <PackageProjectUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</PackageProjectUrl>
@@ -8,7 +8,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <DevelopmentDependency>true</DevelopmentDependency>
-    <NoWarn>RS2002</NoWarn>
+    <NoWarn>RS2002;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <!--<VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>-->
-    <!--<VersionSuffix>rc3</VersionSuffix>-->
+    <VersionSuffix>rc1</VersionSuffix>
   </PropertyGroup>
   
 </Project>
