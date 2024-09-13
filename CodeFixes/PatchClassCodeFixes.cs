@@ -29,7 +29,8 @@ public class PatchClassCodeFixes : CodeFixProvider
         nameof(MHA008),
         nameof(MHA012),
         nameof(MHA016),
-        nameof(MHA017)
+        nameof(MHA017),
+        nameof(MHA018)
     ];
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -57,8 +58,11 @@ public class PatchClassCodeFixes : CodeFixProvider
                 {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
 
-                    foreach (var action in await MHA002.AddPatchTypeAttribute.GetActions(context, diagnostic, mds))
+                    foreach (var action in await MHA002.AddPatchTypeAttribute.GetActions(context, diagnostic, mds)
+                        .ConfigureAwait(false))
                     {
+                        if (context.CancellationToken.IsCancellationRequested) return;
+
                         context.RegisterCodeFix(action, diagnostic);
                     }
                     break;
@@ -68,7 +72,9 @@ public class PatchClassCodeFixes : CodeFixProvider
                 {
                     if (syntax.FindNode(diagnostic.Location.SourceSpan) is not MethodDeclarationSyntax mds) continue;
 
-                    if (await MHA003.AddMissingMethodType.GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken) is { } action)
+                    if (await MHA003.AddMissingMethodType
+                        .GetActionAsync(context.Document, mds, diagnostic, context.CancellationToken)
+                        .ConfigureAwait(false) is { } action)
                         context.RegisterCodeFix(action, diagnostic);
 
                     break;
@@ -114,6 +120,20 @@ public class PatchClassCodeFixes : CodeFixProvider
 
                     context.RegisterCodeFix(action, diagnostic);
 
+                    break;
+                }
+
+                case DiagnosticId.MHA018:
+                {
+                    if (diagnostic.Location is not { } methodLocation ||
+                        syntax.FindNode(methodLocation.SourceSpan) is not MethodDeclarationSyntax mds) continue;
+
+                    if (await MHA018.FixMethodSignature
+                            .GetActionAsync(context.Document, diagnostic, mds, context.CancellationToken)
+                            .ConfigureAwait(false) is { } action)
+                    {
+                        context.RegisterCodeFix(action, diagnostic);
+                    }
                     break;
                 }
             }

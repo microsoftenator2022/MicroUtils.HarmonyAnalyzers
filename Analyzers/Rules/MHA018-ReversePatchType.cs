@@ -79,6 +79,10 @@ internal static class ReversePatchType
 
         return methodData.CreateDiagnostics(
             Descriptor,
+            additionalProperties: props =>
+                props.Add(
+                    "ParameterTypes",
+                    string.Join(",", methodData.TargetMethod.Parameters.Select(p => p.Type.GetFullMetadataName()))),
             messageArgs:
             [
                 methodData.PatchMethod,
