@@ -213,4 +213,7 @@ public static class Optional
 
     public static Optional<U> TryPick<T, U>(this IEnumerable<T> source, Func<T, Optional<U>> picker) =>
         source.Choose(picker).TryFirst();
+
+    //public static Optional<U> Map<T, U>(this Optional<T> @this, Func<T, U> mapper) =>
+    //    !@this.HasValue ? NoValue<U>() : mapper(@this.Value);
 }
