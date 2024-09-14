@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Analyzers\MicroUtils.HarmonyAnalyzers.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.dll" />
     <ProjectReference Include="..\CodeFixes\MicroUtils.HarmonyAnalyzers.CodeFixes.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.CodeFixes.dll" />
+    <ProjectReference Include="..\Completions\MicroUtils.HarmonyAnalyzers.Completions.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.Completions.dll" />
   </ItemGroup>
 
   <ItemGroup>
