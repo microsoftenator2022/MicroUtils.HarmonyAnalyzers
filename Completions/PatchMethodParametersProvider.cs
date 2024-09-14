@@ -93,7 +93,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         if (token.Parent?.FirstAncestorOrSelf<ParameterSyntax>() is { } parameter)
         {
-            context.CompletionListSpan = new TextSpan(parameter.Identifier.Span.Start, context.Position - parameter.Identifier.Span.Start);
+            context.CompletionListSpan = new TextSpan(parameter.Identifier.Span.Start, Math.Max(0, context.Position - parameter.Identifier.Span.Start));
 
             if (parameter.Type is { } parameterTypeSyntax)
             {
