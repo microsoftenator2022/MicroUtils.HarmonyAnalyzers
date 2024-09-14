@@ -219,4 +219,55 @@ public readonly record struct PatchMethodData(
             .Select(location => @this.CreateDiagnosticBuilder(descriptor, location, severity, additionalLocations, additionalProperties, messageArgs))
             .CreateAll();
     }
+
+    public static Optional<PatchMethodData> TryCreate(
+        IMethodSymbol method,
+        Compilation compilation,
+        INamedTypeSymbol? harmonyPatchAttributeType = default,
+        ImmutableArray<(HarmonyConstants.HarmonyPatchType, INamedTypeSymbol)> harmonyPatchTypeAttributeTypes = default,
+        CancellationToken ct = default)
+    {
+        harmonyPatchAttributeType ??= HarmonyHelpers.GetHarmonyPatchType(compilation, ct);
+
+        if (harmonyPatchTypeAttributeTypes.IsDefaultOrEmpty)
+            harmonyPatchTypeAttributeTypes = HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(compilation, ct).ToImmutableArray();
+
+        if (harmonyPatchAttributeType is null ||
+            harmonyPatchTypeAttributeTypes.Length < Enum.GetValues(typeof(HarmonyConstants.HarmonyPatchType)).Length)
+            return default;
+
+        if (!HarmonyHelpers.MayBeHarmonyPatchMethod(
+                method,
+                harmonyPatchAttributeType,
+                harmonyPatchTypeAttributeTypes.Select(tuple => tuple.Item2)))
+            return default;
+
+        var methodData = new PatchMethodData(method.ContainingType, method, compilation);
+
+        var methodAttributes = method.GetAttributes().ToImmutableArray();
+
+        var targetMethodAttributes = methodData.PatchClass.GetAttributes()
+            .Concat(methodAttributes)
+            .Where(attr => harmonyPatchAttributeType.Equals(attr.AttributeClass, SymbolEqualityComparer.Default));
+
+        foreach (var attr in targetMethodAttributes)
+        {
+            methodData = methodData.AddTargetMethodData(attr);
+        }
+
+        var patchType = HarmonyHelpers.TryParseHarmonyPatchType(method.Name);
+
+        if (!patchType.HasValue)
+            patchType = harmonyPatchTypeAttributeTypes.TryPick(tuple =>
+                methodAttributes
+                    .Select(attr => attr.AttributeClass)
+                        .Contains(tuple.Item2, SymbolEqualityComparer.Default) ?
+                        tuple.Item1 :
+                        Optional.NoValue<HarmonyConstants.HarmonyPatchType>());
+
+        if (patchType.HasValue)
+            methodData = methodData with { PatchType = patchType.Value };
+
+        return methodData;
+    }
 }
