@@ -22,11 +22,6 @@ internal class PatchMethodParametersProvider : CompletionProvider
 {
     public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options)
     {
-        //bool isNewIdentifier() =>
-        //    SyntaxFacts.IsIdentifierStartCharacter(text[caretPosition -1]) &&
-        //    !SyntaxFacts.IsIdentifierPartCharacter(text[caretPosition - 2]) &&
-        //    !SyntaxFacts.IsIdentifierPartCharacter(text[caretPosition]);
-
         bool injectionPrefix()
         {
             if (text[caretPosition - 1] is not '_' || text[caretPosition - 2] is not '_')
@@ -49,7 +44,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
             (CompletionTriggerKind.Insertion, _) => injectionPrefix(),
             _ => false
         };
-
+        
         return shouldTrigger;
     }
 
@@ -101,13 +96,6 @@ internal class PatchMethodParametersProvider : CompletionProvider
         context.AddItems(GetCompletions(methodData, parameterType, sm, context.Position, context.CancellationToken)
             .Where(c => !mds.ParameterList.Parameters.Any(p => p.Identifier.ValueText == c.Properties["name"])));
     }
-
-    private static ParameterSyntax CreateParameter(string type, string name, string? modifier = null) =>
-        Parameter(Identifier(name))
-            .WithType(IdentifierName(type).WithTrailingTrivia(Whitespace(" ")))
-            .WithModifiers(modifier is "ref" ?
-                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] :
-                (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] : default));
 
     private static IEnumerable<CompletionItem> GetCompletions(
         PatchMethodData methodData,
@@ -192,6 +180,13 @@ internal class PatchMethodParametersProvider : CompletionProvider
         }
     }
 
+    private static ParameterSyntax CreateParameter(string type, string name, string? modifier = null) =>
+        Parameter(Identifier(name))
+            .WithType(IdentifierName(type).WithTrailingTrivia(Whitespace(" ")))
+            .WithModifiers(modifier is "ref" ?
+                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] :
+                (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] : default));
+
     public override async Task<CompletionChange> GetChangeAsync(Document document, CompletionItem item, char? commitKey, CancellationToken cancellationToken)
     {
         async Task<CompletionChange> noChanges()
@@ -206,23 +201,6 @@ internal class PatchMethodParametersProvider : CompletionProvider
             return await noChanges();
         }
 
-        var span = item.Span;
-
-        if ((syntaxRoot.FindNode(item.Span) ?? syntaxRoot.FindToken(item.Span.Start).Parent)
-            ?.FirstAncestorOrSelf<ParameterListSyntax>() is { } pList &&
-            pList.Parameters.FirstOrDefault(p => p.Span.Contains(span)) is { } parameterNode)
-        {
-            span = parameterNode.Span;
-        }
-        else
-        {
-            var spanText = (await document.GetTextAsync(cancellationToken))?.GetSubText(span).ToString();
-
-            throw new InvalidOperationException($"Could not find node for span {span}: '{spanText ?? span.ToString()}'. " +
-                $"Token: '{syntaxRoot.FindToken(span.Start, true)}'. Node: '{syntaxRoot.FindNode(span, true, true) ??
-                syntaxRoot.FindToken(span.Start).Parent}'.");
-        }
-
         if (!item.Properties.TryGetValue("type", out var type) ||
             !item.Properties.TryGetValue("name", out var name))
         {
@@ -233,7 +211,39 @@ internal class PatchMethodParametersProvider : CompletionProvider
 #endif
         }
 
-        var newDoc = document.WithSyntaxRoot(syntaxRoot.ReplaceNode(parameterNode, CreateParameter(type, name)));
+        var span = item.Span;
+
+        var node = (syntaxRoot.FindNode(span) ?? syntaxRoot.FindToken(span.Start).Parent);
+        var pList = node?.FirstAncestorOrSelf<ParameterListSyntax>();
+
+        if (pList is null)
+        {
+            var spanText = (await document.GetTextAsync(cancellationToken))?.GetSubText(span).ToString();
+
+            throw new InvalidOperationException($"Could not find node for span {span}: '{spanText ?? span.ToString()}'. " +
+                $"Token: '{syntaxRoot.FindToken(span.Start, true)}'. Node: '{syntaxRoot.FindNode(span, true, true) ??
+                syntaxRoot.FindToken(span.Start).Parent}'. Parameters: {string.Join(", ", pList?.Parameters.Select(p => $"[{p}]"))}.");
+        }    
+
+        var parameterNode = node?.FirstAncestorOrSelf<ParameterSyntax>() ??
+            pList.Parameters.FirstOrDefault(p => p.Span.Contains(span));
+
+        var newParameter = CreateParameter(type, name);
+
+        if (parameterNode is null)
+        {
+            // Can't find a parameter to replace when there is no type, so just provide a standard completion
+            return CompletionChange.Create(new TextChange(item.Span, newParameter.ToString()));
+        }
+
+        if (pList.Parameters.Count != 0 && pList.Parameters.IndexOf(parameterNode) < pList.Parameters.Count - 1)
+        {
+            newParameter = newParameter.WithTrailingTrivia(Whitespace(" "));
+        }
+
+        var newPList = pList.ReplaceNode(parameterNode, newParameter);
+
+        var newDoc = document.WithSyntaxRoot(syntaxRoot.ReplaceNode(pList, newPList));
 
         var changes = (await newDoc.GetTextChangesAsync(document, cancellationToken).ConfigureAwait(false)).ToImmutableArray();
 
