@@ -55,9 +55,6 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
-        //if (context.Document.Project.Services.GetService<CompletionService>() is not { } service)
-        //    return;
-
         if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax)
             return;
 
@@ -84,16 +81,12 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         ITypeSymbol? parameterType = null;
 
-        TextSpan span = context.CompletionListSpan;
-
         if (!mds.ParameterList.FullSpan.Contains(context.Position))
             return;
 
-        var token = mds.FindToken(context.Position - 1);
-
-        if (token.Parent?.FirstAncestorOrSelf<ParameterSyntax>() is { } parameter)
+        if (mds.ParameterList.Parameters.FirstOrDefault(p => p.FullSpan.Contains(context.Position - 1)) is { } parameter)
         {
-            context.CompletionListSpan = new TextSpan(parameter.Identifier.Span.Start, Math.Max(0, context.Position - parameter.Identifier.Span.Start));
+            context.CompletionListSpan = parameter.Span;
 
             if (parameter.Type is { } parameterTypeSyntax)
             {
@@ -109,12 +102,12 @@ internal class PatchMethodParametersProvider : CompletionProvider
             .Where(c => !mds.ParameterList.Parameters.Any(p => p.Identifier.ValueText == c.Properties["name"])));
     }
 
-    //private static ParameterSyntax CreateParameter(string type, string name, string? modifier = null) =>
-    //    Parameter(Identifier(name))
-    //        .WithType(IdentifierName(type).WithTrailingTrivia(Whitespace(" ")))
-    //        .WithModifiers(modifier is "ref" ?
-    //            [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] :
-    //            (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] : default));
+    private static ParameterSyntax CreateParameter(string type, string name, string? modifier = null) =>
+        Parameter(Identifier(name))
+            .WithType(IdentifierName(type).WithTrailingTrivia(Whitespace(" ")))
+            .WithModifiers(modifier is "ref" ?
+                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] :
+                (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] : default));
 
     private static IEnumerable<CompletionItem> GetCompletions(
         PatchMethodData methodData,
@@ -186,10 +179,8 @@ internal class PatchMethodParametersProvider : CompletionProvider
                 yield break;
 
             var properties = ImmutableDictionary<string, string>.Empty
+                .Add("type", type)
                 .Add("name", name);
-
-            if (parameterType is null)
-                properties = properties.Add("type", type);
             
             yield return CompletionItem.Create(name,
                 filterText: name,
@@ -203,13 +194,49 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
     public override async Task<CompletionChange> GetChangeAsync(Document document, CompletionItem item, char? commitKey, CancellationToken cancellationToken)
     {
-        var value = item.Properties["name"];
-
-        if (item.Properties.TryGetValue("type", out var type))
+        async Task<CompletionChange> noChanges()
         {
-            value = $"{type} {value}";
+            var changes = (await document.GetTextChangesAsync(document, cancellationToken)).ToImmutableArray();
+
+            return CompletionChange.Create(changes.FirstOrDefault(), changes);
         }
 
-        return await Task.FromResult(CompletionChange.Create(textChange: new TextChange(item.Span, value)));
+        if (await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false) is not { } syntaxRoot)
+        {
+            return await noChanges();
+        }
+
+        var span = item.Span;
+
+        if ((syntaxRoot.FindNode(item.Span) ?? syntaxRoot.FindToken(item.Span.Start).Parent)
+            ?.FirstAncestorOrSelf<ParameterListSyntax>() is { } pList &&
+            pList.Parameters.FirstOrDefault(p => p.Span.Contains(span)) is { } parameterNode)
+        {
+            span = parameterNode.Span;
+        }
+        else
+        {
+            var spanText = (await document.GetTextAsync(cancellationToken))?.GetSubText(span).ToString();
+
+            throw new InvalidOperationException($"Could not find node for span {span}: '{spanText ?? span.ToString()}'. " +
+                $"Token: '{syntaxRoot.FindToken(span.Start, true)}'. Node: '{syntaxRoot.FindNode(span, true, true) ??
+                syntaxRoot.FindToken(span.Start).Parent}'.");
+        }
+
+        if (!item.Properties.TryGetValue("type", out var type) ||
+            !item.Properties.TryGetValue("name", out var name))
+        {
+#if DEBUG
+            throw new InvalidOperationException($"Values missing from properties");
+#else
+            return await noChanges();
+#endif
+        }
+
+        var newDoc = document.WithSyntaxRoot(syntaxRoot.ReplaceNode(parameterNode, CreateParameter(type, name)));
+
+        var changes = (await newDoc.GetTextChangesAsync(document, cancellationToken).ConfigureAwait(false)).ToImmutableArray();
+
+        return CompletionChange.Create(changes.FirstOrDefault(), changes);
     }
 }
