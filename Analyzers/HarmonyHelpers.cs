@@ -11,8 +11,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-using MicroUtils.HarmonyAnalyzers;
-
 namespace MicroUtils.HarmonyAnalyzers;
 
 using static HarmonyConstants;
@@ -38,6 +36,24 @@ public static class HarmonyHelpers
 
     public static INamedTypeSymbol? GetHarmonyCodeInstructionType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Namespace_HarmonyLib, Type_HarmonyLib_CodeInstruction, ct);
+
+    public static bool MayBeHarmonyPatchMethod(
+        IMethodSymbol method,
+        INamedTypeSymbol harmonyPatchAttributeType,
+        IEnumerable<INamedTypeSymbol> harmonyPatchTypeAttributeTypes)
+    {
+        if (HarmonyPatchTypeNames.Contains(method.Name))
+            return true;
+
+        if (method.GetAttributes()
+            .Select(attr => attr.AttributeClass)
+            .ContainsAny(
+                harmonyPatchTypeAttributeTypes.Append(harmonyPatchAttributeType),
+                SymbolEqualityComparer.Default))
+            return true;
+
+        return false;
+    }
 
     public static readonly Regex FieldInjectionRegex = new(@"^___(\w+)$");
 
@@ -157,6 +173,14 @@ public static class HarmonyHelpers
     }
 
     public static bool TryParseHarmonyPatchType(string name, out HarmonyPatchType patchType) => Enum.TryParse(name, out patchType);
+
+    public static Optional<HarmonyPatchType> TryParseHarmonyPatchType(string name)
+    {
+        if (TryParseHarmonyPatchType(name, out HarmonyPatchType patchType))
+            return patchType;
+
+        return default;
+    }
 
     public static IEnumerable<(AttributeData, HarmonyPatchType)> GetPatchTypeAttributes(
         this PatchMethodData methodData, Compilation compilation, CancellationToken ct)

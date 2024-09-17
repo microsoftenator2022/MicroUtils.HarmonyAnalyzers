@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
+using Microsoft.CodeAnalysis;
+
 namespace MicroUtils.HarmonyAnalyzers;
 public partial class Util
 {
@@ -81,4 +83,19 @@ public partial class Util
             .Select(valueSelector);
 
     public static IEnumerable<T> Concat<T>(this IEnumerable<IEnumerable<T>> source) => source.SelectMany(element => element);
+
+    public static IEnumerable<(T, T)> Pairwise<T>(this IEnumerable<T> source)
+    {
+        Optional<T> previous = default;
+        foreach (var element in source)
+        {
+            if (!previous.HasValue)
+            {
+                previous = element;
+                continue;
+            }
+
+            yield return (previous.Value, element);
+        }
+    }
 }

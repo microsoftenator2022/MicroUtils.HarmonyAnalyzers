@@ -230,7 +230,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
 
                 var missingMethodTypes = MissingMethodType.Check(patchMethodData, context.CancellationToken);
-
                 if (missingMethodTypes.Length > 0)
                 {
                     diagnostics = diagnostics.AddRange(missingMethodTypes);
@@ -239,7 +238,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 }
 
                 var ambiguous = AmbiguousMatch.Check(patchMethodData);
-
                 if (ambiguous.Length > 0)
                 {
                     diagnostics = diagnostics.AddRange(ambiguous);
@@ -251,7 +249,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 // TODO: Consider an analyzer that recommends using typeof if the type *is* in a referenced assembly
                 if (patchMethodData.HarmonyPatchAttributes.Any(attr => attr.AttributeConstructor?.Parameters.Any(p => p.Name == "typeName") ?? false))
                     continue;
-                    
+
                 diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
 
             }
