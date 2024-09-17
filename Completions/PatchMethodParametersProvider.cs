@@ -156,6 +156,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
         parameters = parameters
             .Concat(targetType.GetMembers()
                 .OfType<IFieldSymbol>()
+                .Where(f => f.CanBeReferencedByName)
                 .Select(f => ($"___{f.Name}", f.Type)));
 
         foreach (var (name, type) in parameters
