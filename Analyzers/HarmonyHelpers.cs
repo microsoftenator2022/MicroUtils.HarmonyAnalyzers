@@ -72,48 +72,71 @@ public static class HarmonyHelpers
         _ => false
     };
 
-    public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null)
+    public static ITypeSymbol? GetInjectionParameterType(
+        string parameterName,
+        Compilation compilation,
+        INamedTypeSymbol? containingType,
+        ITypeSymbol? returnType = null)
     {
         return parameterName switch
         {
-            Parameter_injection__args => typeof(object[]).ToNamedTypeSymbol(compilation),
+            Parameter_injection__args => compilation.CreateArrayTypeSymbol(compilation.GetSpecialType(SpecialType.System_Object)),
             Parameter_injection__exception => typeof(Exception).ToNamedTypeSymbol(compilation),
-            Parameter_injection__instance => targetMethod?.ContainingType,
+            Parameter_injection__instance => containingType,
             Parameter_injection__originalMethod => typeof(MethodBase).ToNamedTypeSymbol(compilation),
-            Parameter_injection__result => targetMethod?.ReturnType,
-            Parameter_injection__runOriginal => typeof(bool).ToNamedTypeSymbol(compilation),
+            Parameter_injection__result => returnType,
+            Parameter_injection__runOriginal => compilation.GetSpecialType(SpecialType.System_Boolean),
             _ => null
         };
     }
+
+    public static ITypeSymbol? GetInjectionParameterType(string parameterName, PatchMethodData methodData) =>
+        GetInjectionParameterType(
+            parameterName,
+            methodData.Compilation,
+            methodData.TargetType,
+            methodData.TargetMethodType is PatchTargetMethodType.Enumerator ?
+                methodData.Compilation.GetSpecialType(SpecialType.System_Boolean) :
+                methodData.TargetMethod?.ReturnType);
+
+    [Obsolete("Use the PatchMethodData overload")]
+    public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null) =>
+        GetInjectionParameterType(parameterName, compilation, targetMethod?.ContainingType, targetMethod?.ReturnType);
+    //{
+    //    return parameterName switch
+    //    {
+    //        Parameter_injection__args => typeof(object[]).ToNamedTypeSymbol(compilation),
+    //        Parameter_injection__exception => typeof(Exception).ToNamedTypeSymbol(compilation),
+    //        Parameter_injection__instance => targetMethod?.ContainingType,
+    //        Parameter_injection__originalMethod => typeof(MethodBase).ToNamedTypeSymbol(compilation),
+    //        Parameter_injection__result => targetMethod?.ReturnType,
+    //        Parameter_injection__runOriginal => typeof(bool).ToNamedTypeSymbol(compilation),
+    //        _ => null
+    //    };
+    //}
 
     public static ITypeSymbol? GetIEnumerableCodeInstructionType(Compilation compilation, CancellationToken ct)
     {
         if (GetHarmonyCodeInstructionType(compilation, ct) is not { } ci)
             return null;
 
-        return compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1")?.Construct(ci);
+        return compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Construct(ci);
     }
-    
+
     public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
-        HarmonyPatchType patchType,
-        Compilation compilation,
-        CancellationToken ct,
-        IMethodSymbol? targetMethod = null,
-        bool passthrough = false)
+    HarmonyPatchType patchType,
+    Compilation compilation,
+    CancellationToken ct,
+    ITypeSymbol? returnType = null,
+    bool passthrough = false)
     {
-        var voidType = compilation.GetTypeByMetadataName(typeof(void).ToString());
-        var boolType = compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        //var CodeInstructionType = GetHarmonyCodeInstructionType(compilation, ct);
-        var ExceptionType = compilation.GetTypeByMetadataName(typeof(Exception).ToString());
-        //var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
+        var voidType = compilation.GetSpecialType(SpecialType.System_Void);
+        var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
+        var ExceptionType = typeof(Exception).ToNamedTypeSymbol(compilation);
 
         var IEnumerableCodeInstructionType = GetIEnumerableCodeInstructionType(compilation, ct);
 
-        if (voidType is null ||
-            boolType is null ||
-            IEnumerableCodeInstructionType is null ||
-            //CodeInstructionType is null ||
-            //IEnumerableTType is null ||
+        if (IEnumerableCodeInstructionType is null ||
             ExceptionType is null)
             return [];
 
@@ -121,13 +144,21 @@ public static class HarmonyHelpers
         {
             HarmonyPatchType.Prefix => [voidType, boolType],
             HarmonyPatchType.Postfix =>
-                passthrough && targetMethod?.ReturnType is { }  returnType ? [voidType, returnType] : [voidType],
+                passthrough && returnType is not null ? [voidType, returnType] : [voidType],
             HarmonyPatchType.Transpiler => [IEnumerableCodeInstructionType],
             HarmonyPatchType.Finalizer => [voidType, ExceptionType],
-            //HarmonyPatchType.ReversePatch => targetMethod?.ReturnType is { } returnType ? [returnType] : [],
             _ => []
         };
     }
+
+    //[Obsolete("Use the overload taking PatchMethodData or return type")]
+    //public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
+    //    HarmonyPatchType patchType,
+    //    Compilation compilation,
+    //    CancellationToken ct,
+    //    IMethodSymbol? targetMethod = null,
+    //    bool passthrough = false) =>
+    //    ValidReturnTypes(patchType, compilation, ct, targetMethod?.ReturnType, passthrough);
 
     public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         PatchMethodData methodData,
@@ -137,11 +168,18 @@ public static class HarmonyHelpers
         if (methodData.PatchType is not { } patchType)
             return [];
 
+        var targetReturnType = methodData.TargetMethodType switch
+        {
+            // MethodType.Enumerator targets MoveNext, which returns bool
+            PatchTargetMethodType.Enumerator => methodData.Compilation.GetSpecialType(SpecialType.System_Boolean),
+            _ => methodData.TargetMethod?.ReturnType
+        };
+
         return ValidReturnTypes(
             patchType,
             compilation,
             ct,
-            methodData.TargetMethod,
+            targetReturnType,
             methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation));
     }
 

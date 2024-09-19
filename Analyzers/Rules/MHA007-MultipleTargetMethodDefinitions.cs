@@ -39,8 +39,7 @@ internal static class MultipleTargetMethodDefinitions
             targetMethodMethodLocations
                 .Concat(allPatchAttributes
                     .Where(attr => attr.ConstructorArguments.Length > 0)
-                    .Select(attr => attr.ApplicationSyntaxReference)
-                    .NotNull()
+                    .Choose(attr => Optional.MaybeValue(attr.ApplicationSyntaxReference))
                     .Select(s => s.GetSyntax().GetLocation()))
                 .ToImmutableArray();
 

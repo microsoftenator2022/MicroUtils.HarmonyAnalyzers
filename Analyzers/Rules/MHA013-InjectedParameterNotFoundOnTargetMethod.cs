@@ -24,7 +24,6 @@ internal static class InjectedParamterNotFoundOnTargetMethod
         true);
 
     private static IEnumerable<Diagnostic> CheckInternal(
-        //Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct)
     {
@@ -78,7 +77,6 @@ internal static class InjectedParamterNotFoundOnTargetMethod
     }
 
     internal static ImmutableArray<Diagnostic> Check(
-        //Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct) => CheckInternal(methodData, ct).ToImmutableArray();
 }

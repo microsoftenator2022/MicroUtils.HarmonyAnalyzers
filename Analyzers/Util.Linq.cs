@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis;
 namespace MicroUtils.HarmonyAnalyzers;
 public partial class Util
 {
+    [Obsolete("Use Choose and Optional.MaybeValue")]
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> source) where T : notnull =>
         source.SelectMany<T?, T>(element => element is not null ? [element] : []);
 

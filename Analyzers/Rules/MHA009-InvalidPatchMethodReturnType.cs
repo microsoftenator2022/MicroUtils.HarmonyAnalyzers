@@ -39,9 +39,7 @@ internal static class InvalidPatchMethodReturnType
         true);
 
     private static IEnumerable<Diagnostic> CheckPatchMethodInternal(
-        //Compilation compilation,
         PatchMethodData methodData,
-        //INamedTypeSymbol IEnumerableTType,
         CancellationToken ct)
     {
         if (methodData.PatchType is null)
@@ -49,23 +47,18 @@ internal static class InvalidPatchMethodReturnType
 
         var compilation = methodData.Compilation;
 
-        var voidType = compilation.GetTypeByMetadataName(typeof(void).ToString());
-        var boolType = compilation.GetTypeByMetadataName(typeof(bool).ToString());
-        //var CodeInstrctionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
-        var ExceptionType = compilation.GetTypeByMetadataName(typeof(Exception).ToString());
+        
 
-        if (voidType is null ||
-            boolType is null ||
-            //CodeInstrctionType is null ||
-            ExceptionType is null)
+        var voidType = compilation.GetSpecialType(SpecialType.System_Void);
+        var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
+        var ExceptionType = typeof(Exception).ToNamedTypeSymbol(compilation);
+
+        if (ExceptionType is null)
         {
 #if DEBUG
             yield return Diagnostic.Create(
                 PatchClassAnalyzer.DebugMessage,
                 methodData.PatchMethod.Locations[0],
-                $"void = {voidType}, " +
-                $"bool = {boolType}, " +
-                //$"CodeInstruction = {CodeInstrctionType}, " +
                 $"Exception = {ExceptionType}");
 #endif
             yield break;
@@ -82,8 +75,7 @@ internal static class InvalidPatchMethodReturnType
             )
         {
             var locations = methodData.PatchMethod.DeclaringSyntaxReferences
-                .Select(s => s.GetSyntax() as MethodDeclarationSyntax)
-                .NotNull()
+                .Choose(s => Optional.MaybeValue(s.GetSyntax() as MethodDeclarationSyntax))
                 .Select(s => s.ReturnType.GetLocation())
                 .ToImmutableArray();
 
@@ -111,9 +103,7 @@ internal static class InvalidPatchMethodReturnType
     }
 
     internal static ImmutableArray<Diagnostic> CheckPatchMethod(
-        //Compilation compilation,
         PatchMethodData methodData,
-        //INamedTypeSymbol IEnumerableTType,
         CancellationToken ct) => CheckPatchMethodInternal(methodData, ct).ToImmutableArray();
 
     internal static ImmutableArray<Diagnostic> CheckTargetMethod(

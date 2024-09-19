@@ -21,15 +21,13 @@ internal static class InvalidInjectedParameterType
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(
-        //Compilation compilation,
-        PatchMethodData methodData)
+    internal static ImmutableArray<Diagnostic> Check(PatchMethodData methodData)
     {
         if (methodData.PatchType is HarmonyConstants.HarmonyPatchType.Transpiler or HarmonyConstants.HarmonyPatchType.ReversePatch)
             return [];
 
         return methodData.PatchMethod.Parameters
-            .Select(p => (param: p, expected: HarmonyHelpers.GetInjectionParameterType(p.Name, methodData.Compilation, methodData.TargetMethod)))
+            .Select(p => (param: p, expected: HarmonyHelpers.GetInjectionParameterType(p.Name, methodData)))
             .Where(p => p.expected is { } s && !methodData.Compilation.ClassifyConversion(s, p.param.Type).IsStandardImplicit())
             .SelectMany(p => methodData.CreateDiagnostics(Descriptor, p.param.Locations, messageArgs: [p.param.Type, p.param.Name, p.expected]))
             .ToImmutableArray();

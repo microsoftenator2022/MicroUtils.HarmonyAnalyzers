@@ -71,10 +71,10 @@ public readonly record struct PatchMethodData(
 
         return (targetMethodType, argumentTypes) switch
         {
-            (Getter, null) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull(),
-            (Getter, _) => @this.GetTargetProperties().Select(p => p.GetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
-            (Setter, null) => @this.GetTargetProperties().Select(p => p.SetMethod).NotNull(),
-            (Setter, _) => @this.GetTargetProperties().Select(p => p.SetMethod).NotNull().FindMethodsWithArgs(argumentTypes, this.Compilation),
+            (Getter, null) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.GetMethod)),
+            (Getter, _) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.GetMethod)).FindMethodsWithArgs(argumentTypes, this.Compilation),
+            (Setter, null) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.SetMethod)),
+            (Setter, _) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.SetMethod)).FindMethodsWithArgs(argumentTypes, this.Compilation),
             (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
             (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
@@ -133,8 +133,7 @@ public readonly record struct PatchMethodData(
                     patchData = patchData with
                     {
                         ArgumentTypes = patchAttribute.ConstructorArguments[i].Values
-                            .Select(c => c.Value as ITypeSymbol)
-                            .NotNull()
+                            .Choose(c => Optional.MaybeValue(c.Value as ITypeSymbol))
                             .ToImmutableArray(),
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };

@@ -91,9 +91,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (HarmonyHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
             return;
 
-        if (context.Compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1") is not { } IEnumerableTType)
-            return;
-
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
             .ToImmutableArray();
@@ -193,7 +190,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .ToImmutableArray();
 
         var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
-        var IEnumerableMethodBaseType = MethodBaseType is { } mb ? IEnumerableTType?.Construct(mb) : null;
+        var IEnumerableMethodBaseType = MethodBaseType is { } mb ?
+            (context.Compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T))?.Construct(mb) : null;
 
         var allPatchTargetMethodMembers = targetMethodMethods.Concat(targetMethodsMethods).ToImmutableArray();
 

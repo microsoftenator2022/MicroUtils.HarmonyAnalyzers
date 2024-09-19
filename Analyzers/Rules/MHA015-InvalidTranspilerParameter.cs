@@ -24,7 +24,6 @@ internal static class InvalidTranspilerParameter
 
     private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
         PatchMethodData methodData,
-        //Compilation compilation,
         CancellationToken ct)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Transpiler)
@@ -32,20 +31,14 @@ internal static class InvalidTranspilerParameter
 
         var compilation = methodData.Compilation;
 
-        //var IEnumerableTType = compilation.GetTypeByMetadataName("System.Collections.Generic.IEnumerable`1");
-        //var CodeInstructionType = HarmonyHelpers.GetHarmonyCodeInstructionType(compilation, ct);
-        var MethodBaseType = compilation.GetTypeByMetadataName(typeof(MethodBase).GetMetadataName());
+        var MethodBaseType = typeof(MethodBase).ToNamedTypeSymbol(compilation);
         var ILGeneratorType = compilation.GetTypeByMetadataName("System.Reflection.Emit.ILGenerator");
         var IEnumerableCodeInstructionType = HarmonyHelpers.GetIEnumerableCodeInstructionType(compilation, ct);
 
         if (MethodBaseType is null ||
-            //IEnumerableTType is null ||
-            //CodeInstructionType is null ||
             IEnumerableCodeInstructionType is null ||
             ILGeneratorType is null)
             yield break;
-
-        //var IEnumerableCodeInstructionType = IEnumerableTType.Construct(CodeInstructionType);
 
         ImmutableArray<ITypeSymbol> validParameterTypes = [IEnumerableCodeInstructionType, MethodBaseType, ILGeneratorType];
 

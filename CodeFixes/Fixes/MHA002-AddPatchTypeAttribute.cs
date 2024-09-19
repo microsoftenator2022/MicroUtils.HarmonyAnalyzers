@@ -80,7 +80,12 @@ internal static class AddPatchTypeAttribute
         foreach (var ((patchType, attributeType), targetMethod) in patchTypeAttributes
             .Join(targetMethodCandidates.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
         {
-            var validReturnTypes = HarmonyHelpers.ValidReturnTypes(patchType, sm.Compilation, ct, targetMethod, symbol.MayBePassthroughPostfix(targetMethod, sm.Compilation));
+            var validReturnTypes = HarmonyHelpers.ValidReturnTypes(
+                patchType,
+                sm.Compilation,
+                ct,
+                targetMethod.ReturnType,
+                symbol.MayBePassthroughPostfix(targetMethod, sm.Compilation));
 
             if (validReturnTypes.Any(validReturnType => sm.Compilation.ClassifyConversion(symbol.ReturnType, validReturnType).IsStandardImplicit()))
             {

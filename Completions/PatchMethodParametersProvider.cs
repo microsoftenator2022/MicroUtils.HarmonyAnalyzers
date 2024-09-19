@@ -123,19 +123,11 @@ internal class PatchMethodParametersProvider : CompletionProvider
         IEnumerable<(string parameterName, ITypeSymbol type)> parameters = [];
 
         parameters = parameters
-            .Append((HarmonyConstants.Parameter_injection__instance, targetType));
-
-        if (typeof(object).ToNamedTypeSymbol(sm.Compilation) is ITypeSymbol objectType)
-        {
-            parameters = parameters
-                .Append((HarmonyConstants.Parameter_injection__state, objectType));
-        }
-
-        if (typeof(bool).ToNamedTypeSymbol(sm.Compilation) is ITypeSymbol boolType)
-        {
-            parameters = parameters
-                .Append((HarmonyConstants.Parameter_injection__runOriginal, boolType));
-        }
+            .Append((HarmonyConstants.Parameter_injection__instance, targetType))
+            .Append((HarmonyConstants.Parameter_injection__state,
+                methodData.Compilation.GetSpecialType(SpecialType.System_Object)))
+            .Append((HarmonyConstants.Parameter_injection__runOriginal,
+                methodData.Compilation.GetSpecialType(SpecialType.System_Boolean)));
 
         if (!targetMethod.ReturnsVoid)
         {

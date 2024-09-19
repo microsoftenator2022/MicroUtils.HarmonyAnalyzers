@@ -41,8 +41,7 @@ internal static class FixMethodSignature
 
         var parameterTypes =
             parameterTypeNames
-                .Select(sm.Compilation.GetTypeByMetadataName)
-                .NotNull()
+                .Choose(n => Optional.MaybeValue(sm.Compilation.GetTypeByMetadataName(n)))
                 .ToImmutableArray();
 
         if (parameterTypes.Length != parameterTypeNames.Length)

@@ -23,7 +23,6 @@ internal static class PatchTypeAttributeConflict
         true);
 
     internal static IEnumerable<Location> CheckInternal(
-        //Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct)
     {
@@ -49,12 +48,11 @@ internal static class PatchTypeAttributeConflict
 
         return patchTypeAttributes
             .Select(pair => pair.Item1.ApplicationSyntaxReference?.GetSyntax().GetLocation())
-            .NotNull()
+            .Choose(Optional.MaybeValue)
             .Concat(methodNamePatchType is not null ? methodData.PatchMethod.Locations : []);
     }
 
     internal static ImmutableArray<Diagnostic> Check(
-        //Compilation compilation,
         PatchMethodData methodData,
         CancellationToken ct)
     {
