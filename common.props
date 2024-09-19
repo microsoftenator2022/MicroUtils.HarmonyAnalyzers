@@ -8,9 +8,13 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <DevelopmentDependency>true</DevelopmentDependency>
-    <NoWarn>RS2002;NU1903</NoWarn>
+    <!--<NoWarn>RS2002</NoWarn>-->
   </PropertyGroup>
 
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-hh2w-p6rv-4g7w" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
