@@ -78,7 +78,8 @@ public readonly record struct PatchMethodData(
             (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
             (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
-            //(Enumerator, _) => null,
+            (Enumerator, _) => @this.GetCandidateMethods(Normal, null)
+                .Choose(m => Optional.MaybeValue(Util.GetEnumeratorMoveNext(m, @this.Compilation))),
             //(Async, _) => null,
             (_, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
             (_, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes, this.Compilation)
@@ -92,7 +93,66 @@ public readonly record struct PatchMethodData(
         return this.GetCandidateMethods(@this.TargetMethodType ?? Normal, @this.ArgumentTypes);
     }
 
-    public IMethodSymbol? TargetMethod => this.GetCandidateMethods().TryExactlyOne();
+    private class LazyWrapper<T>()
+    {
+        private Lazy<T>? LazyValue;
+
+        public T Value => this.LazyValue!.Value;
+
+        public bool HasValue => this.LazyValue is not null;
+
+        public bool SetValueThunk(Func<T> func)
+        {
+            if (this.LazyValue is not null)
+                return false;
+
+            this.LazyValue = new(func);
+
+            return true;
+        }
+
+        public T GetValueOr(Func<T> thunk)
+        {
+            _ = this.SetValueThunk(thunk);
+
+            return this.LazyValue!.Value;
+        }
+    }
+
+    private readonly LazyWrapper<IMethodSymbol?> LazyTargetMethod = new();
+
+    public IMethodSymbol? TargetMethod
+    {
+        get
+        {
+            var @this = this;
+
+            return this.LazyTargetMethod.GetValueOr(() =>
+                @this.GetCandidateMethods()
+                    .TrySingle()
+                    .ValueOrDefault());
+        }
+    }
+
+    /// <summary>
+    /// Classes and/or interfaces that can be used to access the object instance.
+    /// This may not include the class containing the method (ie. <see cref="ISymbol.CanBeReferencedByName"/> is false).
+    /// Returns an empty <see cref="ImmutableArray{}"/> if the method is static
+    /// or if the target method cannot be resolved for this <see cref="PatchMethodData"/> instance.
+    /// </summary>
+    public ImmutableArray<INamedTypeSymbol> TargetMethodInstanceTypes
+    {
+        get
+        {
+            if (this.TargetMethod is null)
+                return [];
+
+            if (this.TargetMethod.IsStatic)
+                return [];
+
+            return this.TargetMethod.ContainingType.GetNameAccessBaseTypes();
+        }
+    }
 
     public bool IsAmbiguousMatch => this.GetCandidateMethods().Count() > 1;
 

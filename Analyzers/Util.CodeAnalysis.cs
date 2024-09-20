@@ -105,7 +105,9 @@ public static partial class Util
         this IEnumerable<IMethodSymbol> source,
         IEnumerable<ITypeSymbol> argTypes,
         Compilation compilation) =>
-        source.FindMethodsWithArgs(argTypes, compilation).TryExactlyOne();
+        source.FindMethodsWithArgs(argTypes, compilation)
+            .TrySingle()
+            .ValueOrDefault();
 
     public static int DistinctTypedConstantsCount(IEnumerable<TypedConstant> typedConstants, CancellationToken ct)
     {
@@ -167,6 +169,47 @@ public static partial class Util
 
     public static INamedTypeSymbol? ToNamedTypeSymbol(this Type type, Compilation compilation) =>
         compilation.GetTypeByMetadataName(type.GetMetadataName());
+
+    public static IMethodSymbol? GetEnumeratorMoveNext(this IMethodSymbol method, Compilation compilation)
+    {
+        if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
+            method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
+                .Equals(attr.AttributeClass, SymbolEqualityComparer.Default)) is not { } stateMachineAttribute ||
+            stateMachineAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol stateMachineType)
+            return null;
+
+        if (compilation.GetSpecialType(SpecialType.System_Collections_IEnumerator).GetMembers()
+            .OfType<IMethodSymbol>()
+            .FirstOrDefault(m => m.Name == nameof(IEnumerator.MoveNext)) is not { } moveNext)
+            return null;
+
+        return stateMachineType.FindImplementationForInterfaceMember(moveNext) as IMethodSymbol;
+    }
+
+    public static ImmutableArray<INamedTypeSymbol> GetNameAccessBaseTypes(this ITypeSymbol type)
+    {
+        static IEnumerable<INamedTypeSymbol> GetNameAccessTypesInner(ITypeSymbol type)
+        {
+            if (type is INamedTypeSymbol namedType && type.CanBeReferencedByName)
+            {
+                yield return namedType;
+                yield break;
+            }
+
+            if (type.BaseType is not null)
+            {
+                foreach (var t in GetNameAccessTypesInner(type.BaseType))
+                    yield return t;
+            }
+
+            foreach (var i in type.Interfaces.SelectMany(GetNameAccessTypesInner))
+            {
+                yield return i;
+            }
+        }
+
+        return GetNameAccessTypesInner(type).ToImmutableArray();
+    }
 }
 
 public static class Optional
@@ -190,7 +233,7 @@ public static class Optional
 
         return default;
     }
-
+    
     public static Optional<T> TrySingle<T>(this IEnumerable<T> source, Func<T, bool> predicate)
     {
         Optional<T> value = default;
@@ -215,6 +258,15 @@ public static class Optional
 
     public static Optional<U> TryPick<T, U>(this IEnumerable<T> source, Func<T, Optional<U>> picker) =>
         source.Choose(picker).TryFirst();
+
+    public static T? ValueOrDefault<T>(this Optional<T> optional) =>
+        optional.HasValue ? optional.Value : default;
+
+    public static T WithDefaultValue<T>(this Optional<T> optional, T defaultValue) =>
+        optional.HasValue ? optional.Value : defaultValue;
+
+    public static T WithDefaultValue<T>(this Optional<T> optional, Func<T> defaultValueThunk) =>
+        optional.HasValue ? optional.Value : defaultValueThunk();
 
     //public static Optional<U> Map<T, U>(this Optional<T> @this, Func<T, U> mapper) =>
     //    !@this.HasValue ? NoValue<U>() : mapper(@this.Value);

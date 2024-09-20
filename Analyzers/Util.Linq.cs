@@ -26,6 +26,7 @@ public partial class Util
         return false;
     }
 
+    [Obsolete("Use TrySingle and ValueOrDefault")]
     public static T? TryExactlyOne<T>(this IEnumerable<T> source)
     {
         var firstTwo = source.Take(2).ToImmutableArray();

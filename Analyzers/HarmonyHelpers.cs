@@ -94,10 +94,8 @@ public static class HarmonyHelpers
         GetInjectionParameterType(
             parameterName,
             methodData.Compilation,
-            methodData.TargetType,
-            methodData.TargetMethodType is PatchTargetMethodType.Enumerator ?
-                methodData.Compilation.GetSpecialType(SpecialType.System_Boolean) :
-                methodData.TargetMethod?.ReturnType);
+            methodData.TargetMethodInstanceTypes.FirstOrDefault(),
+            methodData.TargetMethod?.ReturnType);
 
     [Obsolete("Use the PatchMethodData overload")]
     public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null) =>
@@ -168,18 +166,11 @@ public static class HarmonyHelpers
         if (methodData.PatchType is not { } patchType)
             return [];
 
-        var targetReturnType = methodData.TargetMethodType switch
-        {
-            // MethodType.Enumerator targets MoveNext, which returns bool
-            PatchTargetMethodType.Enumerator => methodData.Compilation.GetSpecialType(SpecialType.System_Boolean),
-            _ => methodData.TargetMethod?.ReturnType
-        };
-
         return ValidReturnTypes(
             patchType,
             compilation,
             ct,
-            targetReturnType,
+            methodData.TargetMethod?.ReturnType,
             methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation));
     }
 

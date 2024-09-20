@@ -104,9 +104,10 @@ internal class PatchMethodParametersProvider : CompletionProvider
         int position,
         CancellationToken ct)
     {
-        if (methodData.TargetType is not { } targetType ||
-            methodData.TargetMethod is not { } targetMethod)
+        if (methodData.TargetMethod is not { } targetMethod)
             yield break;
+
+        var targetType = targetMethod.ContainingType;
 
         string typeNameString(ITypeSymbol type) => type.ToMinimalDisplayString(sm, position);
         //IdentifierNameSyntax typeNameSyntax(ITypeSymbol type) => IdentifierName(typeNameString(type));
@@ -122,8 +123,14 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         IEnumerable<(string parameterName, ITypeSymbol type)> parameters = [];
 
+        if (targetMethod.ContainingType.CanBeReferencedByName)
+            parameters = parameters
+                .Append((HarmonyConstants.Parameter_injection__instance, targetType));
+        else
+            parameters = parameters
+                .Concat(methodData.TargetMethodInstanceTypes.Select(t => (HarmonyConstants.Parameter_injection__instance, (ITypeSymbol)t)));
+
         parameters = parameters
-            .Append((HarmonyConstants.Parameter_injection__instance, targetType))
             .Append((HarmonyConstants.Parameter_injection__state,
                 methodData.Compilation.GetSpecialType(SpecialType.System_Object)))
             .Append((HarmonyConstants.Parameter_injection__runOriginal,

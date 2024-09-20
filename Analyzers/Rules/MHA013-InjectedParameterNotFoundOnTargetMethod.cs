@@ -39,17 +39,17 @@ internal static class InjectedParamterNotFoundOnTargetMethod
             if (HarmonyHelpers.IsInjectionNameConstant(p.Name))
                 continue;
 
-            if (p.Name.StartsWith("___") && methodData.TargetType is not null)
+            if (p.Name.StartsWith("___"))
             {
                 var fieldInjectionMatch = HarmonyHelpers.FieldInjectionRegex.Match(p.Name);
                 if (fieldInjectionMatch.Success &&
-                    methodData.TargetType.GetMembers().OfType<IFieldSymbol>().Any(f =>
+                    methodData.TargetMethod.ContainingType.GetMembers().OfType<IFieldSymbol>().Any(f =>
                         f.Name == fieldInjectionMatch.Groups[1].Value &&
                         methodData.Compilation.ClassifyConversion(f.Type, p.Type).IsStandardImplicit()))
                     continue;
 
                 foreach (var d in methodData.CreateDiagnostics(
-                    Descriptor, p.Locations, messageArgs: [p, $"any field for target type {methodData.TargetType}"]))
+                    Descriptor, p.Locations, messageArgs: [p, $"any field for type {methodData.TargetMethod.ContainingType}"]))
                     yield return d;
 
                 continue;
