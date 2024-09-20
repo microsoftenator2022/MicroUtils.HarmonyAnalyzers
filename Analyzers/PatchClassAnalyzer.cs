@@ -31,8 +31,37 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         true);
 #endif
 
+    internal static readonly DiagnosticDescriptor PatchInfo = new(
+        "MHI000",
+        "Harmony Patch Method Info",
+        "{0}",
+        "PatchInfo",
+        DiagnosticSeverity.Hidden,
+        true);
+
+    [ThreadStatic]
+    static StringBuilder? StringBuilder;
+
+    private static ImmutableArray<Diagnostic> PatchMethodInfo(PatchMethodData methodData)
+    {
+        var args = Optional.MaybeNullableValue(methodData.ArgumentTypes)
+            .Select(args => string.Join(", ", args.AsEnumerable()));
+
+        var sb = (StringBuilder ??= new()).Clear()
+            .AppendLine("Patch Method Info")
+            .AppendLine($"Patch type: {Optional.MaybeNullableValue(methodData.PatchType)}")
+            .AppendLine($"Target type: {Optional.MaybeValue(methodData.TargetType)}")
+            .AppendLine($"Target method name: {Optional.MaybeValue(methodData.TargetMethodName)}")
+            .AppendLine($"Method type: {Optional.MaybeNullableValue(methodData.TargetMethodType)}")
+            .AppendLine($"Target method args: {args}")
+            .Append($"Effective target method: {methodData.TargetMethod}");
+
+        return methodData.CreateDiagnostics(PatchInfo, messageArgs: [sb.ToString()]);
+    }
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
     [
+        PatchInfo,
 #if DEBUG
         DebugMessage,
 #endif
@@ -226,7 +255,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 if (patchMethodData.TargetMethod is not null)
                     continue;
 
-
                 var missingMethodTypes = MissingMethodType.Check(patchMethodData, context.CancellationToken);
                 if (missingMethodTypes.Length > 0)
                 {
@@ -253,6 +281,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             }
         }
 #endregion
+
+        diagnostics = diagnostics.AddRange(patchMethodsData.SelectMany(m => PatchMethodInfo(m)));
 
         foreach (var diagnostic in diagnostics)
         {
