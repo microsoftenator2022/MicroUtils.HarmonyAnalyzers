@@ -22,3 +22,14 @@ MHA012  | PatchMethod      | Info     | `__result` injection in passthrough Post
 MHA013  | PatchMethod      | Warning  | No matching parameter on target method
 MHA014  | PatchMethod      | Warning  | Invalid injected parameter type
 MHA015  | PatchMethod      | Warning  | Injections in Transpiler patch method
+
+## Release 1.1
+
+### New Rules
+
+Rule ID | Category | Severity | Notes
+--------|----------|----------|--------------------
+MHA016  | PatchMethod      | Info     | Use `out` for `__state` in prefix patches
+MHA017  | PatchMethod      | Info     | Using `__0`, `__1`, etc. injections over parameter names
+MHA018  | PatchMethod      | Warning  | Reverse patch method signature does not match target method
+
