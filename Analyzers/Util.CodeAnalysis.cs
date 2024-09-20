@@ -170,17 +170,46 @@ public static partial class Util
     public static INamedTypeSymbol? ToNamedTypeSymbol(this Type type, Compilation compilation) =>
         compilation.GetTypeByMetadataName(type.GetMetadataName());
 
-    public static IMethodSymbol? GetEnumeratorMoveNext(this IMethodSymbol method, Compilation compilation)
+    private static INamedTypeSymbol? GetStateMachineType(IMethodSymbol method, INamedTypeSymbol stateMachineAttributeType)
     {
-        if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
-            method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
+        if (method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
                 .Equals(attr.AttributeClass, SymbolEqualityComparer.Default)) is not { } stateMachineAttribute ||
             stateMachineAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol stateMachineType)
             return null;
 
+        return stateMachineType;
+    }
+
+    public static IMethodSymbol? GetEnumeratorMoveNext(this IMethodSymbol method, Compilation compilation)
+    {
+        if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
+            GetStateMachineType(method, stateMachineAttributeType) is not { } stateMachineType)
+            return null;
+
+        //if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
+        //    method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
+        //        .Equals(attr.AttributeClass, SymbolEqualityComparer.Default)) is not { } stateMachineAttribute ||
+        //    stateMachineAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol stateMachineType)
+        //    return null;
+
         if (compilation.GetSpecialType(SpecialType.System_Collections_IEnumerator).GetMembers()
             .OfType<IMethodSymbol>()
             .FirstOrDefault(m => m.Name == nameof(IEnumerator.MoveNext)) is not { } moveNext)
+            return null;
+
+        return stateMachineType.FindImplementationForInterfaceMember(moveNext) as IMethodSymbol;
+    }
+
+    public static IMethodSymbol? GetAsyncMoveNext(this IMethodSymbol method, Compilation compilation)
+    {
+        if (typeof(AsyncStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
+            GetStateMachineType(method, stateMachineAttributeType) is not { } stateMachineType)
+            return null;
+
+        if (typeof(IAsyncStateMachine).ToNamedTypeSymbol(compilation) is not { }  asyncStateMachingInterface ||
+            asyncStateMachingInterface.GetMembers()
+                .OfType<IMethodSymbol>()
+                .FirstOrDefault(m => m.Name == nameof(IAsyncStateMachine.MoveNext)) is not { } moveNext)
             return null;
 
         return stateMachineType.FindImplementationForInterfaceMember(moveNext) as IMethodSymbol;
@@ -216,7 +245,10 @@ public static class Optional
 {
     public static Optional<T> Value<T>(T value) => new(value);
     public static Optional<T> NoValue<T>() => new();
-    public static Optional<T> MaybeValue<T>(T? maybeValue) => maybeValue is { } value ? Value(value) : NoValue<T>();
+    public static Optional<T> MaybeValue<T>(T? maybeValue) where T : class =>
+        maybeValue is { } value ? Value(value) : NoValue<T>();
+    public static Optional<T> MaybeNullableValue<T>(T? maybeValue) where T : struct =>
+        maybeValue is { } value ? Value(value) : NoValue<T>();
 
     public static Optional<T> TryFirst<T>(this IEnumerable<T> source)
     {
@@ -268,6 +300,8 @@ public static class Optional
     public static T WithDefaultValue<T>(this Optional<T> optional, Func<T> defaultValueThunk) =>
         optional.HasValue ? optional.Value : defaultValueThunk();
 
-    //public static Optional<U> Map<T, U>(this Optional<T> @this, Func<T, U> mapper) =>
-    //    !@this.HasValue ? NoValue<U>() : mapper(@this.Value);
+    public static Optional<U> Select<T, U>(this Optional<T> @this, Func<T, U> mapper) =>
+        !@this.HasValue ? NoValue<U>() : mapper(@this.Value);
+    public static Optional<T> Flatten<T>(this Optional<Optional<T>> @this) =>
+        @this.ValueOrDefault();
 }
