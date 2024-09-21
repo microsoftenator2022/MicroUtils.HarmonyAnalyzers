@@ -80,7 +80,8 @@ public readonly record struct PatchMethodData(
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
             (Enumerator, _) => @this.GetCandidateMethods(Normal, null)
                 .Choose(m => Optional.MaybeValue(Util.GetEnumeratorMoveNext(m, @this.Compilation))),
-            //(Async, _) => null,
+            (Async, _) => @this.GetCandidateMethods(Normal, null)
+                .Choose(m => Optional.MaybeValue(Util.GetAsyncMoveNext(m, @this.Compilation))),
             (_, null) => @this.GetCandidateTargetMembers<IMethodSymbol>(),
             (_, _) => @this.GetCandidateTargetMembers<IMethodSymbol>().FindMethodsWithArgs(argumentTypes, this.Compilation)
         };
