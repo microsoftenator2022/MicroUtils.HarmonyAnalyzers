@@ -123,12 +123,15 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         IEnumerable<(string parameterName, ITypeSymbol type)> parameters = [];
 
-        if (targetMethod.ContainingType.CanBeReferencedByName)
-            parameters = parameters
-                .Append((HarmonyConstants.Parameter_injection__instance, targetType));
-        else
-            parameters = parameters
-                .Concat(methodData.TargetMethodInstanceTypes.Select(t => (HarmonyConstants.Parameter_injection__instance, (ITypeSymbol)t)));
+        if (!targetMethod.IsStatic)
+        {
+            if (targetMethod.ContainingType.CanBeReferencedByName)
+                parameters = parameters
+                    .Append((HarmonyConstants.Parameter_injection__instance, targetType));
+            else
+                parameters = parameters
+                    .Concat(methodData.TargetMethodInstanceTypes.Select(t => (HarmonyConstants.Parameter_injection__instance, (ITypeSymbol)t)));
+        }
 
         parameters = parameters
             .Append((HarmonyConstants.Parameter_injection__state,
@@ -232,7 +235,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         if (parameterNode is null)
         {
-            // Can't find a parameter to replace when there is no type, so just provide a standard completion
+            // Can't find a parameter to replace when there is no parameter node, so just provide a standard completion
             return CompletionChange.Create(new TextChange(item.Span, newParameter.ToString()));
         }
 
