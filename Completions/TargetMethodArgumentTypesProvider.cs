@@ -78,9 +78,13 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
                 new(context.Position, missingArg.Value.element.Span.End) :
                 missingArg.Value.element.Span;
 
+        var nameColon = false;
+
         if (context.Trigger.Kind is CompletionTriggerKind.Invoke ||
             missingArg.Value.element.NameColon?.Name.ToString() is HarmonyConstants.Parameter_argumentTypes)
-            context.IsExclusive = true;
+        {
+            nameColon = true;
+        }
 
         if (attribute.ApplicationSyntaxReference is null ||
             (await attribute.ApplicationSyntaxReference.GetSyntaxAsync(context.CancellationToken))
@@ -129,13 +133,14 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
         if (candidateTargetMethods.Length < 1)
             return;
 
+        if (nameColon)
+            context.IsExclusive = true;
+
         foreach (var iaces in candidateTargetMethods
-            .Select(m => CreateTypeArrayCreationSyntax(m, sm, context.Position)))
+            .Select(m => CreateTypeArrayCreationSyntax(m, sm, context.Position, nameColon)))
         {
             var s = iaces.ToFullString();
 
-            var expressions = string.Join(", ", iaces.Initializer.Expressions);
-            
             var ci = CompletionItem.Create(
                 displayText: s,
                 tags: [WellKnownTags.Parameter]);
@@ -144,7 +149,11 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
         }
     }
 
-    private static ImplicitArrayCreationExpressionSyntax CreateTypeArrayCreationSyntax(IMethodSymbol method, SemanticModel sm, int position)
+    private static AttributeArgumentSyntax CreateTypeArrayCreationSyntax(
+        IMethodSymbol method,
+        SemanticModel sm,
+        int position,
+        bool includeNameColon = false)
     {
         var ps = method.Parameters.Select(p =>
             TypeOfExpression(
@@ -152,8 +161,8 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
                     p.Type.ToMinimalDisplayString(sm, position)
                 )
             ));
-
-        ImplicitArrayCreationExpressionSyntax implicitArrayExpr() => ImplicitArrayCreationExpression(
+        
+        var implicitArrayExpr = ImplicitArrayCreationExpression(
             InitializerExpression(
                 SyntaxKind.ArrayInitializerExpression,
                 Token(SyntaxKind.OpenBraceToken),
@@ -162,9 +171,14 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
             ).WithLeadingTrivia(Space)
         );
 
-        //SyntaxNode collectionInitializerExpr() =>
+        var nameColon = NameColon(HarmonyConstants.Parameter_argumentTypes).WithTrailingTrivia(Space);
+
+        //var collectionInitializerExpr =
         //    CollectionExpression(SeparatedList<CollectionElementSyntax>(ps.Select(ExpressionElement))).NormalizeWhitespace();
 
-        return implicitArrayExpr();
+        return AttributeArgument(
+            nameEquals: null,
+            nameColon: includeNameColon ? nameColon : null,
+            implicitArrayExpr);
     }
 }
