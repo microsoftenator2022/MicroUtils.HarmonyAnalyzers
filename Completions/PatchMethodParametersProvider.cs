@@ -20,40 +20,13 @@ using static SyntaxFactory;
 [ExportCompletionProvider(nameof(PatchMethodParametersProvider), LanguageNames.CSharp)]
 internal class PatchMethodParametersProvider : CompletionProvider
 {
-    public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options)
-    {
-        bool injectionPrefix()
-        {
-            if (text[caretPosition - 1] is not '_' || text[caretPosition - 2] is not '_')
-                return false;
-
-            var i = 3;
-            if (text[i] is '_')
-            {
-                i++;
-            }
-
-            return !SyntaxFacts.IsIdentifierPartCharacter(text[i]);
-        }
-
-        var shouldTrigger = (trigger.Kind, trigger.Character) switch
-        {
-            (CompletionTriggerKind.Invoke, _) => true,
-            (CompletionTriggerKind.InvokeAndCommitIfUnique, _) => true,
-            (CompletionTriggerKind.Insertion, ' ') => true,
-            (CompletionTriggerKind.Insertion, _) => injectionPrefix(),
-            _ => false
-        };
-        
-        return shouldTrigger;
-    }
+    public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options) =>
+        TriggerCondition.ShouldTrigger(text, caretPosition, trigger, options, true);
 
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
-        if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax)
-            return;
-
-        if (syntax.FindNode(context.CompletionListSpan)?.FirstAncestorOrSelf<MethodDeclarationSyntax>() is not { } mds)
+        if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
+            syntax.FindNode(context.CompletionListSpan)?.FirstAncestorOrSelf<MethodDeclarationSyntax>() is not { } mds)
             return;
 
         if (!mds.ParameterList.FullSpan.Contains(context.CompletionListSpan))
@@ -185,10 +158,10 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
     private static ParameterSyntax CreateParameter(string type, string name, string? modifier = null) =>
         Parameter(Identifier(name))
-            .WithType(IdentifierName(type).WithTrailingTrivia(Whitespace(" ")))
+            .WithType(IdentifierName(type).WithTrailingTrivia(Space))
             .WithModifiers(modifier is "ref" ?
-                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] :
-                (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Whitespace(" "))] : default));
+                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Space)] :
+                (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Space)] : default));
 
     public override async Task<CompletionChange> GetChangeAsync(Document document, CompletionItem item, char? commitKey, CancellationToken cancellationToken)
     {
@@ -226,7 +199,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
             throw new InvalidOperationException($"Could not find node for span {span}: '{spanText ?? span.ToString()}'. " +
                 $"Token: '{syntaxRoot.FindToken(span.Start, true)}'. Node: '{syntaxRoot.FindNode(span, true, true) ??
                 syntaxRoot.FindToken(span.Start).Parent}'. Parameters: {string.Join(", ", pList?.Parameters.Select(p => $"[{p}]"))}.");
-        }    
+        }
 
         var parameterNode = node?.FirstAncestorOrSelf<ParameterSyntax>() ??
             pList.Parameters.FirstOrDefault(p => p.Span.Contains(span));
@@ -241,7 +214,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         if (pList.Parameters.Count != 0 && pList.Parameters.IndexOf(parameterNode) < pList.Parameters.Count - 1)
         {
-            newParameter = newParameter.WithTrailingTrivia(Whitespace(" "));
+            newParameter = newParameter.WithTrailingTrivia(Space);
         }
 
         var newPList = pList.ReplaceNode(parameterNode, newParameter);

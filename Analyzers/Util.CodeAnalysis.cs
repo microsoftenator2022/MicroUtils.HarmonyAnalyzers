@@ -10,8 +10,14 @@ using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers;
+
+public record class PartialAttributeConstructor(
+    IMethodSymbol Constructor,
+    ImmutableArray<(IParameterSymbol Parameter, AttributeArgumentSyntax Argument)> Arguments);
+
 public static partial class Util
 {
     public static IEnumerable<INamespaceSymbol> GetAllNamespaces(this INamespaceSymbol root, CancellationToken ct)
@@ -109,7 +115,7 @@ public static partial class Util
             .TrySingle()
             .ValueOrDefault();
 
-    public static int DistinctTypedConstantsCount(IEnumerable<TypedConstant> typedConstants, CancellationToken ct)
+    public static int DistinctTypedConstantsCount(IEnumerable<TypedConstant> typedConstants)
     {
         if (!typedConstants.Any())
             return 0;
@@ -131,7 +137,7 @@ public static partial class Util
 
         if (s is IArrayTypeSymbol ats)
         {
-            sb.Insert(0, "[]");
+            _ = sb.Insert(0, "[]");
             s = ats.ElementType;
         }
 
@@ -143,14 +149,14 @@ public static partial class Util
         {
             if (s is ITypeSymbol && last is ITypeSymbol)
             {
-                sb.Insert(0, '+');
+                _ = sb.Insert(0, '+');
             }
             else
             {
-                sb.Insert(0, '.');
+                _ = sb.Insert(0, '.');
             }
 
-            sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
+            _ = sb.Insert(0, s.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
             s = s.ContainingSymbol;
         }
 
@@ -170,6 +176,90 @@ public static partial class Util
     public static INamedTypeSymbol? ToNamedTypeSymbol(this Type type, Compilation compilation) =>
         compilation.GetTypeByMetadataName(type.GetMetadataName());
 
+    public static AttributeData? FindAttributeData(this AttributeSyntax node, SemanticModel sm, CancellationToken ct)
+    {
+        return node.AncestorsAndSelf()
+            .Choose(n => Optional.MaybeValue(sm.GetDeclaredSymbol(n, ct)))
+            .SelectMany(s => s.GetAttributes())
+            .FirstOrDefault(attr => attr.ApplicationSyntaxReference?.Span.Contains(node.Span) ?? false);
+    }
+
+    private static bool ArgumentMatchesParameterSymbol(
+        this SemanticModel semanticModel,
+        AttributeArgumentSyntax attributeArgument,
+        IParameterSymbol parameter,
+        CancellationToken ct)
+    {
+        if (attributeArgument.IsMissing)
+            return false;
+
+        if (attributeArgument.NameColon?.Name.ToString() is { } nameString &&
+            nameString != parameter.Name)
+            return false;
+
+        return parameter.Type.Equals(
+            semanticModel.GetTypeInfo(attributeArgument.Expression, ct).ConvertedType,
+            SymbolEqualityComparer.Default);
+    }
+
+    public static ImmutableArray<PartialAttributeConstructor> FilterCandidateMethods(
+        this SemanticModel semanticModel,
+        SymbolInfo symbolInfo,
+        AttributeArgumentListSyntax attributeArgumentList,
+        CancellationToken ct)
+    {
+        var args = attributeArgumentList.Arguments.Indexed().Where(a => !a.element.IsMissing).ToImmutableArray();
+
+        return symbolInfo.CandidateSymbols
+            .OfType<IMethodSymbol>()
+            .Where(m => m.Parameters.Length >= attributeArgumentList.Arguments.Count)
+            .Choose(candidate =>
+            {
+                var paramsAndArgs = ImmutableArray<(IParameterSymbol, AttributeArgumentSyntax)>.Empty;
+
+                if (ct.IsCancellationRequested)
+                    return default;
+
+                foreach (var (i, arg) in args)
+                {
+                    if (!semanticModel.ArgumentMatchesParameterSymbol(arg, candidate.Parameters[i], ct))
+                        continue;
+                    
+                    paramsAndArgs = paramsAndArgs.Add((candidate.Parameters[i], arg));
+                }
+
+                return Optional.Value(new PartialAttributeConstructor(candidate, paramsAndArgs));
+            })
+            .ToImmutableArray();
+    }
+
+    //public static ImmutableArray<IMethodSymbol> FilterCandidateMethods(
+    //    this SemanticModel semanticModel,
+    //    SymbolInfo symbolInfo,
+    //    AttributeArgumentListSyntax attributeArgumentList,
+    //    CancellationToken ct)
+    //{
+    //    var args = attributeArgumentList.Arguments.Indexed().Where(a => !a.element.IsMissing).ToImmutableArray();
+
+    //    return symbolInfo.CandidateSymbols
+    //        .OfType<IMethodSymbol>()
+    //        .Where(m => m.Parameters.Length >= attributeArgumentList.Arguments.Count)
+    //        .Choose(candidate =>
+    //        {
+    //            if (ct.IsCancellationRequested)
+    //                return default;
+
+    //            foreach (var (i, arg) in args)
+    //                if (!semanticModel.ArgumentMatchesParameterSymbol(arg, candidate.Parameters[i], ct))
+    //                {
+    //                    return default;
+    //                }
+
+    //            return Optional.Value(candidate);
+    //        })
+    //        .ToImmutableArray();
+    //}
+
     private static INamedTypeSymbol? GetStateMachineType(IMethodSymbol method, INamedTypeSymbol stateMachineAttributeType)
     {
         if (method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
@@ -185,12 +275,6 @@ public static partial class Util
         if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
             GetStateMachineType(method, stateMachineAttributeType) is not { } stateMachineType)
             return null;
-
-        //if (typeof(IteratorStateMachineAttribute).ToNamedTypeSymbol(compilation) is not { } stateMachineAttributeType ||
-        //    method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType
-        //        .Equals(attr.AttributeClass, SymbolEqualityComparer.Default)) is not { } stateMachineAttribute ||
-        //    stateMachineAttribute.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol stateMachineType)
-        //    return null;
 
         if (compilation.GetSpecialType(SpecialType.System_Collections_IEnumerator).GetMembers()
             .OfType<IMethodSymbol>()

@@ -9,6 +9,9 @@ using Microsoft.CodeAnalysis;
 namespace MicroUtils.HarmonyAnalyzers;
 public partial class Util
 {
+    public static IEnumerable<(T1 first, T2 second)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) =>
+        first.Zip(second, (a, b) => (a, b));
+
     [Obsolete("Use Choose and Optional.MaybeValue")]
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> source) where T : notnull =>
         source.SelectMany<T?, T>(element => element is not null ? [element] : []);

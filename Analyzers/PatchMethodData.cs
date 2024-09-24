@@ -35,7 +35,7 @@ public readonly record struct PatchMethodData(
 
         foreach (var argGroup in argsByParameter)
         {
-            if (Util.DistinctTypedConstantsCount(argGroup.Select(triple => triple.arg), ct) > 1)
+            if (Util.DistinctTypedConstantsCount(argGroup.Select(triple => triple.arg)) > 1)
                 conflicts = conflicts.AddRange(argGroup.Select(triple => triple.attr));
         }
 
