@@ -6,8 +6,18 @@
     <PackageId>MicroUtils.HarmonyAnalyzers</PackageId>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <Authors>https://github.com/microsoftenator2022</Authors>
+    <PackageProjectUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="$(OutputPath)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <!--<None Include="$(OutputPath)\$(AssemblyName).dll"  PackagePath="analyzers/dotnet/cs" Visible="false" />-->
