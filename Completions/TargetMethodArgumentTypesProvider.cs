@@ -28,10 +28,7 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
         if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
-            await context.Document.GetSemanticModelAsync(context.CancellationToken) is not { } sm
-            //||
-            //typeof(Type).ToNamedTypeSymbol(sm.Compilation)?.ToMinimalDisplayString(sm, context.Position) is not { } typeTypeName
-            )
+            await context.Document.GetSemanticModelAsync(context.CancellationToken) is not { } sm)
             return;
 
         if (syntax.FindNode(context.CompletionListSpan) is not { } node ||
@@ -78,13 +75,9 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
                 new(context.Position, missingArg.Value.element.Span.End) :
                 missingArg.Value.element.Span;
 
-        var nameColon = false;
-
-        if (context.Trigger.Kind is CompletionTriggerKind.Invoke ||
-            missingArg.Value.element.NameColon?.Name.ToString() is HarmonyConstants.Parameter_argumentTypes)
-        {
-            nameColon = true;
-        }
+        var nameColon =
+            context.Trigger.Kind is CompletionTriggerKind.Invoke ||
+            missingArg.Value.element.NameColon?.Name.ToString() is HarmonyConstants.Parameter_argumentTypes;
 
         if (attribute.ApplicationSyntaxReference is null ||
             (await attribute.ApplicationSyntaxReference.GetSyntaxAsync(context.CancellationToken))
@@ -118,9 +111,9 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
                             methodData = methodData with { TargetType = t };
                         }
                         break;
+
                     case HarmonyConstants.Parameter_methodName:
-                        if (methodData.TargetMethodName is null &&
-                            sm.GetConstantValue(arg.Expression).Value is string n)
+                        if (methodData.TargetMethodName is null && sm.GetConstantValue(arg.Expression).Value is string n)
                             methodData = methodData with { TargetMethodName = n };
 
                         break;

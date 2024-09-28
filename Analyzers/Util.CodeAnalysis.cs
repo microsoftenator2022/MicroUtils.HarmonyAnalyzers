@@ -233,33 +233,6 @@ public static partial class Util
             .ToImmutableArray();
     }
 
-    //public static ImmutableArray<IMethodSymbol> FilterCandidateMethods(
-    //    this SemanticModel semanticModel,
-    //    SymbolInfo symbolInfo,
-    //    AttributeArgumentListSyntax attributeArgumentList,
-    //    CancellationToken ct)
-    //{
-    //    var args = attributeArgumentList.Arguments.Indexed().Where(a => !a.element.IsMissing).ToImmutableArray();
-
-    //    return symbolInfo.CandidateSymbols
-    //        .OfType<IMethodSymbol>()
-    //        .Where(m => m.Parameters.Length >= attributeArgumentList.Arguments.Count)
-    //        .Choose(candidate =>
-    //        {
-    //            if (ct.IsCancellationRequested)
-    //                return default;
-
-    //            foreach (var (i, arg) in args)
-    //                if (!semanticModel.ArgumentMatchesParameterSymbol(arg, candidate.Parameters[i], ct))
-    //                {
-    //                    return default;
-    //                }
-
-    //            return Optional.Value(candidate);
-    //        })
-    //        .ToImmutableArray();
-    //}
-
     private static INamedTypeSymbol? GetStateMachineType(IMethodSymbol method, INamedTypeSymbol stateMachineAttributeType)
     {
         if (method.GetAttributes().FirstOrDefault(attr => stateMachineAttributeType

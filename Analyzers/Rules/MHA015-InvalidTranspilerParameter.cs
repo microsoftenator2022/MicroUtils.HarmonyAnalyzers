@@ -53,7 +53,6 @@ internal static class InvalidTranspilerParameter
 
     internal static ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
-        //Compilation compilation,
         CancellationToken ct) =>
         CheckInternal(methodData, ct).Concat().ToImmutableArray();
 }

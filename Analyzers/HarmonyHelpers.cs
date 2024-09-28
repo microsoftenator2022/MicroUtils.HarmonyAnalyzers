@@ -100,18 +100,6 @@ public static class HarmonyHelpers
     [Obsolete("Use the PatchMethodData overload")]
     public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null) =>
         GetInjectionParameterType(parameterName, compilation, targetMethod?.ContainingType, targetMethod?.ReturnType);
-    //{
-    //    return parameterName switch
-    //    {
-    //        Parameter_injection__args => typeof(object[]).ToNamedTypeSymbol(compilation),
-    //        Parameter_injection__exception => typeof(Exception).ToNamedTypeSymbol(compilation),
-    //        Parameter_injection__instance => targetMethod?.ContainingType,
-    //        Parameter_injection__originalMethod => typeof(MethodBase).ToNamedTypeSymbol(compilation),
-    //        Parameter_injection__result => targetMethod?.ReturnType,
-    //        Parameter_injection__runOriginal => typeof(bool).ToNamedTypeSymbol(compilation),
-    //        _ => null
-    //    };
-    //}
 
     public static ITypeSymbol? GetIEnumerableCodeInstructionType(Compilation compilation, CancellationToken ct)
     {
@@ -148,15 +136,6 @@ public static class HarmonyHelpers
             _ => []
         };
     }
-
-    //[Obsolete("Use the overload taking PatchMethodData or return type")]
-    //public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
-    //    HarmonyPatchType patchType,
-    //    Compilation compilation,
-    //    CancellationToken ct,
-    //    IMethodSymbol? targetMethod = null,
-    //    bool passthrough = false) =>
-    //    ValidReturnTypes(patchType, compilation, ct, targetMethod?.ReturnType, passthrough);
 
     public static ImmutableArray<ITypeSymbol> ValidReturnTypes(
         PatchMethodData methodData,

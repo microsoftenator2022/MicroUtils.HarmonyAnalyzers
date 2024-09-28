@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>
+    <!--<VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>-->
     <!--<VersionSuffix>rc1</VersionSuffix>-->
   </PropertyGroup>
   
