@@ -34,7 +34,7 @@ No method matching the provided `{HarmonyPatch}` arguments was found.
 
 A class with a `[HarmonyPatch]` attribute and no patch methods.
 
-# MHA007: TargetMethod(s) + HarmonyPatch attribute arguments
+#### MHA007: TargetMethod(s) + HarmonyPatch attribute arguments
 
 A patch class containing `[HarmonyPatch]` arguments and `TargetMethod` or `TargetMethods` methods.
 
@@ -46,7 +46,7 @@ Assignment to a non-`ref`, non-`out` patch method argument.
 
 Patch method return type is not value for its patch type (`IEnumerable<CodeInstruction>` for a transpiler, `void` or `bool` for a prefix, etc.)
 
-#### MHA010: HarmonyPatch attribute conflict
+#### MHA010: `[HarmonyPatch]` attribute conflict
 
 Multiple `[HarmonyPatch]` attributes applied to a method (and/or class) with conflicting target method arguments.
 
@@ -66,7 +66,7 @@ An injected argument does not match any parameter on the target method.
 
 The type of an injected argument does not match the type of the argument on the target method with the same name.
 
-#### MHA015: Injections in Transpiler patch method
+#### MHA015: Injections in transpiler patch method
 
 Invalid injected arguments in a transpiler method.
 
@@ -90,8 +90,8 @@ Fixes are provided for the following rules:
 - [MHA002](#mha002-missing-patch-type-attribute)
 - [MHA003](#mha003-missing-methodtype-argument)
 - [MHA008](#mha008-assignment-to-non-ref-patch-method-argument)
-- [MHA012](#mha012-result-injection-in-passthrough-postfix)
-- [MHA016](#mha016-use-out-for-state-in-prefix-patches)
+- [MHA012](#mha012-__result-injection-in-passthrough-postfix)
+- [MHA016](#mha016-use-out-for-__state-in-prefix-patches)
 - [MHA017](#mha017-use-of-indexed-argument-injection-over-parameter-name)
 - [MHA018](#mha018-reverse-patch-method-signature-does-not-match-target-method)
 
