@@ -50,7 +50,7 @@ Patch method return type is not value for its patch type (`IEnumerable<CodeInstr
 
 Multiple `[HarmonyPatch]` attributes applied to a method (and/or class) with conflicting target method arguments.
 
-### MHA011: Multiple patch type attributes on the same method
+#### MHA011: Multiple patch type attributes on the same method
 
 eg. `HarmonyPostfix` and `HarmonyPrefix`.
 
