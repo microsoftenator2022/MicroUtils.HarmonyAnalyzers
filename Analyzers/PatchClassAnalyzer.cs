@@ -92,11 +92,11 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
         context.RegisterSyntaxNodeAction(
 #if DEBUG
-        context =>
+        snContext =>
         {
             try
             {
-                AnalyzeClassDeclaration(context);
+                AnalyzeClassDeclaration(snContext);
             }
             catch (Exception ex)
             {
@@ -114,7 +114,14 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (context.Node is not ClassDeclarationSyntax cds)
             return;
 
-        if (context.SemanticModel.GetDeclaredSymbol(cds, context.CancellationToken) is not INamedTypeSymbol classSymbol)
+        var sm =
+#if DEBUG
+            Util.GetIgnoreAccessSemanticModel(context.Compilation, cds.SyntaxTree);
+#else
+            context.SemanticModel;
+#endif
+
+        if (sm.GetDeclaredSymbol(cds, context.CancellationToken) is not INamedTypeSymbol classSymbol)
             return;
 
         if (HarmonyHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
@@ -144,6 +151,11 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         
         if (classAttributes.Length == 0 && patchMethods.Length == 0)
             return;
+
+        //context.ReportDiagnostic(Diagnostic.Create(
+        //    DebugMessage,
+        //    context.Node.GetLocation(),
+        //    messageArgs: [$"SemanticModel.IgnoresAccessibility = {sm.IgnoresAccessibility}"]));
 
         var diagnostics = ImmutableArray<Diagnostic>.Empty;
 
@@ -186,7 +198,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(patchMethodData, context.CancellationToken))
                 .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
                 .AddRange(AssignmentToNonRefResultArgument.Check(
-                    context.SemanticModel, patchMethodData, context.CancellationToken))
+                    sm, patchMethodData, context.CancellationToken))
                 .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(patchMethodData, context.CancellationToken))
                 .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken))
                 .AddRange(InvalidInjectedParameterType.Check(patchMethodData))
@@ -277,10 +289,16 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     continue;
 
                 diagnostics = diagnostics.AddRange(patchMethodData.CreateDiagnostics(TargetMethodMatchFailed.Descriptor));
+#if DEBUG
+                diagnostics = diagnostics.Add(Diagnostic.Create(
+                    DebugMessage,
+                    patchMethodData.PatchMethod.Locations[0],
+                    messageArgs: [String.Join(", ", patchMethodData.TargetType?.MemberNames)]));
+#endif
 
             }
         }
-#endregion
+        #endregion
 
         diagnostics = diagnostics.AddRange(patchMethodsData.SelectMany(m => PatchMethodInfo(m)));
 

@@ -23,7 +23,13 @@ internal static class FixMethodSignature
         MethodDeclarationSyntax mds,
         CancellationToken ct)
     {
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+        if (await
+#if DEBUG
+            document.GetIgnoreAccessSemanticModelAsync(ct)
+#else
+            document.GetSemanticModelAsync(ct)
+#endif
+    is not { } sm)
             return null;
 
         if (!diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetType), out var targetTypeName) ||

@@ -22,7 +22,13 @@ internal static class AddMissingMethodType
             !Enum.TryParse<HarmonyConstants.PatchTargetMethodType>(methodTypeName, out var methodType))
             return null;
 
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+        if (await
+#if DEBUG
+            document.GetIgnoreAccessSemanticModelAsync(ct)
+#else
+            document.GetSemanticModelAsync(ct)
+#endif
+    is not { } sm)
             return null;
 
         if (HarmonyHelpers.GetHarmonyMethodTypeType(sm.Compilation, ct) is not INamedTypeSymbol methodTypeType)
@@ -46,7 +52,13 @@ internal static class AddMissingMethodType
         IFieldSymbol enumField,
         CancellationToken ct)
     {
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+        if (await
+#if DEBUG
+            document.GetIgnoreAccessSemanticModelAsync(ct)
+#else
+            document.GetSemanticModelAsync(ct)
+#endif
+    is not { } sm)
             return document;
 
         if (sm.Compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)

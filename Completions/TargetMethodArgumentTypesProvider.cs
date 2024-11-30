@@ -28,7 +28,13 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
         if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
-            await context.Document.GetSemanticModelAsync(context.CancellationToken) is not { } sm)
+            await
+#if DEBUG
+            context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken)
+#else
+            context.Document.GetSemanticModelAsync(context.CancellationToken)
+#endif
+            is not { } sm)
             return;
 
         if (syntax.FindNode(context.CompletionListSpan) is not { } node ||

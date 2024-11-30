@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -20,6 +21,9 @@ public record class PartialAttributeConstructor(
 
 public static partial class Util
 {
+    public static SemanticModel GetIgnoreAccessSemanticModel(Compilation compilation, SyntaxTree syntaxTree) =>
+        compilation.GetSemanticModel(syntaxTree, ignoreAccessibility: true);
+
     public static IEnumerable<INamespaceSymbol> GetAllNamespaces(this INamespaceSymbol root, CancellationToken ct)
     {
         yield return root;

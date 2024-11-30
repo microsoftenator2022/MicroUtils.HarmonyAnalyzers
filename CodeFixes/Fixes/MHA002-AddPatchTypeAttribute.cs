@@ -23,7 +23,13 @@ internal static class AddPatchTypeAttribute
         var document = context.Document;
         var ct = context.CancellationToken;
 
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+        if (await
+#if DEBUG
+            document.GetIgnoreAccessSemanticModelAsync(ct)
+#else
+            document.GetSemanticModelAsync(ct)
+#endif
+    is not { } sm)
             return [];
 
         if (sm.GetDeclaredSymbol(mds) is not IMethodSymbol methodSymbol)
@@ -44,7 +50,13 @@ internal static class AddPatchTypeAttribute
 
     private static async Task<Document> AddAttributeAction(Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t, CancellationToken ct)
     {
-        if (await document.GetSemanticModelAsync(ct) is not { } sm)
+        if (await
+#if DEBUG
+            document.GetIgnoreAccessSemanticModelAsync(ct)
+#else
+            document.GetSemanticModelAsync(ct)
+#endif
+    is not { } sm)
             return document;
 
         var newMds = mds.AddAttributeLists(

@@ -22,7 +22,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 {
     public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, OptionSet options) =>
         TriggerCondition.ShouldTrigger(text, caretPosition, trigger, options, true);
-
+    
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
         if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
@@ -32,7 +32,13 @@ internal class PatchMethodParametersProvider : CompletionProvider
         if (!mds.ParameterList.FullSpan.Contains(context.CompletionListSpan))
             return;
 
-        if (await context.Document.GetSemanticModelAsync(context.CancellationToken) is not { } sm)
+        if (await 
+#if DEBUG
+            context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken)
+#else
+            context.Document.GetSemanticModelAsync(context.CancellationToken)
+#endif
+            is not { } sm)
             return;
 
         if (sm.GetDeclaredSymbol(mds) is not IMethodSymbol methodSymbol)
