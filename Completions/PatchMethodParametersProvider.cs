@@ -223,7 +223,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
             newParameter = newParameter.WithTrailingTrivia(Space);
         }
 
-        var newPList = pList.ReplaceNode(parameterNode, newParameter);
+        var newPList = pList.ReplaceNode(parameterNode, newParameter.WithModifiers(parameterNode.Modifiers));
 
         var newDoc = document.WithSyntaxRoot(syntaxRoot.ReplaceNode(pList, newPList));
 
