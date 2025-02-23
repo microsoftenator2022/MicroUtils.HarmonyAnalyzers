@@ -166,7 +166,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
         Parameter(Identifier(name))
             .WithType(IdentifierName(type).WithTrailingTrivia(Space))
             .WithModifiers(modifier is "ref" ?
-                [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Space)] :
+                [Token(SyntaxKind.RefKeyword).WithTrailingTrivia(Space)] :
                 (modifier is "out" ? [Token(SyntaxKind.OutKeyword).WithTrailingTrivia(Space)] : default));
 
     public override async Task<CompletionChange> GetChangeAsync(Document document, CompletionItem item, char? commitKey, CancellationToken cancellationToken)
