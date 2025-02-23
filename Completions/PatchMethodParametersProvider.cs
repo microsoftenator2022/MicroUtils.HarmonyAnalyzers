@@ -32,12 +32,12 @@ internal class PatchMethodParametersProvider : CompletionProvider
         if (!mds.ParameterList.FullSpan.Contains(context.CompletionListSpan))
             return;
 
-        if (await 
-#if DEBUG
+        if (await
+//#if DEBUG
             context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken)
-#else
-            context.Document.GetSemanticModelAsync(context.CancellationToken)
-#endif
+//#else
+//            context.Document.GetSemanticModelAsync(context.CancellationToken)
+//#endif
             is not { } sm)
             return;
 

@@ -24,11 +24,11 @@ internal static class FixMethodSignature
         CancellationToken ct)
     {
         if (await
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
     is not { } sm)
             return null;
 

@@ -28,11 +28,11 @@ internal static class AddHarmonyPatchAttribute
     private static async Task<Document> AddHarmonyPatchAttributeAsync(Document document, ClassDeclarationSyntax cds, CancellationToken ct)
     {
         if (await 
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
             is not { } sm)
             return document;
 

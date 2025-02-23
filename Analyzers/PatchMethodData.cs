@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers;
 
@@ -169,9 +169,11 @@ public readonly record struct PatchMethodData(
             switch (constructor.Parameters[i].Name)
             {
                 case HarmonyConstants.Parameter_declaringType:
+                    var symbol = patchAttribute.ConstructorArguments[i].Value as INamedTypeSymbol;
+
                     patchData = patchData with
                     {
-                        TargetType = patchAttribute.ConstructorArguments[i].Value as INamedTypeSymbol,
+                        TargetType = symbol,
                         HarmonyPatchAttributes = patchData.HarmonyPatchAttributes.Add(patchAttribute)
                     };
                     break;

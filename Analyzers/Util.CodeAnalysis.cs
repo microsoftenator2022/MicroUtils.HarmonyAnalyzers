@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -21,9 +22,6 @@ public record class PartialAttributeConstructor(
 
 public static partial class Util
 {
-    public static SemanticModel GetIgnoreAccessSemanticModel(Compilation compilation, SyntaxTree syntaxTree) =>
-        compilation.GetSemanticModel(syntaxTree, ignoreAccessibility: true);
-
     public static IEnumerable<INamespaceSymbol> GetAllNamespaces(this INamespaceSymbol root, CancellationToken ct)
     {
         yield return root;
@@ -300,6 +298,9 @@ public static partial class Util
 
         return GetNameAccessTypesInner(type).ToImmutableArray();
     }
+
+    public static Compilation WithInternalMembers(this Compilation c) => c.WithOptions(c.Options.WithMetadataImportOptions(MetadataImportOptions.Internal));
+    public static Compilation WithAllMembers(this Compilation c) => c.WithOptions(c.Options.WithMetadataImportOptions(MetadataImportOptions.All));
 }
 
 public static class Optional

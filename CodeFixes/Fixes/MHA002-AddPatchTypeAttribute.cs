@@ -24,11 +24,11 @@ internal static class AddPatchTypeAttribute
         var ct = context.CancellationToken;
 
         if (await
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
     is not { } sm)
             return [];
 
@@ -51,11 +51,11 @@ internal static class AddPatchTypeAttribute
     private static async Task<Document> AddAttributeAction(Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t, CancellationToken ct)
     {
         if (await
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
     is not { } sm)
             return document;
 

@@ -97,10 +97,6 @@ public static class HarmonyHelpers
             methodData.TargetMethodInstanceTypes.FirstOrDefault(),
             methodData.TargetMethod?.ReturnType);
 
-    [Obsolete("Use the PatchMethodData overload")]
-    public static ITypeSymbol? GetInjectionParameterType(string parameterName, Compilation compilation, IMethodSymbol? targetMethod = null) =>
-        GetInjectionParameterType(parameterName, compilation, targetMethod?.ContainingType, targetMethod?.ReturnType);
-
     public static ITypeSymbol? GetIEnumerableCodeInstructionType(Compilation compilation, CancellationToken ct)
     {
         if (GetHarmonyCodeInstructionType(compilation, ct) is not { } ci)

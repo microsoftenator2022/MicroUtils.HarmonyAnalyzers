@@ -18,6 +18,7 @@ static class DocumentExtensions
         if (await document.GetSyntaxTreeAsync(ct) is not { } st)
             return null;
 
-        return Util.GetIgnoreAccessSemanticModel(sm.Compilation, st);
+        var compilation = sm.Compilation.WithAllMembers();
+        return compilation.GetSemanticModel(st, true);
     }
 }

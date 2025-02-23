@@ -23,11 +23,11 @@ internal static class AddMissingMethodType
             return null;
 
         if (await
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
     is not { } sm)
             return null;
 
@@ -53,11 +53,11 @@ internal static class AddMissingMethodType
         CancellationToken ct)
     {
         if (await
-#if DEBUG
+//#if DEBUG
             document.GetIgnoreAccessSemanticModelAsync(ct)
-#else
-            document.GetSemanticModelAsync(ct)
-#endif
+//#else
+//            document.GetSemanticModelAsync(ct)
+//#endif
     is not { } sm)
             return document;
 

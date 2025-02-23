@@ -29,11 +29,11 @@ internal class TargetMethodArgumentTypesProvider : CompletionProvider
     {
         if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
             await
-#if DEBUG
+//#if DEBUG
             context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken)
-#else
-            context.Document.GetSemanticModelAsync(context.CancellationToken)
-#endif
+//#else
+//            context.Document.GetSemanticModelAsync(context.CancellationToken)
+//#endif
             is not { } sm)
             return;
 

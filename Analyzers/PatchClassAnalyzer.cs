@@ -18,7 +18,6 @@ namespace MicroUtils.HarmonyAnalyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 {
-
 #if DEBUG
     internal static readonly DiagnosticDescriptor DebugMessage = new(
 #pragma warning disable RS2000 // Add analyzer diagnostic IDs to analyzer release
@@ -90,41 +89,47 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
 
-        context.RegisterSyntaxNodeAction(
-#if DEBUG
-        snContext =>
+        context.RegisterCompilationStartAction(context =>
         {
-            try
-            {
-                AnalyzeClassDeclaration(snContext);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.StackTrace);
-            }
-        }
-#else
-        AnalyzeClassDeclaration
+            // Need to see non-public members from external references.
+            var compilation = context.Compilation.WithAllMembers();
+
+            // This should be fine
+#pragma warning disable RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
+            SemanticModel GetSemanticModel(SyntaxTree tree) => compilation.GetSemanticModel(tree, true);
+#pragma warning restore RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
+
+            SemanticModel GetCachedSemanticModel(SyntaxTree tree) => context.TryGetValue<SemanticModel>(tree, new(GetSemanticModel), out var sm) ? sm : GetSemanticModel(tree);
+
+            context.RegisterSyntaxNodeAction(
+                snContext =>
+                {
+                    if (snContext.Node is not ClassDeclarationSyntax cds)
+                        return;
+
+                    var semanticModel = GetCachedSemanticModel(snContext.FilterTree);
+#if DEBUG
+                    try
+                    {
 #endif
-        , SyntaxKind.ClassDeclaration);
+                        AnalyzeClassDeclaration(cds, compilation, semanticModel, reports => snContext.ReportAll(reports), snContext.CancellationToken);
+#if DEBUG
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception(ex.StackTrace);
+                    }
+#endif
+                }, SyntaxKind.ClassDeclaration);
+        });
     }
 
-    private static void AnalyzeClassDeclaration(SyntaxNodeAnalysisContext context)
+    private static void AnalyzeClassDeclaration(ClassDeclarationSyntax cds, Compilation compilation, SemanticModel sm, Action<IEnumerable<Diagnostic>> report, CancellationToken ct)
     {
-        if (context.Node is not ClassDeclarationSyntax cds)
+        if (sm.GetDeclaredSymbol(cds, ct) is not INamedTypeSymbol classSymbol)
             return;
 
-        var sm =
-#if DEBUG
-            Util.GetIgnoreAccessSemanticModel(context.Compilation, cds.SyntaxTree);
-#else
-            context.SemanticModel;
-#endif
-
-        if (sm.GetDeclaredSymbol(cds, context.CancellationToken) is not INamedTypeSymbol classSymbol)
-            return;
-
-        if (HarmonyHelpers.GetHarmonyPatchType(context.Compilation, context.CancellationToken) is not { } harmonyAttribute)
+        if (HarmonyHelpers.GetHarmonyPatchType(compilation, ct) is not { } harmonyAttribute)
             return;
 
         var classAttributes = classSymbol.GetAttributes()
@@ -138,7 +143,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 var attrs = m.GetAttributes()
                     .Where(attr => attr.AttributeClass is { } type && 
                         (type.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ||
-                        HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(context.Compilation, context.CancellationToken)
+                        HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(compilation, ct)
                             .Any(at => at.Item2.Equals(type, SymbolEqualityComparer.Default))
                         ))
                     .ToImmutableArray();
@@ -152,24 +157,19 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (classAttributes.Length == 0 && patchMethods.Length == 0)
             return;
 
-        //context.ReportDiagnostic(Diagnostic.Create(
-        //    DebugMessage,
-        //    context.Node.GetLocation(),
-        //    messageArgs: [$"SemanticModel.IgnoresAccessibility = {sm.IgnoresAccessibility}"]));
-
         var diagnostics = ImmutableArray<Diagnostic>.Empty;
 
         var patchMethodsData = patchMethods
             .Select(pair =>
             {
-                var methodData = new PatchMethodData(classSymbol, pair.m, context.Compilation)
+                var methodData = new PatchMethodData(classSymbol, pair.m, compilation)
                     .AddTargetMethodData(classAttributes)
                     .AddTargetMethodData(pair.attrs);
 
                 if (HarmonyHelpers.TryParseHarmonyPatchType(pair.m.Name, out var methodNamePatchType))
                     methodData = methodData with { PatchType = methodNamePatchType };
 
-                var maybeAttr = methodData.GetPatchTypeAttributes(context.Compilation, context.CancellationToken).TryFirst();
+                var maybeAttr = methodData.GetPatchTypeAttributes(compilation, ct).TryFirst();
 
                 if (maybeAttr.HasValue)
                     methodData = methodData with { PatchType = maybeAttr.Value.Item2 };
@@ -187,25 +187,24 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 #region General patch method rules
         foreach (var patchMethodData in patchMethodsData)
         {
-            if (context.CancellationToken.IsCancellationRequested)
+            if (ct.IsCancellationRequested)
                 break;
 #if DEBUG
-            context.ReportAll(patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]));
+            report(patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]));
 #endif
             diagnostics = diagnostics
                 .AddRange(MissingPatchTypeAttribute.Check(patchMethodData))
-                .AddRange(PatchTypeAttributeConflict.Check(patchMethodData, context.CancellationToken))
-                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(patchMethodData, context.CancellationToken))
+                .AddRange(PatchTypeAttributeConflict.Check(patchMethodData, ct))
+                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(patchMethodData, ct))
                 .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
-                .AddRange(AssignmentToNonRefResultArgument.Check(
-                    sm, patchMethodData, context.CancellationToken))
-                .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(patchMethodData, context.CancellationToken))
-                .AddRange(PatchAttributeConflict.Check(patchMethodData, context.CancellationToken))
+                .AddRange(AssignmentToNonRefResultArgument.Check(sm, patchMethodData, ct))
+                .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(patchMethodData, ct))
+                .AddRange(PatchAttributeConflict.Check(patchMethodData, ct))
                 .AddRange(InvalidInjectedParameterType.Check(patchMethodData))
-                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, context.CancellationToken))
+                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, ct))
                 .AddRange(UseOutForPrefixStateInjection.Check(patchMethodData))
                 .AddRange(ParameterIndexInjection.Check(patchMethodData))
-                .AddRange(ReversePatchType.Check(patchMethodData, context.CancellationToken));
+                .AddRange(ReversePatchType.Check(patchMethodData, ct));
         }
 #endregion
 
@@ -213,12 +212,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         bool isTargetMethod(IMethodSymbol m) =>
             m.Name is HarmonyConstants.TargetMethodMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
+                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(compilation, ct), SymbolEqualityComparer.Default));
 
         bool isTargetMethods(IMethodSymbol m) =>
             m.Name is HarmonyConstants.TargetMethodsMethodName ||
             m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(context.Compilation, context.CancellationToken), SymbolEqualityComparer.Default));
+                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(compilation, ct), SymbolEqualityComparer.Default));
 
         var targetMethodMethods = classSymbol.GetMembers()
             .OfType<IMethodSymbol>()
@@ -230,9 +229,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Where(isTargetMethods)
             .ToImmutableArray();
 
-        var MethodBaseType = context.Compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
+        var MethodBaseType = compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
         var IEnumerableMethodBaseType = MethodBaseType is { } mb ?
-            (context.Compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T))?.Construct(mb) : null;
+            (compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T))?.Construct(mb) : null;
 
         var allPatchTargetMethodMembers = targetMethodMethods.Concat(targetMethodsMethods).ToImmutableArray();
 
@@ -240,18 +239,18 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         {
             diagnostics = diagnostics
                 .AddRange(MultipleTargetMethodDefinitions.Check(
-                    classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers, context.CancellationToken));
+                    classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers, ct));
 
             foreach (var m in targetMethodMethods)
             {
                 diagnostics = diagnostics
-                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethod(context.Compilation, m, MethodBaseType));
+                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethod(compilation, m, MethodBaseType));
             }
 
             foreach (var m in targetMethodsMethods)
             {
                 diagnostics = diagnostics
-                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethods(context.Compilation, m, IEnumerableMethodBaseType));
+                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethods(compilation, m, IEnumerableMethodBaseType));
             }
         }
 #endregion
@@ -261,13 +260,13 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         {
             foreach (var patchMethodData in patchMethodsData)
             {
-                if (context.CancellationToken.IsCancellationRequested)
+                if (ct.IsCancellationRequested)
                     break;
 
                 if (patchMethodData.TargetMethod is not null)
                     continue;
 
-                var missingMethodTypes = MissingMethodType.Check(patchMethodData, context.CancellationToken);
+                var missingMethodTypes = MissingMethodType.Check(patchMethodData, ct);
                 if (missingMethodTypes.Length > 0)
                 {
                     diagnostics = diagnostics.AddRange(missingMethodTypes);
@@ -304,10 +303,10 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
         foreach (var diagnostic in diagnostics)
         {
-            if (context.CancellationToken.IsCancellationRequested)
+            if (ct.IsCancellationRequested)
                 return;
 
-            context.ReportDiagnostic(diagnostic);
+            report([diagnostic]);
         }
     }
 }
