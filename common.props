@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.3.0</VersionPrefix>
+    <VersionPrefix>1.4.0</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
-    <!--<NoWarn>RS2002</NoWarn>-->
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +17,7 @@
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <!--<VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>-->
-    <!--<VersionSuffix>rc1</VersionSuffix>-->
+    <VersionSuffix>rc1</VersionSuffix>
   </PropertyGroup>
   
 </Project>

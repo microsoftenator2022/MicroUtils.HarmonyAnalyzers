@@ -11,6 +11,8 @@
     <RepositoryUrl>https://github.com/microsoftenator2022/MicroUtils.HarmonyAnalyzers</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,24 +21,22 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Include="$(OutputPath)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <!--<None Include="$(OutputPath)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />-->
     <!--<None Include="$(OutputPath)\$(AssemblyName).dll"  PackagePath="analyzers/dotnet/cs" Visible="false" />-->
     <None Remove="$(OutputPath)\$(AssemblyName).dll" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Analyzers\MicroUtils.HarmonyAnalyzers.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.dll" />
-    <ProjectReference Include="..\CodeFixes\MicroUtils.HarmonyAnalyzers.CodeFixes.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.CodeFixes.dll" />
-    <ProjectReference Include="..\Completions\MicroUtils.HarmonyAnalyzers.Completions.csproj" ReferenceOutputAssembly="true" IncludeAssets="MicroUtils.HarmonyAnalyzers.Completions.dll" />
+    <ProjectReference Include="..\Analyzers\MicroUtils.HarmonyAnalyzers.csproj" />
+    <ProjectReference Include="..\CodeFixes\MicroUtils.HarmonyAnalyzers.CodeFixes.csproj" />
+    <ProjectReference Include="..\Completions\MicroUtils.HarmonyAnalyzers.Completions.csproj" />
   </ItemGroup>
-  
-  <PropertyGroup>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
-  </PropertyGroup>
 
-  <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+  <Target Name="_AddAnalyzersToOutput">
     <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+      <TfmSpecificPackageFile Include="$(OutputPath)\MicroUtils.HarmonyAnalyzers.dll" PackagePath="analyzers/dotnet/cs" />
+      <TfmSpecificPackageFile Include="$(OutputPath)\MicroUtils.HarmonyAnalyzers.CodeFixes.dll" PackagePath="analyzers/dotnet/cs" />
+      <TfmSpecificPackageFile Include="$(OutputPath)\MicroUtils.HarmonyAnalyzers.Completions.dll" PackagePath="analyzers/dotnet/cs" />
     </ItemGroup>
   </Target>
 
