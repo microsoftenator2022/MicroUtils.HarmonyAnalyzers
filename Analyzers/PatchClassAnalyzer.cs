@@ -91,7 +91,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(context =>
         {
-            // Need to see non-public members from external references.
+            // Need to see non-public members and types from external references.
             var compilation = context.Compilation.WithAllMembers();
 
             // This should be fine
@@ -99,7 +99,9 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             SemanticModel GetSemanticModel(SyntaxTree tree) => compilation.GetSemanticModel(tree, true);
 #pragma warning restore RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
 
-            SemanticModel GetCachedSemanticModel(SyntaxTree tree) => context.TryGetValue<SemanticModel>(tree, new(GetSemanticModel), out var sm) ? sm : GetSemanticModel(tree);
+            SemanticModel GetCachedSemanticModel(SyntaxTree tree) =>
+                context.TryGetValue<SemanticModel>(tree, new(GetSemanticModel), out var sm) ?
+                    sm : GetSemanticModel(tree);
 
             context.RegisterSyntaxNodeAction(
                 snContext =>
@@ -112,7 +114,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     try
                     {
 #endif
-                        AnalyzeClassDeclaration(cds, compilation, semanticModel, reports => snContext.ReportAll(reports), snContext.CancellationToken);
+                        AnalyzeClassDeclaration(
+                            cds,
+                            compilation,
+                            semanticModel,
+                            report => snContext.ReportDiagnostic(report),
+                            snContext.CancellationToken);
 #if DEBUG
                     }
                     catch (Exception ex)
@@ -124,7 +131,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private static void AnalyzeClassDeclaration(ClassDeclarationSyntax cds, Compilation compilation, SemanticModel sm, Action<IEnumerable<Diagnostic>> report, CancellationToken ct)
+    private static void AnalyzeClassDeclaration(
+        ClassDeclarationSyntax cds,
+        Compilation compilation,
+        SemanticModel sm,
+        Action<Diagnostic> report,
+        CancellationToken ct)
     {
         if (sm.GetDeclaredSymbol(cds, ct) is not INamedTypeSymbol classSymbol)
             return;
@@ -190,7 +202,13 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             if (ct.IsCancellationRequested)
                 break;
 #if DEBUG
-            report(patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]));
+            foreach (var d in patchMethodData.CreateDiagnostics(DebugMessage, messageArgs: [patchMethodData]))
+            {
+                if (ct.IsCancellationRequested)
+                    break;
+
+                report(d);
+            }
 #endif
             diagnostics = diagnostics
                 .AddRange(MissingPatchTypeAttribute.Check(patchMethodData))
@@ -306,7 +324,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             if (ct.IsCancellationRequested)
                 return;
 
-            report([diagnostic]);
+            report(diagnostic);
         }
     }
 }
