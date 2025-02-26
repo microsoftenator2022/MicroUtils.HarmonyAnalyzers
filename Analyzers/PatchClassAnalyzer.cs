@@ -91,10 +91,13 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(context =>
         {
-            // Need to see non-public members and types from external references.
+            // Notes: The analyzer needs to see non-public members and types from external references.
+            // However, the provided compilation and semantic model cannot see non-public types or members
+            // (even with if you create a new SemanticModel with ignoreAccessibility = true)
+            // Workaround: create a single new compilation on Compilation start and share the new SemanticModel
+            // between analysis contexts where possible
             var compilation = context.Compilation.WithAllMembers();
 
-            // This should be fine
 #pragma warning disable RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
             SemanticModel GetSemanticModel(SyntaxTree tree) => compilation.GetSemanticModel(tree, true);
 #pragma warning restore RS1030 // Do not invoke Compilation.GetSemanticModel() method within a diagnostic analyzer
