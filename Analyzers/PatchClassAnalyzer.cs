@@ -84,6 +84,35 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         ReversePatchType.Descriptor
     ];
 
+    static readonly ImmutableArray<Func<PatchClassData, CancellationToken, ImmutableArray<Diagnostic>>> patchClassChecks =
+    [
+        PatchRule.Check<MissingClassAttribute>,
+        PatchRule.Check<NoPatchMethods>,
+    ];
+
+    static readonly ImmutableArray<Func<PatchClassData, CancellationToken, ImmutableArray<Diagnostic>>> targetMethodChecks =
+    [
+        PatchRule.Check<MultipleTargetMethodDefinitions>,
+        PatchRule.Check<InvalidPatchMethodReturnType.TargetMethod>,
+        PatchRule.Check<InvalidPatchMethodReturnType.TargetMethods>
+    ];
+
+    static readonly ImmutableArray<Func<PatchMethodData, SemanticModel, CancellationToken, ImmutableArray<Diagnostic>>> patchMethodChecks =
+    [
+        PatchRule.Check<MissingPatchTypeAttribute>,
+        PatchRule.Check<PatchTypeAttributeConflict>,
+        PatchRule.Check<InvalidPatchMethodReturnType.PatchMethod>,
+        PatchRule.Check<PaasthroughPostfixResultInjection>,
+        PatchRule.Check<AssignmentToNonRefResultArgument>,
+        PatchRule.Check<InjectedParamterNotFoundOnTargetMethod>,
+        PatchRule.Check<PatchAttributeConflict>,
+        PatchRule.Check<InvalidInjectedParameterType>,
+        PatchRule.Check<InvalidTranspilerParameter>,
+        PatchRule.Check<UseOutForPrefixStateInjection>,
+        PatchRule.Check<ParameterIndexInjection>,
+        PatchRule.Check<ReversePatchType>
+    ];
+
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
@@ -169,8 +198,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         if (classAttributes.Length == 0 && patchMethods.Length == 0)
             return;
 
-        var diagnostics = ImmutableArray<Diagnostic>.Empty;
-
         var patchMethodsData = patchMethods
             .Select(pair =>
             {
@@ -193,9 +220,13 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         var patchClassData = new PatchClassData(classSymbol, classAttributes, patchMethodsData, compilation, commonSymbols);
 
 #region Rules for patch class
-        diagnostics = diagnostics
-            .AddRange(PatchRule.Check<MissingClassAttribute>(patchClassData, ct))
-            .AddRange(PatchRule.Check<NoPatchMethods>(patchClassData, ct));
+        foreach (var diagnostic in patchClassChecks.SelectMany(check => check(patchClassData, ct)))
+        {
+            if (ct.IsCancellationRequested)
+                break;
+
+            report(diagnostic);
+        }
 #endregion
 
 #region General patch method rules
@@ -212,32 +243,31 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 report(d);
             }
 #endif
-            diagnostics = diagnostics
-                .AddRange(PatchRule.Check<MissingPatchTypeAttribute>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<PatchTypeAttributeConflict>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.PatchMethod>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<PaasthroughPostfixResultInjection>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<AssignmentToNonRefResultArgument>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<InjectedParamterNotFoundOnTargetMethod>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<PatchAttributeConflict>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<InvalidInjectedParameterType>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<InvalidTranspilerParameter>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<UseOutForPrefixStateInjection>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<ParameterIndexInjection>(patchMethodData, sm, ct))
-                .AddRange(PatchRule.Check<ReversePatchType>(patchMethodData, sm, ct));
+            foreach (var diagnostic in patchMethodChecks.SelectMany(check => check(patchMethodData, sm, ct)))
+            {
+                if (ct.IsCancellationRequested)
+                    break;
+
+                report(diagnostic);
+            }
         }
 #endregion
+
+        var diagnostics = ImmutableArray<Diagnostic>.Empty;
 
 #region Rules for TargetMethod/TargetMethods
         if (patchClassData.TargetMethodMethods.Value.Concat(patchClassData.TargetMethodsMethods.Value).Count() > 0)
         {
-            diagnostics = diagnostics
-                .AddRange(PatchRule.Check<MultipleTargetMethodDefinitions>(patchClassData, ct))
-                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.TargetMethod>(patchClassData, ct))
-                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.TargetMethods>(patchClassData, ct));
+            foreach (var diagnostic in targetMethodChecks.SelectMany(check => check(patchClassData, ct)))
+            {
+                if (ct.IsCancellationRequested)
+                    break;
+
+                report(diagnostic);
+            }
         }
 #endregion
-        
+
 #region Rules for target method resolution
         else
         {
