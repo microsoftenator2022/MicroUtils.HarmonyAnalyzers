@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class MissingClassAttribute
+internal readonly struct MissingClassAttribute : IPatchClassRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA001),
@@ -22,20 +23,21 @@ internal static class MissingClassAttribute
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(
-        INamedTypeSymbol classSymbol,
-        ImmutableArray<AttributeData> classPatchAttributes,
-        ImmutableArray<PatchMethodData> methodAttributes,
-        INamedTypeSymbol harmonyPatchAttributeType)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchClassData patchClassData,
+        //INamedTypeSymbol harmonyPatchAttributeType,
+        CancellationToken _)
     {
-        if (classPatchAttributes.Length == 0 && methodAttributes.Length > 0)
+        if (patchClassData.ClassAttributes.Length == 0 && patchClassData.PatchMethods.Length > 0)
         {
             var diagnostic = new DiagnosticBuilder(Descriptor)
             {
-                MessageArgs = [classSymbol, harmonyPatchAttributeType]
+                MessageArgs = [patchClassData.ClassSymbol, patchClassData.CommonSymbols.HarmonyPatchAttribute]
             };
 
-            return diagnostic.ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
+            return diagnostic.ForAllLocations(patchClassData.ClassSymbol.Locations).CreateAll().ToImmutableArray();
         }
 
         return [];

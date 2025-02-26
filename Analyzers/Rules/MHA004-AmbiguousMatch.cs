@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class AmbiguousMatch
+internal readonly struct AmbiguousMatch : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA004),
@@ -21,8 +22,12 @@ internal static class AmbiguousMatch
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(
-        PatchMethodData patchMethodData)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchMethodData patchMethodData,
+        SemanticModel _0,
+        CancellationToken _1)
     {
         if (!patchMethodData.IsAmbiguousMatch)
             return [];

@@ -12,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class PatchTypeAttributeConflict
+internal readonly struct PatchTypeAttributeConflict : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA011),
@@ -21,6 +21,8 @@ internal static class PatchTypeAttributeConflict
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     internal static IEnumerable<Location> CheckInternal(
         PatchMethodData methodData,
@@ -52,8 +54,9 @@ internal static class PatchTypeAttributeConflict
             .Concat(methodNamePatchType is not null ? methodData.PatchMethod.Locations : []);
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
+    public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
+        SemanticModel _1,
         CancellationToken ct)
     {
         var conflictLocations = CheckInternal(methodData, ct).ToImmutableArray();

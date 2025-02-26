@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 
@@ -10,7 +11,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class ParameterIndexInjection
+internal readonly struct ParameterIndexInjection : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA017),
@@ -20,7 +21,11 @@ internal static class ParameterIndexInjection
         DiagnosticSeverity.Info,
         true);
 
-    private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(PatchMethodData methodData)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
+        PatchMethodData methodData,
+        CancellationToken ct)
     {
         var argInjections = methodData.PatchMethod.Parameters
             .Select(p => (p, HarmonyHelpers.ArgInjectionRegex.Match(p.Name)))
@@ -32,6 +37,9 @@ internal static class ParameterIndexInjection
 
         foreach (var (p, index) in argInjections)
         {
+            if (ct.IsCancellationRequested)
+                yield break;
+
             var parameterName = methodData.TargetMethod?.Parameters[index].Name;
 
             yield return methodData.CreateDiagnostics(
@@ -42,6 +50,9 @@ internal static class ParameterIndexInjection
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(PatchMethodData methodData) =>
-        CheckInternal(methodData).Concat().ToImmutableArray();
+    public ImmutableArray<Diagnostic> Check(
+        PatchMethodData methodData,
+        SemanticModel _1,
+        CancellationToken cancellationToken) =>
+        CheckInternal(methodData, cancellationToken).Concat().ToImmutableArray();
 }

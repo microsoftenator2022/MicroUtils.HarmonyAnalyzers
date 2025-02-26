@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class MissingPatchTypeAttribute
+internal readonly struct MissingPatchTypeAttribute : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA002),
@@ -21,8 +22,12 @@ internal static class MissingPatchTypeAttribute
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(
-        PatchMethodData methodData)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchMethodData methodData,
+        SemanticModel _1,
+        CancellationToken _2)
     {
         if (methodData.PatchType is null)
         {

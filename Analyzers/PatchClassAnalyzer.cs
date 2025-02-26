@@ -106,18 +106,14 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             context.RegisterSyntaxNodeAction(
                 snContext =>
                 {
-                    if (snContext.Node is not ClassDeclarationSyntax cds)
-                        return;
-
-                    var semanticModel = GetCachedSemanticModel(snContext.FilterTree);
 #if DEBUG
                     try
                     {
 #endif
                         AnalyzeClassDeclaration(
-                            cds,
+                            snContext.Node,
                             compilation,
-                            semanticModel,
+                            GetCachedSemanticModel,
                             report => snContext.ReportDiagnostic(report),
                             snContext.CancellationToken);
 #if DEBUG
@@ -132,17 +128,21 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
     }
 
     private static void AnalyzeClassDeclaration(
-        ClassDeclarationSyntax cds,
+        SyntaxNode node,
         Compilation compilation,
-        SemanticModel sm,
+        Func<SyntaxTree, SemanticModel> getSemanticModel,
         Action<Diagnostic> report,
         CancellationToken ct)
     {
-        if (sm.GetDeclaredSymbol(cds, ct) is not INamedTypeSymbol classSymbol)
+        if (node is not ClassDeclarationSyntax cds ||
+            getSemanticModel(cds.SyntaxTree) is not { } sm ||
+            sm.GetDeclaredSymbol(cds, ct) is not INamedTypeSymbol classSymbol)
             return;
 
-        if (HarmonyHelpers.GetHarmonyPatchType(compilation, ct) is not { } harmonyAttribute)
+        if (CommonSymbols.Get(compilation, ct) is not { } commonSymbols)
             return;
+
+        var harmonyAttribute = commonSymbols.HarmonyPatchAttribute;
 
         var classAttributes = classSymbol.GetAttributes()
             .Where(attr => attr.AttributeClass?.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ?? false)
@@ -155,8 +155,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 var attrs = m.GetAttributes()
                     .Where(attr => attr.AttributeClass is { } type && 
                         (type.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ||
-                        HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(compilation, ct)
-                            .Any(at => at.Item2.Equals(type, SymbolEqualityComparer.Default))
+                        commonSymbols.HarmonyPatchTypeAttributes.Values
+                            .Any(at => at.Equals(type, SymbolEqualityComparer.Default))
                         ))
                     .ToImmutableArray();
 
@@ -190,10 +190,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             })
             .ToImmutableArray();
 
+        var patchClassData = new PatchClassData(classSymbol, classAttributes, patchMethodsData, compilation, commonSymbols);
+
 #region Rules for patch class
         diagnostics = diagnostics
-            .AddRange(MissingClassAttribute.Check(classSymbol, classAttributes, patchMethodsData, harmonyAttribute))
-            .AddRange(NoPatchMethods.Check(classSymbol, classAttributes, patchMethodsData));
+            .AddRange(PatchRule.Check<MissingClassAttribute>(patchClassData, ct))
+            .AddRange(PatchRule.Check<NoPatchMethods>(patchClassData, ct));
 #endregion
 
 #region General patch method rules
@@ -211,65 +213,28 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             }
 #endif
             diagnostics = diagnostics
-                .AddRange(MissingPatchTypeAttribute.Check(patchMethodData))
-                .AddRange(PatchTypeAttributeConflict.Check(patchMethodData, ct))
-                .AddRange(InvalidPatchMethodReturnType.CheckPatchMethod(patchMethodData, ct))
-                .AddRange(PaasthroughPostfixResultInjection.Check(patchMethodData))
-                .AddRange(AssignmentToNonRefResultArgument.Check(sm, patchMethodData, ct))
-                .AddRange(InjectedParamterNotFoundOnTargetMethod.Check(patchMethodData, ct))
-                .AddRange(PatchAttributeConflict.Check(patchMethodData, ct))
-                .AddRange(InvalidInjectedParameterType.Check(patchMethodData))
-                .AddRange(InvalidTranspilerParameter.Check(patchMethodData, ct))
-                .AddRange(UseOutForPrefixStateInjection.Check(patchMethodData))
-                .AddRange(ParameterIndexInjection.Check(patchMethodData))
-                .AddRange(ReversePatchType.Check(patchMethodData, ct));
+                .AddRange(PatchRule.Check<MissingPatchTypeAttribute>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<PatchTypeAttributeConflict>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.PatchMethod>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<PaasthroughPostfixResultInjection>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<AssignmentToNonRefResultArgument>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<InjectedParamterNotFoundOnTargetMethod>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<PatchAttributeConflict>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<InvalidInjectedParameterType>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<InvalidTranspilerParameter>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<UseOutForPrefixStateInjection>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<ParameterIndexInjection>(patchMethodData, sm, ct))
+                .AddRange(PatchRule.Check<ReversePatchType>(patchMethodData, sm, ct));
         }
 #endregion
 
 #region Rules for TargetMethod/TargetMethods
-        bool isTargetMethod(IMethodSymbol m) =>
-            m.Name is HarmonyConstants.TargetMethodMethodName ||
-            m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodType(compilation, ct), SymbolEqualityComparer.Default));
-
-        bool isTargetMethods(IMethodSymbol m) =>
-            m.Name is HarmonyConstants.TargetMethodsMethodName ||
-            m.GetAttributes().Any(attr => attr.AttributeClass is not null &&
-                attr.AttributeClass.Equals(HarmonyHelpers.GetHarmonyTargetMethodsType(compilation, ct), SymbolEqualityComparer.Default));
-
-        var targetMethodMethods = classSymbol.GetMembers()
-            .OfType<IMethodSymbol>()
-            .Where(isTargetMethod)
-            .ToImmutableArray();
-
-        var targetMethodsMethods = classSymbol.GetMembers()
-            .OfType<IMethodSymbol>()
-            .Where(isTargetMethods)
-            .ToImmutableArray();
-
-        var MethodBaseType = compilation.GetTypeByMetadataName(typeof(MethodBase).ToString());
-        var IEnumerableMethodBaseType = MethodBaseType is { } mb ?
-            (compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T))?.Construct(mb) : null;
-
-        var allPatchTargetMethodMembers = targetMethodMethods.Concat(targetMethodsMethods).ToImmutableArray();
-
-        if (MethodBaseType is not null && IEnumerableMethodBaseType is not null && allPatchTargetMethodMembers.Count() > 0)
+        if (patchClassData.TargetMethodMethods.Value.Concat(patchClassData.TargetMethodsMethods.Value).Count() > 0)
         {
             diagnostics = diagnostics
-                .AddRange(MultipleTargetMethodDefinitions.Check(
-                    classSymbol, classAttributes, patchMethodsData, allPatchTargetMethodMembers, ct));
-
-            foreach (var m in targetMethodMethods)
-            {
-                diagnostics = diagnostics
-                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethod(compilation, m, MethodBaseType));
-            }
-
-            foreach (var m in targetMethodsMethods)
-            {
-                diagnostics = diagnostics
-                    .AddRange(InvalidPatchMethodReturnType.CheckTargetMethods(compilation, m, IEnumerableMethodBaseType));
-            }
+                .AddRange(PatchRule.Check<MultipleTargetMethodDefinitions>(patchClassData, ct))
+                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.TargetMethod>(patchClassData, ct))
+                .AddRange(PatchRule.Check<InvalidPatchMethodReturnType.TargetMethods>(patchClassData, ct));
         }
 #endregion
         
@@ -284,7 +249,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 if (patchMethodData.TargetMethod is not null)
                     continue;
 
-                var missingMethodTypes = MissingMethodType.Check(patchMethodData, ct);
+                var missingMethodTypes = PatchRule.Check<MissingMethodType>(patchMethodData, sm, ct);
                 if (missingMethodTypes.Length > 0)
                 {
                     diagnostics = diagnostics.AddRange(missingMethodTypes);
@@ -292,7 +257,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                     continue;
                 }
 
-                var ambiguous = AmbiguousMatch.Check(patchMethodData);
+                var ambiguous = PatchRule.Check<AmbiguousMatch>(patchMethodData, sm, ct);
                 if (ambiguous.Length > 0)
                 {
                     diagnostics = diagnostics.AddRange(ambiguous);

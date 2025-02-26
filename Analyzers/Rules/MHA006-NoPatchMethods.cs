@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class NoPatchMethods
+internal readonly struct NoPatchMethods : IPatchClassRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA006),
@@ -22,14 +23,15 @@ internal static class NoPatchMethods
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(
-        INamedTypeSymbol classSymbol,
-        ImmutableArray<AttributeData> classAttributes,
-        ImmutableArray<PatchMethodData> methodAttributes)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchClassData patchClassData,
+        CancellationToken _)
     {
-        if (classAttributes.Length > 0 && methodAttributes.Length == 0)
+        if (patchClassData.ClassAttributes.Length > 0 && patchClassData.PatchMethods.Length == 0)
         { 
-            return new DiagnosticBuilder(Descriptor).ForAllLocations(classSymbol.Locations).CreateAll().ToImmutableArray();
+            return new DiagnosticBuilder(Descriptor).ForAllLocations(patchClassData.ClassSymbol.Locations).CreateAll().ToImmutableArray();
         }
 
         return [];
