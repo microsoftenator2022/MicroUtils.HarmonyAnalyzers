@@ -11,7 +11,6 @@ internal interface IPatchClassRule : IPatchRule
 {
     ImmutableArray<Diagnostic> Check(
         PatchClassData patchClassData,
-        //INamedTypeSymbol harmonyPatchAttributeType,
         CancellationToken cancellationToken);
 }
 
@@ -19,7 +18,6 @@ internal static partial class PatchRule
 {
     public static ImmutableArray<Diagnostic> Check<TRule>(
         PatchClassData patchClassData,
-        //INamedTypeSymbol harmonyPatchAttributeType,
         CancellationToken cancellationToken) where TRule : struct, IPatchClassRule
     {
         if (cancellationToken.IsCancellationRequested)
@@ -27,7 +25,6 @@ internal static partial class PatchRule
 
         return default(TRule).Check(
             patchClassData,
-            //harmonyPatchAttributeType,
             cancellationToken);
     }
 }

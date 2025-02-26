@@ -84,20 +84,29 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         ReversePatchType.Descriptor
     ];
 
-    static readonly ImmutableArray<Func<PatchClassData, CancellationToken, ImmutableArray<Diagnostic>>> patchClassChecks =
+    delegate ImmutableArray<Diagnostic> PatchClassRuleCheck(
+        PatchClassData patchClassData,
+        CancellationToken cancellationToken);
+
+    static readonly ImmutableArray<PatchClassRuleCheck> patchClassChecks =
     [
         PatchRule.Check<MissingClassAttribute>,
         PatchRule.Check<NoPatchMethods>,
     ];
 
-    static readonly ImmutableArray<Func<PatchClassData, CancellationToken, ImmutableArray<Diagnostic>>> targetMethodChecks =
+    static readonly ImmutableArray<PatchClassRuleCheck> targetMethodChecks =
     [
         PatchRule.Check<MultipleTargetMethodDefinitions>,
         PatchRule.Check<InvalidPatchMethodReturnType.TargetMethod>,
         PatchRule.Check<InvalidPatchMethodReturnType.TargetMethods>
     ];
 
-    static readonly ImmutableArray<Func<PatchMethodData, SemanticModel, CancellationToken, ImmutableArray<Diagnostic>>> patchMethodChecks =
+    delegate ImmutableArray<Diagnostic> PatchMethodRuleCheck(
+        PatchMethodData patchMethodData,
+        SemanticModel semanticModel,
+        CancellationToken cancellationToken);
+
+    static readonly ImmutableArray<PatchMethodRuleCheck> patchMethodChecks =
     [
         PatchRule.Check<MissingPatchTypeAttribute>,
         PatchRule.Check<PatchTypeAttributeConflict>,
