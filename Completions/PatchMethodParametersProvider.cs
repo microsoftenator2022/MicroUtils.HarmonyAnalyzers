@@ -25,20 +25,14 @@ internal class PatchMethodParametersProvider : CompletionProvider
     
     public override async Task ProvideCompletionsAsync(CompletionContext context)
     {
-        if (await context.Document.GetSyntaxRootAsync(context.CancellationToken) is not { } syntax ||
+        if (await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false) is not { } syntax ||
             syntax.FindNode(context.CompletionListSpan)?.FirstAncestorOrSelf<MethodDeclarationSyntax>() is not { } mds)
             return;
 
         if (!mds.ParameterList.FullSpan.Contains(context.CompletionListSpan))
             return;
 
-        if (await
-//#if DEBUG
-            context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken)
-//#else
-//            context.Document.GetSemanticModelAsync(context.CancellationToken)
-//#endif
-            is not { } sm)
+        if (await context.Document.GetIgnoreAccessSemanticModelAsync(context.CancellationToken).ConfigureAwait(false) is not { } sm)
             return;
 
         if (sm.GetDeclaredSymbol(mds) is not IMethodSymbol methodSymbol)
@@ -51,7 +45,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         var methodData = maybeMethodData.Value;
 
-        var text = await context.Document.GetTextAsync(context.CancellationToken);
+        var text = await context.Document.GetTextAsync(context.CancellationToken).ConfigureAwait(false);
 
         ITypeSymbol? parameterType = null;
 
@@ -173,7 +167,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
     {
         async Task<CompletionChange> noChanges()
         {
-            var changes = (await document.GetTextChangesAsync(document, cancellationToken)).ToImmutableArray();
+            var changes = (await document.GetTextChangesAsync(document, cancellationToken).ConfigureAwait(false)).ToImmutableArray();
 
             return CompletionChange.Create(changes.FirstOrDefault(), changes);
         }
@@ -200,7 +194,7 @@ internal class PatchMethodParametersProvider : CompletionProvider
 
         if (pList is null)
         {
-            var spanText = (await document.GetTextAsync(cancellationToken))?.GetSubText(span).ToString();
+            var spanText = (await document.GetTextAsync(cancellationToken).ConfigureAwait(false))?.GetSubText(span).ToString();
 
             throw new InvalidOperationException($"Could not find node for span {span}: '{spanText ?? span.ToString()}'. " +
                 $"Token: '{syntaxRoot.FindToken(span.Start, true)}'. Node: '{syntaxRoot.FindNode(span, true, true) ??
