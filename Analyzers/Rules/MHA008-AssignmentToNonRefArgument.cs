@@ -13,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class AssignmentToNonRefResultArgument
+internal readonly struct AssignmentToNonRefResultArgument : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA008),
@@ -22,6 +22,8 @@ internal static class AssignmentToNonRefResultArgument
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     private static IEnumerable<Diagnostic> CheckInternal(
         SemanticModel semanticModel,
@@ -51,8 +53,8 @@ internal static class AssignmentToNonRefResultArgument
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
-        SemanticModel semanticModel,
+    public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
+        SemanticModel semanticModel,
         CancellationToken ct) => CheckInternal(semanticModel, methodData, ct).ToImmutableArray();
 }

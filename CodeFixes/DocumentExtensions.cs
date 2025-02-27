@@ -10,9 +10,6 @@ namespace MicroUtils.HarmonyAnalyzers;
 
 static class DocumentExtensions
 {
-
-    // FIXME: Should cache the new compilation somewhere within the CodeFixContext/CompletionContext
-    // Also maybe cache the Semantic model (per-Document?)
     public static async Task<SemanticModel?> GetIgnoreAccessSemanticModelAsync(this Document document, CancellationToken ct)
     {
         if (await document.GetSemanticModelAsync(ct) is not { } sm)
@@ -23,5 +20,14 @@ static class DocumentExtensions
 
         var compilation = sm.Compilation.WithAllMembers();
         return compilation.GetSemanticModel(st, true);
+    }
+
+    public static async Task<TNode?> FindSyntaxNodeAsync<TNode>(this Document document, Location location, CancellationToken ct)
+        where TNode : SyntaxNode
+    {
+        if (await document.GetSyntaxRootAsync(ct) is not { } syntaxRoot)
+            return null;
+
+        return syntaxRoot.FindNode(location.SourceSpan) as TNode;
     }
 }

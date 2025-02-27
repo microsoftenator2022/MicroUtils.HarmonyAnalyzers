@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 
@@ -10,7 +11,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class UseOutForPrefixStateInjection
+internal readonly struct UseOutForPrefixStateInjection : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA016),
@@ -20,7 +21,12 @@ internal static class UseOutForPrefixStateInjection
         DiagnosticSeverity.Info,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(PatchMethodData methodData)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchMethodData methodData,
+        SemanticModel _1,
+        CancellationToken _2)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.Prefix)
             return [];

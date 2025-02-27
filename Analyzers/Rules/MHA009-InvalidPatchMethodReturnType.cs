@@ -14,7 +14,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
-using static HarmonyConstants.HarmonyPatchType;
 
 internal static class InvalidPatchMethodReturnType
 {
@@ -38,119 +37,150 @@ internal static class InvalidPatchMethodReturnType
         DiagnosticSeverity.Warning,
         true);
 
-    private static IEnumerable<Diagnostic> CheckPatchMethodInternal(
-        PatchMethodData methodData,
-        CancellationToken ct)
+    internal readonly struct PatchMethod : IPatchMethodRule
     {
-        if (methodData.PatchType is null)
-            yield break;
+        DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
-        var compilation = methodData.Compilation;
+        private static IEnumerable<Diagnostic> CheckInternal(
+            PatchMethodData methodData,
+            CancellationToken ct)
+        {
+            if (methodData.PatchType is null)
+                yield break;
+
+            var compilation = methodData.Compilation;
 
         
 
-        var voidType = compilation.GetSpecialType(SpecialType.System_Void);
-        var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
-        var ExceptionType = typeof(Exception).ToNamedTypeSymbol(compilation);
+            var voidType = compilation.GetSpecialType(SpecialType.System_Void);
+            var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
+            var ExceptionType = typeof(Exception).ToNamedTypeSymbol(compilation);
 
-        if (ExceptionType is null)
-        {
-#if DEBUG
-            yield return Diagnostic.Create(
-                PatchClassAnalyzer.DebugMessage,
-                methodData.PatchMethod.Locations[0],
-                $"Exception = {ExceptionType}");
-#endif
-            yield break;
-        }
-
-        if (methodData.PatchType is not { } patchType)
-            yield break;
-
-        var maybePassthrough = methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
-
-        var (hasValidReturnType, validReturnTypes) = HarmonyHelpers.HasValidReturnType(methodData, compilation, ct);
-
-        if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
-            )
-        {
-            var locations = methodData.PatchMethod.DeclaringSyntaxReferences
-                .Choose(s => Optional.MaybeValue(s.GetSyntax() as MethodDeclarationSyntax))
-                .Select(s => s.ReturnType.GetLocation())
-                .ToImmutableArray();
-
-            foreach (var d in methodData.CreateDiagnostics(
-                descriptor: Descriptor,
-                primaryLocations: methodData.PatchMethod.DeclaringSyntaxReferences
-                    .Select(sr => sr.GetSyntax())
-                    .OfType<MethodDeclarationSyntax>()
-                    .Select(mds => mds.ReturnType.GetLocation()).ToImmutableArray(),
-                messageArgs:
-                [
-                    methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes),
-#if DEBUG
-                    maybePassthrough ?
-                    $"Return type: {methodData.PatchMethod.ReturnType} -> {methodData.TargetMethod?.ReturnType}. " +
-                    $@"Conversion: {(methodData.TargetMethod is not null ?
-                        compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, methodData.TargetMethod.ReturnType) :
-                        null)}" : ""
-#endif
-                ]))
+            if (ExceptionType is null)
             {
-                yield return d;
+    #if DEBUG
+                yield return Diagnostic.Create(
+                    PatchClassAnalyzer.DebugMessage,
+                    methodData.PatchMethod.Locations[0],
+                    $"Exception = {ExceptionType}");
+    #endif
+                yield break;
+            }
+
+            if (methodData.PatchType is not { } patchType)
+                yield break;
+
+            var maybePassthrough = methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
+
+            var (hasValidReturnType, validReturnTypes) = HarmonyHelpers.HasValidReturnType(methodData, compilation, ct);
+
+            if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
+                )
+            {
+                var locations = methodData.PatchMethod.DeclaringSyntaxReferences
+                    .Choose(s => Optional.MaybeValue(s.GetSyntax() as MethodDeclarationSyntax))
+                    .Select(s => s.ReturnType.GetLocation())
+                    .ToImmutableArray();
+
+                foreach (var d in methodData.CreateDiagnostics(
+                    descriptor: Descriptor,
+                    primaryLocations: methodData.PatchMethod.DeclaringSyntaxReferences
+                        .Select(sr => sr.GetSyntax())
+                        .OfType<MethodDeclarationSyntax>()
+                        .Select(mds => mds.ReturnType.GetLocation()).ToImmutableArray(),
+                    messageArgs:
+                    [
+                        methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes),
+    #if DEBUG
+                        maybePassthrough ?
+                        $"Return type: {methodData.PatchMethod.ReturnType} -> {methodData.TargetMethod?.ReturnType}. " +
+                        $@"Conversion: {(methodData.TargetMethod is not null ?
+                            compilation.ClassifyConversion(methodData.PatchMethod.ReturnType, methodData.TargetMethod.ReturnType) :
+                            null)}" : ""
+    #endif
+                    ]))
+                {
+                    yield return d;
+                }
             }
         }
+
+        public ImmutableArray<Diagnostic> Check(
+            PatchMethodData methodData,
+            SemanticModel _1,
+            CancellationToken ct) => CheckInternal(methodData, ct).ToImmutableArray();
     }
 
-    internal static ImmutableArray<Diagnostic> CheckPatchMethod(
-        PatchMethodData methodData,
-        CancellationToken ct) => CheckPatchMethodInternal(methodData, ct).ToImmutableArray();
-
-    internal static ImmutableArray<Diagnostic> CheckTargetMethod(
-        Compilation compilation,
-        IMethodSymbol method,
-        INamedTypeSymbol MethodBaseType)
+    internal readonly struct TargetMethod : IPatchClassRule
     {
-        if (!compilation.ClassifyConversion(method.ReturnType, MethodBaseType).IsStandardImplicit())
+        DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+        public ImmutableArray<Diagnostic> Check(PatchClassData patchClassData, CancellationToken ct)
         {
-            var diagnostic = new DiagnosticBuilder(Descriptor)
-            {
-                MessageArgs =
-                [
-                    method.ReturnType, MethodBaseType,
+            return patchClassData.TargetMethodMethods.Value
+                .SelectMany(method =>
+                {
+                    if (ct.IsCancellationRequested)
+                        return [];
+
+                    if (!patchClassData.Compilation
+                        .ClassifyConversion(method.ReturnType, patchClassData.CommonSymbols.MethodBase)
+                        .IsStandardImplicit())
+                    {
+                        var diagnostic = new DiagnosticBuilder(Descriptor)
+                        {
+                            MessageArgs =
+                            [
+                                method.ReturnType, patchClassData.CommonSymbols.MethodBase,
 #if DEBUG
-                    null
+                                null
 #endif
-                ]
-            };
+                            ]
+                        };
 
-            return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                        return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                    }
+
+                    return [];
+                })
+                .ToImmutableArray();
         }
-
-        return [];
     }
 
-    internal static ImmutableArray<Diagnostic> CheckTargetMethods(
-        Compilation compilation,
-        IMethodSymbol method,
-        INamedTypeSymbol IEnumerableMethodBaseType)
+    internal readonly struct TargetMethods : IPatchClassRule
     {
-        if (!compilation.ClassifyConversion(method.ReturnType, IEnumerableMethodBaseType).IsStandardImplicit())
+        DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+        public ImmutableArray<Diagnostic> Check(PatchClassData patchClassData, CancellationToken ct)
         {
-            var diagnostic = new DiagnosticBuilder(Descriptor)
-            {
-                MessageArgs =
-                [
-                    method.ReturnType, IEnumerableMethodBaseType,
+            return patchClassData.TargetMethodsMethods.Value
+                .SelectMany(method =>
+                {
+                    if (ct.IsCancellationRequested)
+                        return [];
+
+                    if (!patchClassData.Compilation
+                        .ClassifyConversion(method.ReturnType, patchClassData.CommonSymbols.IEnumerable_MethodBase)
+                        .IsStandardImplicit())
+                    {
+                        var diagnostic = new DiagnosticBuilder(Descriptor)
+                        {
+                            MessageArgs =
+                            [
+                                method.ReturnType, patchClassData.CommonSymbols.IEnumerable_MethodBase,
 #if DEBUG
-                    null
+                                null
 #endif
-                ]
-            };
+                            ]
+                        };
 
-            return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                        return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                    }
+
+                    return [];
+
+                })
+                .ToImmutableArray();
         }
-
-        return [];
     }
 }

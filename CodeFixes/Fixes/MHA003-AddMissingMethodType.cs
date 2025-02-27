@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,54 +15,49 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 using static SyntaxFactory;
-internal static class AddMissingMethodType
+internal readonly struct AddMissingMethodType : IHarmonyCodeFix
 {
-    internal static async Task<CodeAction?> GetActionAsync(Document document, MethodDeclarationSyntax mds, Diagnostic diagnostic, CancellationToken ct)
+    public DiagnosticId DiagnosticId => DiagnosticId.MHA003;
+
+    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+        Diagnostic diagnostic,
+        Document document,
+        SemanticModel sm,
+        [EnumeratorCancellation] CancellationToken ct)
     {
+        if (diagnostic.Location is not { } location ||
+            await document.FindSyntaxNodeAsync<MethodDeclarationSyntax>(location, ct).ConfigureAwait(false) is not { } mds)
+            yield break;
+
         if (!diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetMethodType), out var methodTypeName) ||
             !Enum.TryParse<HarmonyConstants.PatchTargetMethodType>(methodTypeName, out var methodType))
-            return null;
-
-        if (await
-//#if DEBUG
-            document.GetIgnoreAccessSemanticModelAsync(ct)
-//#else
-//            document.GetSemanticModelAsync(ct)
-//#endif
-    is not { } sm)
-            return null;
+            yield break;
 
         if (HarmonyHelpers.GetHarmonyMethodTypeType(sm.Compilation, ct) is not INamedTypeSymbol methodTypeType)
-            return null;
+            yield break;
 
         var enumField = methodTypeType.GetMembers().OfType<IFieldSymbol>().FirstOrDefault(f => f.HasConstantValue && (f.ConstantValue as int?) == (int)methodType);
 
         var title = $"Add {enumField.ToMinimalDisplayString(sm, mds.SpanStart)} with HarmonyPatch attribute";
 
-        return CodeAction.Create(
+        yield return CodeAction.Create(
             title,
-            ct => AddMethodTypeAttributeAsync(document, mds, methodType, methodTypeType, enumField, ct),
+            ct => AddMethodTypeAttributeAsync(document, mds, sm, methodType, methodTypeType, enumField, ct),
             equivalenceKey: title);
     }
 
     private static async Task<Document> AddMethodTypeAttributeAsync(
         Document document,
         MethodDeclarationSyntax mds,
+        SemanticModel sm,
         HarmonyConstants.PatchTargetMethodType methodType,
         INamedTypeSymbol methodTypeType,
         IFieldSymbol enumField,
         CancellationToken ct)
     {
-        if (await
-//#if DEBUG
-            document.GetIgnoreAccessSemanticModelAsync(ct)
-//#else
-//            document.GetSemanticModelAsync(ct)
-//#endif
-    is not { } sm)
-            return document;
-
-        if (sm.Compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)
+        if (sm.Compilation.GetType(
+            HarmonyConstants.Namespace_HarmonyLib,
+            HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)
             return document;
 
         var newMds = mds.AddAttributeLists(
@@ -86,9 +82,10 @@ internal static class AddMissingMethodType
             )
         );
 
-        if ((await document.GetSyntaxRootAsync(ct))?.ReplaceNode(mds, newMds) is not { } newRoot)
+        if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(mds, newMds) is not { } newRoot)
             return document;
 
         return document.WithSyntaxRoot(newRoot);
     }
 }
+

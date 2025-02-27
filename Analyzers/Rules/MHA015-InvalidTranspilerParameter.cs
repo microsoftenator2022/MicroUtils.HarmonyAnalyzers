@@ -12,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class InvalidTranspilerParameter
+internal readonly struct InvalidTranspilerParameter : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA015),
@@ -21,6 +21,8 @@ internal static class InvalidTranspilerParameter
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     private static IEnumerable<IEnumerable<Diagnostic>> CheckInternal(
         PatchMethodData methodData,
@@ -51,8 +53,9 @@ internal static class InvalidTranspilerParameter
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
+    public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
+        SemanticModel _1,
         CancellationToken ct) =>
         CheckInternal(methodData, ct).Concat().ToImmutableArray();
 }

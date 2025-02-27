@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,49 +17,42 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA002;
 
 using static SyntaxFactory;
 
-internal static class AddPatchTypeAttribute
+internal readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
 {
-    internal static async Task<ImmutableArray<CodeAction>> GetActions(CodeFixContext context, Diagnostic diagnostic, MethodDeclarationSyntax mds)
-    {
-        var document = context.Document;
-        var ct = context.CancellationToken;
+    public DiagnosticId DiagnosticId => DiagnosticId.MHA002;
 
-        if (await
-//#if DEBUG
-            document.GetIgnoreAccessSemanticModelAsync(ct)
-//#else
-//            document.GetSemanticModelAsync(ct)
-//#endif
-    is not { } sm)
-            return [];
+    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+        Diagnostic diagnostic,
+        Document document,
+        SemanticModel sm,
+        [EnumeratorCancellation] CancellationToken ct)
+    {
+        if (diagnostic.Location is not { } location ||
+            await document.FindSyntaxNodeAsync<MethodDeclarationSyntax>(location, ct).ConfigureAwait(false) is not { } mds)
+            yield break;
 
         if (sm.GetDeclaredSymbol(mds) is not IMethodSymbol methodSymbol)
-            return [];
+            yield break;
 
-        return GetValidAttributeTypes(sm, diagnostic, methodSymbol, ct)
-            .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default)
-            .Select(t =>
-            {
-                var title = $"Add {t.Name} attribute";
-                return GetAction(title, document, mds, t);
-            })
-            .ToImmutableArray();
+        foreach (var t in GetValidAttributeTypes(diagnostic, sm, methodSymbol, ct)
+            .Distinct<INamedTypeSymbol>(SymbolEqualityComparer.Default))
+        {
+            if (ct.IsCancellationRequested)
+                yield break;
+
+            var title = $"Add {t.Name} attribute";
+            yield return CodeAction.Create(
+                title, ct => AddAttributeActionAsync(document, mds, sm, t, ct), equivalenceKey: title);
+        }
     }
 
-    internal static CodeAction GetAction(string title, Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t) =>
-        CodeAction.Create(title, ct => AddAttributeAction(document, mds, t, ct), equivalenceKey: title);
-
-    private static async Task<Document> AddAttributeAction(Document document, MethodDeclarationSyntax mds, INamedTypeSymbol t, CancellationToken ct)
+    private static async Task<Document> AddAttributeActionAsync(
+        Document document,
+        MethodDeclarationSyntax mds,
+        SemanticModel sm,
+        INamedTypeSymbol t,
+        CancellationToken ct)
     {
-        if (await
-//#if DEBUG
-            document.GetIgnoreAccessSemanticModelAsync(ct)
-//#else
-//            document.GetSemanticModelAsync(ct)
-//#endif
-    is not { } sm)
-            return document;
-
         var newMds = mds.AddAttributeLists(
             AttributeList(
                 SeparatedList(
@@ -70,13 +64,17 @@ internal static class AddPatchTypeAttribute
             )
         );
 
-        if ((await document.GetSyntaxRootAsync(ct))?.ReplaceNode(mds, newMds) is not { } newRoot)
+        if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(mds, newMds) is not { } newRoot)
             return document;
 
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static IEnumerable<INamedTypeSymbol> GetValidAttributeTypes(SemanticModel sm, Diagnostic diagnostic, IMethodSymbol symbol, CancellationToken ct)
+    private static IEnumerable<INamedTypeSymbol> GetValidAttributeTypes(
+        Diagnostic diagnostic,
+        SemanticModel sm,
+        IMethodSymbol symbol,
+        CancellationToken ct)
     {
         var patchTypeAttributes = HarmonyHelpers.GetHarmonyPatchTypeAttributeTypes(sm.Compilation, ct);
         

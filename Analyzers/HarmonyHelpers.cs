@@ -23,10 +23,11 @@ public static class HarmonyHelpers
     public static INamedTypeSymbol? GetHarmonyMethodTypeType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Namespace_HarmonyLib, Type_HarmonyLib_MethodType, ct);
 
-    public static IEnumerable<(HarmonyPatchType, INamedTypeSymbol)> GetHarmonyPatchTypeAttributeTypes(Compilation compilation, CancellationToken ct) =>
+    public static ImmutableArray<(HarmonyPatchType, INamedTypeSymbol)> GetHarmonyPatchTypeAttributeTypes(Compilation compilation, CancellationToken ct) =>
         Enum.GetValues(typeof(HarmonyPatchType)).Cast<HarmonyPatchType>()
             .SelectMany<HarmonyPatchType, (HarmonyPatchType, INamedTypeSymbol)>(pt =>
-                GetPatchTypeAttributeType(pt, compilation, ct) is { } t ? [(pt, t)] : []);
+                GetPatchTypeAttributeType(pt, compilation, ct) is { } t ? [(pt, t)] : [])
+            .ToImmutableArray();
 
     public static INamedTypeSymbol? GetHarmonyTargetMethodType(Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Namespace_HarmonyLib, Attribute_HarmonyLib_HarmonyTargetMethod, ct);

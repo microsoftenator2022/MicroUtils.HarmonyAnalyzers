@@ -13,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class InjectedParamterNotFoundOnTargetMethod
+internal readonly struct InjectedParamterNotFoundOnTargetMethod : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA013),
@@ -22,6 +22,8 @@ internal static class InjectedParamterNotFoundOnTargetMethod
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     private static IEnumerable<Diagnostic> CheckInternal(
         PatchMethodData methodData,
@@ -76,7 +78,8 @@ internal static class InjectedParamterNotFoundOnTargetMethod
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
+    public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
+        SemanticModel _1,
         CancellationToken ct) => CheckInternal(methodData, ct).ToImmutableArray();
 }

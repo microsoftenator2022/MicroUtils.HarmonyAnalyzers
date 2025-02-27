@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,14 +12,29 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA016;
-internal static class UseOutForPrefixStateInjection
+internal readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
 {
     const string Title = "Use out for __state injection";
 
-    internal static CodeAction GetAction(Document document, ParameterSyntax ps)
+    public DiagnosticId DiagnosticId => DiagnosticId.MHA016;
+
+    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+        Diagnostic diagnostic,
+        Document document,
+        SemanticModel sm,
+        [EnumeratorCancellation] CancellationToken ct)
     {
-        return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
+        if (diagnostic.Location is not { } location ||
+            await document.FindSyntaxNodeAsync<ParameterSyntax>(location, ct).ConfigureAwait(false) is not { } ps)
+            yield break;
+
+        yield return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
     }
+
+    //internal static CodeAction GetAction(Document document, ParameterSyntax ps)
+    //{
+    //    return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
+    //}
 
     private static async Task<Document> SetOutKeywordAsync(Document document, ParameterSyntax ps, CancellationToken ct)
     {
@@ -30,7 +46,7 @@ internal static class UseOutForPrefixStateInjection
 
         var newPs = ps.WithModifiers(newModifiers);
 
-        if ((await document.GetSyntaxRootAsync(ct))?.ReplaceNode(ps, newPs) is not { } newRoot)
+        if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(ps, newPs) is not { } newRoot)
             return document;
 
         return document.WithSyntaxRoot(newRoot);

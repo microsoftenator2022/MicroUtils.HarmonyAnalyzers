@@ -13,7 +13,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class ReversePatchType
+internal readonly struct ReversePatchType : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA018),
@@ -23,7 +23,12 @@ internal static class ReversePatchType
         DiagnosticSeverity.Warning,
         true);
 
-    internal static ImmutableArray<Diagnostic> Check(PatchMethodData methodData, CancellationToken ct)
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
+
+    public ImmutableArray<Diagnostic> Check(
+        PatchMethodData methodData,
+        SemanticModel _1,
+        CancellationToken ct)
     {
         if (methodData.PatchType is not HarmonyConstants.HarmonyPatchType.ReversePatch ||
             methodData.TargetMethod is not { } targetMethod)

@@ -12,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class MultipleTargetMethodDefinitions
+internal readonly struct MultipleTargetMethodDefinitions : IPatchClassRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA007),
@@ -21,6 +21,8 @@ internal static class MultipleTargetMethodDefinitions
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     private static IEnumerable<Diagnostic> CheckInternal(
         INamedTypeSymbol classSymbol,
@@ -52,11 +54,16 @@ internal static class MultipleTargetMethodDefinitions
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
-        INamedTypeSymbol classSymbol,
-        ImmutableArray<AttributeData> classAttributes,
-        ImmutableArray<PatchMethodData> patchMethods,
-        ImmutableArray<IMethodSymbol> targetMethodMethods,
-        CancellationToken ct) =>
-            CheckInternal(classSymbol, classAttributes, patchMethods, targetMethodMethods, ct).ToImmutableArray();
+    public ImmutableArray<Diagnostic> Check(
+        PatchClassData patchClassData,
+        CancellationToken ct)
+    {
+        return CheckInternal(
+            patchClassData.ClassSymbol,
+            patchClassData.ClassAttributes,
+            patchClassData.PatchMethods,
+            patchClassData.TargetMethodMethods.Value,
+            ct)
+            .ToImmutableArray();
+    }
 }

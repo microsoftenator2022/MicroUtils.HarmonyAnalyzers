@@ -12,7 +12,7 @@ namespace MicroUtils.HarmonyAnalyzers.Rules;
 
 using static DiagnosticId;
 
-internal static class MissingMethodType
+internal readonly struct MissingMethodType : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA003),
@@ -21,6 +21,8 @@ internal static class MissingMethodType
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
         true);
+
+    DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
     private static IEnumerable<Diagnostic> Report(
         PatchMethodData patchMethodData,
@@ -99,8 +101,9 @@ internal static class MissingMethodType
         }
     }
 
-    internal static ImmutableArray<Diagnostic> Check(
+    public ImmutableArray<Diagnostic> Check(
         PatchMethodData patchMethodData,
+        SemanticModel _,
         CancellationToken ct) =>
         CheckInternal(patchMethodData, ct).SelectMany(d => d).ToImmutableArray();
 }

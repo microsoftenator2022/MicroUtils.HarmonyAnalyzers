@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,28 +16,37 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 
 using static SyntaxFactory;
 
-internal static class AddHarmonyPatchAttribute
+internal readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
 {
     const string Title = "Add HarmonyPatch Attribute";
 
-    internal static CodeAction GetAction(Document document, ClassDeclarationSyntax node) =>
-        CodeAction.Create(
-            Title,
-            ct => AddHarmonyPatchAttributeAsync(document, node, ct),
-            equivalenceKey: Title);
+    public DiagnosticId DiagnosticId => DiagnosticId.MHA001;
 
-    private static async Task<Document> AddHarmonyPatchAttributeAsync(Document document, ClassDeclarationSyntax cds, CancellationToken ct)
+    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+        Diagnostic diagnostic,
+        Document document,
+        SemanticModel sm,
+        [EnumeratorCancellation] CancellationToken ct)
     {
-        if (await 
-//#if DEBUG
-            document.GetIgnoreAccessSemanticModelAsync(ct)
-//#else
-//            document.GetSemanticModelAsync(ct)
-//#endif
-            is not { } sm)
-            return document;
+        if (diagnostic.Location is not { } location ||
+            await document.FindSyntaxNodeAsync<ClassDeclarationSyntax>(location, ct).ConfigureAwait(false) is not { } cds)
+            yield break;
 
-        if (sm.Compilation.GetType(HarmonyConstants.Namespace_HarmonyLib, HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)
+        yield return CodeAction.Create(
+            Title,
+            ct => AddHarmonyPatchAttributeAsync(document, cds, sm, ct),
+            equivalenceKey: Title);
+    }
+
+    private static async Task<Document> AddHarmonyPatchAttributeAsync(
+        Document document,
+        ClassDeclarationSyntax cds,
+        SemanticModel sm,
+        CancellationToken ct)
+    {
+        if (sm.Compilation.GetType(
+            HarmonyConstants.Namespace_HarmonyLib,
+            HarmonyConstants.Attribute_HarmonyLib_HarmonyPatch, ct) is not { } patchAttributeType)
             return document;
 
         var newCds = cds.AddAttributeLists(
@@ -50,7 +60,7 @@ internal static class AddHarmonyPatchAttribute
             )
         );
 
-        if ((await document.GetSyntaxRootAsync(ct))?.ReplaceNode(cds, newCds) is not { } newRoot)
+        if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(cds, newCds) is not { } newRoot)
             return document;
 
         return document.WithSyntaxRoot(newRoot);
