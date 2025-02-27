@@ -103,4 +103,7 @@ public partial class Util
             yield return (previous.Value, element);
         }
     }
+
+    public static KeyValuePair<TKey, TValue> ToKeyValuePair<TKey, TValue>(this (TKey key, TValue value) pair) =>
+        new(pair.key, pair.value);
 }
