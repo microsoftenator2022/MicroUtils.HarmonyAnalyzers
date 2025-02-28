@@ -226,6 +226,7 @@ public readonly record struct PatchMethodData(
             .Add(nameof(this.PatchMethod), this.PatchMethod.GetFullMetadataName())
             .Add(nameof(this.PatchType), this.PatchType?.ToString())
             .Add(nameof(this.TargetType), this.TargetType?.GetFullMetadataName())
+            .Add(nameof(this.TargetMethodName), this.TargetMethodName)
             .Add(nameof(this.TargetMethod), this.TargetMethod?.MetadataName)
             .Add(nameof(this.TargetMethodType), this.TargetMethodType?.ToString())
             .Add(nameof(this.ArgumentTypes), string.Join(",", (this.ArgumentTypes ?? []).Select(t => t.GetFullMetadataName())));

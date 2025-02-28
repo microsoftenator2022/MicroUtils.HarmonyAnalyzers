@@ -80,8 +80,13 @@ internal readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
         
         IEnumerable<IMethodSymbol> targetMethodCandidates = [];
 
-        if (diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetType), out var targetTypeName) && targetTypeName is not null &&
-            diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetMethod), out var targetMethodName) && targetMethodName is not null)
+        if (!diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetMethod), out var targetMethodName) || 
+            targetMethodName is null)
+            _ = diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetMethodName), out targetMethodName);
+
+        if (diagnostic.Properties.TryGetValue(nameof(PatchMethodData.TargetType), out var targetTypeName) && 
+            targetTypeName is not null && 
+            targetMethodName is not null)
         {
             targetMethodCandidates = sm.Compilation.GetTypeByMetadataName(targetTypeName)?.GetMembers()
                 .OfType<IMethodSymbol>().Where(m => m.MetadataName == targetMethodName) ?? [];
@@ -94,7 +99,7 @@ internal readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
                 patchType,
                 sm.Compilation,
                 ct,
-                targetMethod.ReturnType,
+                targetMethod?.ReturnType,
                 symbol.MayBePassthroughPostfix(targetMethod, sm.Compilation));
 
             if (validReturnTypes.Any(validReturnType => sm.Compilation.ClassifyConversion(symbol.ReturnType, validReturnType).IsStandardImplicit()))
