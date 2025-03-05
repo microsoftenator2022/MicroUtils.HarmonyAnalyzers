@@ -147,23 +147,12 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             context.RegisterSyntaxNodeAction(
                 snContext =>
                 {
-#if DEBUG
-                    try
-                    {
-#endif
-                        AnalyzeClassDeclaration(
-                            snContext.Node,
-                            compilation,
-                            GetCachedSemanticModel,
-                            report => snContext.ReportDiagnostic(report),
-                            snContext.CancellationToken);
-#if DEBUG
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new Exception(ex.StackTrace);
-                    }
-#endif
+                    AnalyzeClassDeclaration(
+                        snContext.Node,
+                        compilation,
+                        GetCachedSemanticModel,
+                        report => snContext.ReportDiagnostic(report),
+                        snContext.CancellationToken);
                 }, SyntaxKind.ClassDeclaration);
         });
     }
