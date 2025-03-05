@@ -306,7 +306,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
                 diagnostics = diagnostics.Add(Diagnostic.Create(
                     DebugMessage,
                     patchMethodData.PatchMethod.Locations[0],
-                    messageArgs: [String.Join(", ", patchMethodData.TargetType?.MemberNames)]));
+                    messageArgs: [String.Join(", ", patchMethodData.TargetType?.MemberNames ?? [])]));
 #endif
 
             }
