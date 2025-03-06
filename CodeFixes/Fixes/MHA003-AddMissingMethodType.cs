@@ -19,7 +19,10 @@ internal readonly struct AddMissingMethodType : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA003;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] formatArgs) => string.Format("Add {0} with HarmonyPatch attribute", formatArgs);
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -38,7 +41,8 @@ internal readonly struct AddMissingMethodType : IHarmonyCodeFix
 
         var enumField = methodTypeType.GetMembers().OfType<IFieldSymbol>().FirstOrDefault(f => f.HasConstantValue && (f.ConstantValue as int?) == (int)methodType);
 
-        var title = $"Add {enumField.ToMinimalDisplayString(sm, mds.SpanStart)} with HarmonyPatch attribute";
+        var title = /*$"Add {enumField.ToMinimalDisplayString(sm, mds.SpanStart)} with HarmonyPatch attribute";*/
+            this.GetTitle(enumField.ToMinimalDisplayString(sm, mds.SpanStart));
 
         yield return CodeAction.Create(
             title,

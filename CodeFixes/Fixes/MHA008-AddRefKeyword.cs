@@ -22,7 +22,10 @@ internal readonly struct AddRefKeyword : IHarmonyCodeFix
 
     public DiagnosticId DiagnosticId => DiagnosticId.MHA008;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] _) => Title;
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,

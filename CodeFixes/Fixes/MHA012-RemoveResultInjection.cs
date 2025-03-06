@@ -18,7 +18,10 @@ internal readonly struct RemoveResultInjection : IHarmonyCodeFix
 
     public DiagnosticId DiagnosticId => DiagnosticId.MHA012;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] _) => Title;
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -33,14 +36,6 @@ internal readonly struct RemoveResultInjection : IHarmonyCodeFix
             ct => RemoveParameterAsync(document, ps, ct),
             equivalenceKey: Title);
     }
-
-    //internal static CodeAction GetAction(Document document, ParameterSyntax ps)
-    //{
-    //    return CodeAction.Create(
-    //        Title,
-    //        ct => RemoveParameterAsync(document, ps, ct),
-    //        equivalenceKey: Title);
-    //}
 
     private static async Task<Document> RemoveParameterAsync(Document document, ParameterSyntax ps, CancellationToken ct)
     {

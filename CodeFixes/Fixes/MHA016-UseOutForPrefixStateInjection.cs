@@ -18,7 +18,10 @@ internal readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
 
     public DiagnosticId DiagnosticId => DiagnosticId.MHA016;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] _) => Title;
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -30,11 +33,6 @@ internal readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
 
         yield return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
     }
-
-    //internal static CodeAction GetAction(Document document, ParameterSyntax ps)
-    //{
-    //    return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
-    //}
 
     private static async Task<Document> SetOutKeywordAsync(Document document, ParameterSyntax ps, CancellationToken ct)
     {

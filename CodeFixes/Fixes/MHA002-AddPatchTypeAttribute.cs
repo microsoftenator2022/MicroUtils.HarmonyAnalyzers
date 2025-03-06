@@ -17,11 +17,14 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA002;
 
 using static SyntaxFactory;
 
-internal readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
+public readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA002;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] formatArgs) => string.Format("Add {0} attribute", formatArgs);
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -40,7 +43,9 @@ internal readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
             if (ct.IsCancellationRequested)
                 yield break;
 
-            var title = $"Add {t.Name} attribute";
+            var title = /*$"Add {t.Name} attribute";*/
+                this.GetEquivalenceKey(t.Name);
+
             yield return CodeAction.Create(
                 title, ct => AddAttributeActionAsync(document, mds, sm, t, ct), equivalenceKey: title);
         }

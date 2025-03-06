@@ -15,7 +15,10 @@ internal readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA017;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] formatArgs) => string.Format("Replace '{0}' with '{1}'", formatArgs);
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -28,20 +31,14 @@ internal readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
         if (!diagnostic.Properties.TryGetValue("ParameterName", out var name) || name is null)
             yield break;
 
+        var title = this.GetTitle(ps.Identifier, name);
+
         yield return CodeAction.Create(
-            $"Replace '{ps.Identifier}' with '{name}'",
-            ct => ReplaceParameterNameAsync(document, ps, name, ct));
+            /*$"Replace '{ps.Identifier}' with '{name}'",*/
+            title,
+            ct => ReplaceParameterNameAsync(document, ps, name, ct),
+            equivalenceKey: title);
     }
-
-    //internal static CodeAction? GetAction(Document document, Diagnostic diagnostic, ParameterSyntax ps)
-    //{
-    //    if (!diagnostic.Properties.TryGetValue("ParameterName", out var name) || name is null)
-    //        return null;
-
-    //    return CodeAction.Create(
-    //        $"Replace '{ps.Identifier}' with '{name}'",
-    //        ct => ReplaceParameterNameAsync(document, ps, name, ct));
-    //}
 
     private static async Task<Document> ReplaceParameterNameAsync(Document document, ParameterSyntax ps, string parameterName, CancellationToken ct)
     {

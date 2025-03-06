@@ -16,13 +16,16 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 
 using static SyntaxFactory;
 
-internal readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
+public readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
 {
     const string Title = "Add HarmonyPatch Attribute";
+    
+    public string GetTitle(params object[] _) => Title;
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
 
     public DiagnosticId DiagnosticId => DiagnosticId.MHA001;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -35,7 +38,7 @@ internal readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
         yield return CodeAction.Create(
             Title,
             ct => AddHarmonyPatchAttributeAsync(document, cds, sm, ct),
-            equivalenceKey: Title);
+            equivalenceKey: this.GetTitle());
     }
 
     private static async Task<Document> AddHarmonyPatchAttributeAsync(

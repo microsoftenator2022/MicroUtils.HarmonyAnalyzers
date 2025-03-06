@@ -20,7 +20,16 @@ internal readonly struct FixMethodSignature : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA018;
 
-    public async IAsyncEnumerable<CodeAction> GetActionsAsync(
+    public string GetTitle(params object[] formatArgs) =>
+#if DEBUG
+        string.Format("Change method signature to match target method: {0} {1}({2})", formatArgs);
+#else
+            "Fix method signature";
+#endif
+
+    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+
+    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -68,13 +77,15 @@ internal readonly struct FixMethodSignature : IHarmonyCodeFix
             yield break;
 
         yield return CodeAction.Create(
-#if DEBUG
-            $"Change method signature to match target method: " +
-            $"{method.Value.ReturnType} {method.Value.Name}({
-                string.Join(", ", method.Value.Parameters.Select(p => p.Type))})",
-#else
-            "Fix method signature",
-#endif
+//#if DEBUG
+//            $"Change method signature to match target method: " +
+//            $"{method.Value.ReturnType} {method.Value.Name}({
+//                string.Join(", ", method.Value.Parameters.Select(p => p.Type))})",
+//#else
+//            "Fix method signature",
+//#endif
+            GetTitle(method.Value.ReturnType, method.Value.Name, string.Join(", ", method.Value.Parameters.Select(p => p.Type))),
+
             ct => FixMethodSignatureAsync(document, diagnostic, sm, mds, method.Value, ct));
     }
 
