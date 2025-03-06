@@ -213,4 +213,6 @@ public static class HarmonyHelpers
 
     public static INamedTypeSymbol? GetPatchTypeAttributeType(this HarmonyPatchType patchType, Compilation compilation, CancellationToken ct) =>
         compilation.GetType(Namespace_HarmonyLib, $"Harmony{patchType}", ct);
+
+    public static string GetPatchTypeAttributeName(HarmonyPatchType patchType) => HarmonyPatchTypeAttributeNames[(int)patchType];
 }
