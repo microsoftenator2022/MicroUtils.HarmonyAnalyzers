@@ -13,10 +13,14 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA008;
 
-internal readonly struct AddRefKeyword : IHarmonyCodeFix
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class AddRefKeywordCodeFix : PatchClassCodeFixProvider<AddRefKeyword> { }
+
+public readonly struct AddRefKeyword : IHarmonyCodeFix
 {
     const string Title = "Add ref keyword";
 

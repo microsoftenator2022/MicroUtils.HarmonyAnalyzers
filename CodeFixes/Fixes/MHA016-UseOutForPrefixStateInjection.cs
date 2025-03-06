@@ -8,11 +8,18 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
+
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA016;
-internal readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
+
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class UseOutForPrefixStateInjectionCodeFix : PatchClassCodeFixProvider<UseOutForPrefixStateInjection> { }
+
+public readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
 {
     const string Title = "Use out for __state injection";
 

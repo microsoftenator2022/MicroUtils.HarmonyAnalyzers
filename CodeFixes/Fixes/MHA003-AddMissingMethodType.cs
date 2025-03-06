@@ -13,9 +13,15 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
+
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 using static SyntaxFactory;
-internal readonly struct AddMissingMethodType : IHarmonyCodeFix
+
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class AddMissingMethodTypeCodeFix : PatchClassCodeFixProvider<AddMissingMethodType> { }
+
+public readonly struct AddMissingMethodType : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA003;
 

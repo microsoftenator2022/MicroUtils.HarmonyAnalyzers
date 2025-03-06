@@ -8,11 +8,17 @@ using System.Xml.Serialization;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA012;
 
-internal readonly struct RemoveResultInjection : IHarmonyCodeFix
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class RemoveResultInjectionCodeFix : PatchClassCodeFixProvider<RemoveResultInjection> { }
+
+public readonly struct RemoveResultInjection : IHarmonyCodeFix
 {
     const string Title = "Remove __result parameter";
 

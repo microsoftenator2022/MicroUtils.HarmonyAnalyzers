@@ -7,11 +7,18 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
+
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA017;
-internal readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
+
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class ReplaceIndexInjectionWithNameCodeFix : PatchClassCodeFixProvider<ReplaceIndexInjectionWithName> { }
+
+public readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA017;
 

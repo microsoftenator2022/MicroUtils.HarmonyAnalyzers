@@ -9,14 +9,20 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA018;
 
 using static SyntaxFactory;
 
-internal readonly struct FixMethodSignature : IHarmonyCodeFix
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSignature> { }
+
+public readonly struct FixMethodSignature : IHarmonyCodeFix
 {
     public DiagnosticId DiagnosticId => DiagnosticId.MHA018;
 

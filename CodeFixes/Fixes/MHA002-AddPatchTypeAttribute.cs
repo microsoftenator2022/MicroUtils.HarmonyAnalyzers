@@ -13,9 +13,15 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
+
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA002;
 
 using static SyntaxFactory;
+
+[ExportCodeFixProvider(LanguageNames.CSharp)]
+public class AddPatchTypeAttributeCodeFix : PatchClassCodeFixProvider<AddPatchTypeAttribute> { }
+
 
 public readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
 {

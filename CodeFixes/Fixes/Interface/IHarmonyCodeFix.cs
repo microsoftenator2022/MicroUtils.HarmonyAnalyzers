@@ -23,17 +23,19 @@ public interface IHarmonyCodeFix
 
 public static class HarmonyCodeFix
 {
-    public delegate IAsyncEnumerable<CodeAction> GetActionsAsynx(
+    public delegate IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel semanticModel,
         CancellationToken cancellationToken);
 
-    internal static (DiagnosticId, GetActionsAsynx) Get<TCodeFix>() where TCodeFix : struct, IHarmonyCodeFix =>
+    internal static (DiagnosticId, GetActionsAsync) Get<TCodeFix>() where TCodeFix : struct, IHarmonyCodeFix =>
         (default(TCodeFix).DiagnosticId, default(TCodeFix).GetActionsAsync);
 
-    public static string GetDiagnosticId<TCodeFix>() where TCodeFix : struct, IHarmonyCodeFix =>
-        default(TCodeFix).DiagnosticId.ToString();
+    internal static GetActionsAsync GetFixActions<TCodeFix>() where TCodeFix : struct, IHarmonyCodeFix => Get<TCodeFix>().Item2;
+
+    public static DiagnosticId GetDiagnosticId<TCodeFix>() where TCodeFix : struct, IHarmonyCodeFix =>
+        default(TCodeFix).DiagnosticId;
 
     public static string GetEquivalenceKey<TCodeFix>(params object[] formatArgs)
         where TCodeFix : struct, IHarmonyCodeFix =>
