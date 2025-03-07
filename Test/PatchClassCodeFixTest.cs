@@ -17,28 +17,25 @@ using MicroUtils.HarmonyAnalyzers.CodeFixes;
 
 namespace MicroUtils.HarmonyAnalyzers.Test;
 
-using static CommonTestProperties;
-
 internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAnalyzer, TCodeFix, DefaultVerifier>
     where TCodeFix : CodeFixProvider, new()
 {
     public PatchClassCodeFixTest()
     {
         this.ReferenceAssemblies = ReferenceAssemblies.Default.AddPackages([HarmonyPackage]);
-        this.DisabledDiagnostics.AddRange(IgnoreDiagnostics);
+        this.DisabledDiagnostics.AddRange(Default.DisableDiagnostics);
     }
 
     public Func<CodeAction, bool>? ActionFilter { get; set; }
 
     private static string PrintActions(IEnumerable<CodeAction> actions)
     {
-        var sb = new StringBuilder()
-            .Append("Available actions:");
+        var sb = new StringBuilder();
+            //.Append("Available actions:");
 
         foreach (var action in actions)
         {
-            sb = sb.AppendLine()
-                .Append($" - {action.EquivalenceKey}");
+            sb = sb.AppendLine($" - {action.EquivalenceKey}");
         }
 
         return sb.ToString();
@@ -47,8 +44,6 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
     protected override ImmutableArray<CodeAction> FilterCodeActions(ImmutableArray<CodeAction> actions)
     {
         actions = base.FilterCodeActions(actions);
-
-        Debug.Print(PrintActions(actions));
 
         if (this.CodeActionEquivalenceKey is null)
         {
@@ -61,17 +56,14 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
 
         if (!matchingActions.Any())
         {
-            var sb = new StringBuilder()
-                .Append($"No matching code actions for key '{this.CodeActionEquivalenceKey}'");
-                
-            if (actions.Any())
-            {
-                sb = sb.AppendLine()
-                    .Append(PrintActions(actions));
-            }
-
-            throw new Exception(sb.ToString());
+            Debug.Print($"No matching code actions for key '{this.CodeActionEquivalenceKey}'");
         }
+
+        Debug.Print("Available actions:");
+        Debug.Print(PrintActions(actions));
+
+        Debug.Print("Selected actions:");
+        Debug.Print(PrintActions(matchingActions));
 
         return matchingActions;
     }

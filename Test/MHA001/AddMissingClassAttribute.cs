@@ -1,18 +1,14 @@
-﻿using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-using MicroUtils.HarmonyAnalyzers.CodeFixes;
-using MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
+﻿using MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 
 namespace MicroUtils.HarmonyAnalyzers.Test.MHA001;
 
-using Verify = PatchClassCodeFixVerifier<AddHarmonyPatchAttributeCodeFix>;
+using Verify = PatchClassCodeFixVerifier<AddHarmonyPatchAttributeCodeFix, AddHarmonyPatchAttribute>;
 
 [TestClass]
-public class MHA001
+public class AddMissingClassAttribute
 {
     [TestMethod]
-    public async Task AddMissingClassAttribute()
+    public async Task AddMissingAttributeToClass()
     {
         var test = """
 using HarmonyLib;
@@ -46,8 +42,7 @@ static class {|#0:TypeName|}
 """;
         await Verify.VerifyCodeFixAsync(
             test,
-            Verify.Diagnostic("MHA001").WithLocation(0).WithMessage(null),
-            HarmonyCodeFix.GetEquivalenceKey<AddHarmonyPatchAttribute>(),
-            testFix);
+            testFix,
+            Verify.GetEquivalenceKey());
     }
 }
