@@ -33,3 +33,10 @@ MHA016  | PatchMethod      | Info     | Use `out` for `__state` in prefix patche
 MHA017  | PatchMethod      | Info     | Using `__0`, `__1`, etc. injections over parameter names
 MHA018  | PatchMethod      | Warning  | Reverse patch method signature does not match target method
 
+## Release 1.3
+
+### New Rules
+
+Rule ID |     Category     | Severity | Notes
+--------|------------------|----------|----------------------------------------------------
+MHI000  | PatchInfo        | Hidden   | PatchClassAnalyzer
