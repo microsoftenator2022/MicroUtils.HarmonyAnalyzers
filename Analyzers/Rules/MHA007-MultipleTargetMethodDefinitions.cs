@@ -42,13 +42,15 @@ internal readonly struct MultipleTargetMethodDefinitions : IPatchClassRule
                 .Concat(allPatchAttributes
                     .Where(attr => attr.ConstructorArguments.Length > 0)
                     .Choose(attr => Optional.MaybeValue(attr.ApplicationSyntaxReference))
-                    .Select(s => s.GetSyntax().GetLocation()))
+                    .Select(s => s.GetSyntax(ct).GetLocation()))
                 .ToImmutableArray();
 
         if (allTargetMethodLocations.Length > 1)
         {
             foreach (var d in new DiagnosticBuilder(Descriptor)
-                .ForAllLocations(classSymbol.Locations.Concat(allTargetMethodLocations).ToImmutableArray())
+                .ForAllLocations(classSymbol.Locations.Concat(allTargetMethodLocations)
+                    .DistinctBy(l => (l.SourceTree, l.SourceSpan))
+                    .ToImmutableArray())
                 .CreateAll())
                 yield return d;
         }
@@ -62,7 +64,9 @@ internal readonly struct MultipleTargetMethodDefinitions : IPatchClassRule
             patchClassData.ClassSymbol,
             patchClassData.ClassAttributes,
             patchClassData.PatchMethods,
-            patchClassData.TargetMethodMethods.Value,
+            patchClassData.TargetMethodMethods.Value
+                .Concat(patchClassData.TargetMethodsMethods.Value)
+                .ToImmutableArray(),
             ct)
             .ToImmutableArray();
     }
