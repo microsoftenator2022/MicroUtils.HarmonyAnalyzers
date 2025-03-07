@@ -14,7 +14,7 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
     public PatchClassCodeFixTest()
     {
         this.ReferenceAssemblies = ReferenceAssemblies.Default.AddPackages([HarmonyPackage]);
-        this.DisabledDiagnostics.AddRange(Default.DisableDiagnostics);
+        this.DisabledDiagnostics.AddRange(Default.DisabledDiagnostics);
     }
 
     const string targetClassSourceName = "TargetClass.cs";
@@ -48,7 +48,7 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
             _ = this.TestState.Sources.RemoveAll(s => s.filename == patchCodeSourceName);
 
             if (value is not null)
-                this.TestState.Sources.Add((targetClassSourceName, value));
+                this.TestState.Sources.Add((patchCodeSourceName, value));
 
             field = value;
 
@@ -63,7 +63,7 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
             _ = this.FixedState.Sources.RemoveAll(s => s.filename == patchCodeSourceName);
 
             if (value is not null)
-                this.FixedState.Sources.Add((targetClassSourceName, value));
+                this.FixedState.Sources.Add((patchCodeSourceName, value));
 
             field = value;
 

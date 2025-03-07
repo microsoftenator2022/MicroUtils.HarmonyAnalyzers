@@ -48,6 +48,6 @@ static class PatchClass
         await Verify.VerifyCodeFixAsync(
             test,
             testfix,
-            disabledDiagnostics: Default.DisableDiagnostics.Add("MHA013"));
+            disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA013"));
     }
 }

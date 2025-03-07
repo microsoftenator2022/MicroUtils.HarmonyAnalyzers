@@ -7,7 +7,7 @@ internal class PatchClassAnalyzerTest : CSharpAnalyzerTest<PatchClassAnalyzer, D
     public PatchClassAnalyzerTest()
     {
         this.ReferenceAssemblies = ReferenceAssemblies.Default.AddPackages([HarmonyPackage]);
-        this.DisabledDiagnostics.AddRange(Default.DisableDiagnostics);
+        this.DisabledDiagnostics.AddRange(Default.DisabledDiagnostics);
     }
 
     const string targetClassSourceName = "TargetClass.cs";
@@ -39,7 +39,7 @@ internal class PatchClassAnalyzerTest : CSharpAnalyzerTest<PatchClassAnalyzer, D
             _ = this.TestState.Sources.RemoveAll(s => s.filename == patchCodeSourceName);
 
             if (value is not null)
-                this.TestState.Sources.Add((targetClassSourceName, value));
+                this.TestState.Sources.Add((patchCodeSourceName, value));
 
             field = value;
 

@@ -22,6 +22,6 @@ internal static class CommonTestProperties
 
     public static class Default
     {
-        public static readonly ImmutableArray<string> DisableDiagnostics = ["DEBUG", "MHI000"];
+        public static readonly ImmutableArray<string> DisabledDiagnostics = ["DEBUG", "MHI000"];
     }
 }

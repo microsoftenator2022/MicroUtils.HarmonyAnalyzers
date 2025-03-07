@@ -44,7 +44,7 @@ static class Patch
             new TestSources(targetClass, testPropertyPatch, testFix),
             [Verify.Default.Diagnostic(), Verify.Default.Diagnostic()],
             Verify.GetEquivalenceKey($"MethodType.{PatchTargetMethodType.Getter}"),
-            Default.DisableDiagnostics.Add("MHA005"));
+            Default.DisabledDiagnostics.Add("MHA005"));
     }
 
     [TestMethod]
@@ -65,7 +65,7 @@ static class Patch
             new TestSources(targetClass, testPropertyPatch, testFix),
             [Verify.Default.Diagnostic(), Verify.Default.Diagnostic()],
             Verify.GetEquivalenceKey($"MethodType.{PatchTargetMethodType.Setter}"),
-            disabledDiagnostics: Default.DisableDiagnostics.Add("MHA005"));
+            disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA005"));
     }
 
     [TestMethod]
@@ -96,6 +96,6 @@ static class Patch
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, testIndexerPatch, testFix),
             Verify.Default.Diagnostic(),
-            disabledDiagnostics: Default.DisableDiagnostics.Add("MHA005"));
+            disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA005"));
     }
 }
