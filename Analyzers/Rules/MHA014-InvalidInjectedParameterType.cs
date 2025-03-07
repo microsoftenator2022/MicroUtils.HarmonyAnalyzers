@@ -20,7 +20,7 @@ internal readonly struct InvalidInjectedParameterType : IPatchMethodRule
         "Invalid type '{0}' for injected parameter '{1}'. Expected '{2}'.",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

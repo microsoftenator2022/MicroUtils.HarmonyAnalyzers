@@ -20,7 +20,7 @@ internal readonly struct MultipleTargetMethodDefinitions : IPatchClassRule
         "Patch class has more than one of: TargetMethod, TargetMethods, parametrized HarmonyPatch attributes",
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

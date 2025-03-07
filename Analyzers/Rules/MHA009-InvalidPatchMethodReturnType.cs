@@ -35,7 +35,7 @@ internal static class InvalidPatchMethodReturnType
         ,
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     internal readonly struct PatchMethod : IPatchMethodRule
     {

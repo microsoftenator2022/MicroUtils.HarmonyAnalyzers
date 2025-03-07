@@ -19,7 +19,7 @@ internal readonly struct ParameterIndexInjection : IPatchMethodRule
         "Use parameter name {1}over parameter index injection '{0}'",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Info,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

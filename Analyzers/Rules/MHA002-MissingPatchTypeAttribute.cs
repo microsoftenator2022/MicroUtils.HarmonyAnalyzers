@@ -20,7 +20,7 @@ internal readonly struct MissingPatchTypeAttribute : IPatchMethodRule
         "Patch method requires a Harmony patch type attribute",
         nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

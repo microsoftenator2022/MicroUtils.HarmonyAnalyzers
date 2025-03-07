@@ -20,7 +20,7 @@ internal readonly struct InvalidTranspilerParameter : IPatchMethodRule
         "Invalid transpiler method parameter '{0}`",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

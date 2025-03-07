@@ -20,7 +20,7 @@ internal readonly struct PatchTypeAttributeConflict : IPatchMethodRule
         "Patch type attribute conflict",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

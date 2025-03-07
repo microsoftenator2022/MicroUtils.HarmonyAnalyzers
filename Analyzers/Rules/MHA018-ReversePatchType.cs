@@ -21,7 +21,7 @@ internal readonly struct ReversePatchType : IPatchMethodRule
         "Reverse patch method '{0}' signature does not match target method '{1}'. Expected '{2}'.",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

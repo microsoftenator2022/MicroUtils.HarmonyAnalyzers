@@ -21,7 +21,7 @@ internal readonly struct AssignmentToNonRefResultArgument : IPatchMethodRule
         "Assignment to non-ref argument '{0}'",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

@@ -20,7 +20,7 @@ internal readonly struct PaasthroughPostfixResultInjection : IPatchMethodRule
         "Unnecessary injected __result parameter in passthrough postfix",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Info,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

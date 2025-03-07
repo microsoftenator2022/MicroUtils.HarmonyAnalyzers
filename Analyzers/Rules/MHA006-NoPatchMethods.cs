@@ -21,7 +21,7 @@ internal readonly struct NoPatchMethods : IPatchClassRule
         "Patch class contains no patch methods",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

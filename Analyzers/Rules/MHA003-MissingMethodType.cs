@@ -20,7 +20,7 @@ internal readonly struct MissingMethodType : IPatchMethodRule
         "Cannot find target method for patch method '{2}', but a matching {0} method '{1}' was found",
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

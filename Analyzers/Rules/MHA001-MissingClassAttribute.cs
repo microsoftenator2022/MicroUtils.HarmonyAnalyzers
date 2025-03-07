@@ -21,7 +21,7 @@ internal readonly struct MissingClassAttribute : IPatchClassRule
         "Class '{0}' lacks a '{1}' attribute, but has one or more members with a '{1}' attribute",
         nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
-        true);
+        isEnabledByDefault: true);
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
