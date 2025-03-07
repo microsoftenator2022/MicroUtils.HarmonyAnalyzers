@@ -13,8 +13,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
-
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 using static SyntaxFactory;
 

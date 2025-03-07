@@ -9,10 +9,10 @@ using Microsoft.CodeAnalysis.CodeFixes;
 
 using MicroUtils.HarmonyAnalyzers;
 
-namespace MicroUtils.HarmonyAnalyzers.CodeFixes.Fixes;
+namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
 
-public abstract class PatchClassCodeFixProvider<TCodeFix> : CodeFixProvider
-    where TCodeFix : struct, IHarmonyCodeFix
+public abstract class PatchClassCodeFixProvider<TCodeFixImpl> : CodeFixProvider
+    where TCodeFixImpl : struct, IHarmonyCodeFix
 {
     private protected PatchClassCodeFixProvider() { }
 
@@ -20,7 +20,7 @@ public abstract class PatchClassCodeFixProvider<TCodeFix> : CodeFixProvider
     
     public override ImmutableArray<string> FixableDiagnosticIds => [Id.ToString()];
 
-    readonly static DiagnosticId Id = HarmonyCodeFix.GetDiagnosticId<TCodeFix>();
+    readonly static DiagnosticId Id = HarmonyCodeFix.GetDiagnosticId<TCodeFixImpl>();
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
@@ -44,7 +44,7 @@ public abstract class PatchClassCodeFixProvider<TCodeFix> : CodeFixProvider
 
         foreach (var diagnostic in context.Diagnostics.Where(d => Enum.TryParse<DiagnosticId>(d.Id, out var id) && id == Id))
         {
-            var actions = HarmonyCodeFix.GetFixActions<TCodeFix>()(
+            var actions = HarmonyCodeFix.GetFixActions<TCodeFixImpl>()(
                 diagnostic,
                 context.Document,
                 semanticModel,
