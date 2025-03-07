@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.Testing;
-
-using MicroUtils.HarmonyAnalyzers.CodeFixes;
 
 namespace MicroUtils.HarmonyAnalyzers.Test;
 
@@ -24,6 +15,66 @@ internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAna
     {
         this.ReferenceAssemblies = ReferenceAssemblies.Default.AddPackages([HarmonyPackage]);
         this.DisabledDiagnostics.AddRange(Default.DisableDiagnostics);
+    }
+
+    const string targetClassSourceName = "TargetClass.cs";
+
+    public string? TargetClassCode
+    {
+        get;
+        set
+        {
+            _ = this.TestState.Sources.RemoveAll(s => s.filename == targetClassSourceName);
+            _ = this.FixedState.Sources.RemoveAll(s => s.filename == targetClassSourceName);
+
+            if (value is not null)
+            {
+                this.TestState.Sources.Add((targetClassSourceName, value));
+                this.FixedState.Sources.Add((targetClassSourceName, value));
+            }
+
+            field = value;
+
+        }
+    }
+
+    const string patchCodeSourceName = "Patch.cs";
+
+    public string? TestPatchCode
+    {
+        get;
+        set
+        {
+            _ = this.TestState.Sources.RemoveAll(s => s.filename == patchCodeSourceName);
+
+            if (value is not null)
+                this.TestState.Sources.Add((targetClassSourceName, value));
+
+            field = value;
+
+        }
+    }
+
+    public string? FixedPatchCode
+    {
+        get;
+        set
+        {
+            _ = this.FixedState.Sources.RemoveAll(s => s.filename == patchCodeSourceName);
+
+            if (value is not null)
+                this.FixedState.Sources.Add((targetClassSourceName, value));
+
+            field = value;
+
+        }
+    }
+
+    public void AddSources(TestSources sources)
+    {
+        this.TargetClassCode = sources.TargetClassSource;
+        this.TestPatchCode = sources.TestPatchSource;
+        this.FixedPatchCode = sources.FixedPatchSource;
     }
 
     public Func<CodeAction, bool>? ActionFilter { get; set; }

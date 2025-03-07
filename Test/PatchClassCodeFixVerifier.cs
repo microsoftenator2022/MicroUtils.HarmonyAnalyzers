@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Testing;
-
-namespace MicroUtils.HarmonyAnalyzers.Test;
+﻿namespace MicroUtils.HarmonyAnalyzers.Test;
 
 internal class PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl> : CodeFixVerifier<
     PatchClassAnalyzer,
@@ -34,16 +24,16 @@ internal class PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl> : CodeFixVerifi
         string source,
         string fixedSource,
         string? codeActionKey = null,
-        ImmutableArray<string> disabledDiagnostics = default)
-        => VerifyCodeFixAsync(source, Default.Diagnostic(), fixedSource, codeActionKey, disabledDiagnostics);
+        ImmutableArray<string> disabledDiagnostics = default) =>
+        VerifyCodeFixAsync(source, Default.Diagnostic(), fixedSource, codeActionKey, disabledDiagnostics);
 
     public static Task VerifyCodeFixAsync(
         string source,
         DiagnosticResult expected,
         string fixedSource,
         string? codeActionKey = null,
-        ImmutableArray<string> disabledDiagnostics = default)
-        => VerifyCodeFixAsync(source, [expected], fixedSource, codeActionKey, disabledDiagnostics);
+        ImmutableArray<string> disabledDiagnostics = default) =>
+        VerifyCodeFixAsync(source, [expected], fixedSource, codeActionKey, disabledDiagnostics);
 
     public static Task VerifyCodeFixAsync(
         string source,
@@ -58,16 +48,49 @@ internal class PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl> : CodeFixVerifi
             FixedCode = fixedSource
         };
 
+        return VerifyCodeFixAsync(test, expected, codeActionKey, disabledDiagnostics);
+    }
+
+    public static Task VerifyCodeFixAsync(
+    TestSources sources,
+    string? codeActionKey = null,
+    ImmutableArray<string> disabledDiagnostics = default) =>
+    VerifyCodeFixAsync(sources, Default.Diagnostic(), codeActionKey, disabledDiagnostics);
+
+    public static Task VerifyCodeFixAsync(
+        TestSources sources,
+        DiagnosticResult expected,
+        string? codeActionKey = null,
+        ImmutableArray<string> disabledDiagnostics = default) =>
+        VerifyCodeFixAsync(sources, [expected], codeActionKey, disabledDiagnostics);
+
+    public static Task VerifyCodeFixAsync(
+        TestSources sources,
+        IEnumerable<DiagnosticResult> expected,
+        string? codeActionKey = null,
+        ImmutableArray<string> disabledDiagnostics = default)
+    {
+        var test = new PatchClassCodeFixTest<TCodeFix>();
+        test.AddSources(sources);
+
+        return VerifyCodeFixAsync(test, expected, codeActionKey, disabledDiagnostics);
+    }
+
+    private static Task VerifyCodeFixAsync(
+        PatchClassCodeFixTest<TCodeFix> test,
+        IEnumerable<DiagnosticResult> expected,
+        string? codeActionKey,
+        ImmutableArray<string> disabledDiagnostics)
+    {
+
         if (!disabledDiagnostics.IsDefaultOrEmpty)
-        {
             test.DisabledDiagnostics.AddRange(disabledDiagnostics);
-        }
 
         if (codeActionKey is not null)
             test.CodeActionEquivalenceKey = codeActionKey;
 
         test.ExpectedDiagnostics.AddRange(expected);
-        
+
         return test.RunAsync(CancellationToken.None);
     }
 }

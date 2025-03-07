@@ -7,16 +7,18 @@ using Verify = PatchClassCodeFixVerifier<AddHarmonyPatchAttributeCodeFix, AddHar
 [TestClass]
 public class AddMissingClassAttribute
 {
+    const string targetClass = """
+static class TargetType
+{
+    public static void TargetMethod() {}
+}
+""";
+
     [TestMethod]
     public async Task AddMissingAttributeToClass()
     {
         var test = """
 using HarmonyLib;
-
-static class TargetType
-{
-    public static void TargetMethod() {}
-}
 
 static class {|#0:TypeName|}
 {
@@ -28,11 +30,6 @@ static class {|#0:TypeName|}
         var testFix = """
 using HarmonyLib;
 
-static class TargetType
-{
-    public static void TargetMethod() {}
-}
-
 [HarmonyPatch]
 static class {|#0:TypeName|}
 {
@@ -41,8 +38,7 @@ static class {|#0:TypeName|}
 }
 """;
         await Verify.VerifyCodeFixAsync(
-            test,
-            testFix,
+            new TestSources(targetClass, test, testFix),
             Verify.GetEquivalenceKey());
     }
 }

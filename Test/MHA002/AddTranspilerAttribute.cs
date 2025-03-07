@@ -48,7 +48,6 @@ static class PatchClass
         await Verify.VerifyCodeFixAsync(
             test,
             testfix,
-            GetEquivalenceKey(HarmonyPatchType.Transpiler),
             disabledDiagnostics: Default.DisableDiagnostics.Add("MHA013"));
     }
 }
