@@ -20,6 +20,6 @@ static class {|#0:Patch|}
 
         await Verify.VerifyAnalyzerAsync(
             testPatchClass,
-            Verify.Diagnostic("MHA006").WithLocation(0).WithMessage(null));
+            Verify.Diagnostic("MHA006").WithLocation(0));
     }
 }

@@ -27,6 +27,6 @@ static class Patch
 """;
         await Verify.VerifyAnalyzerAsync(
             new TestSources(targetClass, testPatch),
-            Verify.Diagnostic("MHA004").WithLocation(0).WithMessage(null));
+            Verify.Diagnostic("MHA004").WithLocation(0));
     }
 }

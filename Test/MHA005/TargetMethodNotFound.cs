@@ -28,7 +28,7 @@ static class Patch
 
         await Verify.VerifyAnalyzerAsync(
             new TestSources(targetClass, testPatch),
-            Verify.Diagnostic("MHA005").WithLocation(0).WithMessage(null));
+            Verify.Diagnostic("MHA005").WithLocation(0));
     }
 
     [TestMethod]

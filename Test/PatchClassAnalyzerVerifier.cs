@@ -53,4 +53,7 @@ internal class PatchClassAnalyzerVerifier : AnalyzerVerifier<PatchClassAnalyzer,
 
         return test.RunAsync(CancellationToken.None);
     }
+
+    public static new DiagnosticResult Diagnostic(string id) =>
+        AnalyzerVerifier<PatchClassAnalyzer, PatchClassAnalyzerTest, DefaultVerifier>.Diagnostic(id).WithMessage(null);
 }

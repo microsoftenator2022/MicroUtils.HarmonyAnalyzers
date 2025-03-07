@@ -34,10 +34,10 @@ static class {|#1:Patch|}
         await Verify.VerifyAnalyzerAsync(
             new TestSources(targetClass, testPatch),
             [
-                Verify.Diagnostic("MHA007").WithLocation(0).WithMessage(null),
-                Verify.Diagnostic("MHA007").WithLocation(1).WithMessage(null),
-                Verify.Diagnostic("MHA007").WithLocation(2).WithMessage(null),
-                Verify.Diagnostic("MHA007").WithLocation(3).WithMessage(null)
+                Verify.Diagnostic("MHA007").WithLocation(0),
+                Verify.Diagnostic("MHA007").WithLocation(1),
+                Verify.Diagnostic("MHA007").WithLocation(2),
+                Verify.Diagnostic("MHA007").WithLocation(3)
             ]);
     }
 }
