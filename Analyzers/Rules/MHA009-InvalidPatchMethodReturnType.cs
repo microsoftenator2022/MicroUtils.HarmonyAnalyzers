@@ -37,6 +37,11 @@ internal static class InvalidPatchMethodReturnType
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    static IEnumerable<TypeSyntax> GetMethodReturnTypeNodes(IMethodSymbol method) =>
+        method.DeclaringSyntaxReferences
+            .Choose(s => Optional.MaybeValue(s.GetSyntax() as MethodDeclarationSyntax))
+            .Select(s => s.ReturnType);
+
     internal readonly struct PatchMethod : IPatchMethodRule
     {
         DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
@@ -77,17 +82,10 @@ internal static class InvalidPatchMethodReturnType
             if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
                 )
             {
-                var locations = methodData.PatchMethod.DeclaringSyntaxReferences
-                    .Choose(s => Optional.MaybeValue(s.GetSyntax() as MethodDeclarationSyntax))
-                    .Select(s => s.ReturnType.GetLocation())
-                    .ToImmutableArray();
-
                 foreach (var d in methodData.CreateDiagnostics(
                     descriptor: Descriptor,
-                    primaryLocations: methodData.PatchMethod.DeclaringSyntaxReferences
-                        .Select(sr => sr.GetSyntax())
-                        .OfType<MethodDeclarationSyntax>()
-                        .Select(mds => mds.ReturnType.GetLocation()).ToImmutableArray(),
+                    primaryLocations: GetMethodReturnTypeNodes(methodData.PatchMethod)
+                        .Select(n => n.GetLocation()).ToImmutableArray(),
                     messageArgs:
                     [
                         methodData.PatchMethod.ReturnType, string.Join(", ", validReturnTypes),
@@ -138,7 +136,11 @@ internal static class InvalidPatchMethodReturnType
                             ]
                         };
 
-                        return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                        var locations = GetMethodReturnTypeNodes(method)
+                            .Select(n => n.GetLocation())
+                            .ToImmutableArray();
+
+                        return diagnostic.ForAllLocations(locations).CreateAll();
                     }
 
                     return [];
@@ -174,7 +176,11 @@ internal static class InvalidPatchMethodReturnType
                             ]
                         };
 
-                        return diagnostic.ForAllLocations(method.Locations).CreateAll();
+                        var locations = GetMethodReturnTypeNodes(method)
+                            .Select(n => n.GetLocation())
+                            .ToImmutableArray();
+
+                        return diagnostic.ForAllLocations(locations).CreateAll();
                     }
 
                     return [];
