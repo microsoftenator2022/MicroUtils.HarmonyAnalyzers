@@ -12,10 +12,6 @@ public partial class Util
     public static IEnumerable<(T1 first, T2 second)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) =>
         first.Zip(second, (a, b) => (a, b));
 
-    [Obsolete("Use Choose and Optional.MaybeValue")]
-    public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> source) where T : notnull =>
-        source.SelectMany<T?, T>(element => element is not null ? [element] : []);
-
     public static bool ContainsAny<T>(this IEnumerable<T> source, IEnumerable<T> values, IEqualityComparer<T>? comparer = null)
     {
         comparer ??= EqualityComparer<T>.Default;
@@ -27,16 +23,6 @@ public partial class Util
         }
 
         return false;
-    }
-
-    [Obsolete("Use TrySingle and ValueOrDefault")]
-    public static T? TryExactlyOne<T>(this IEnumerable<T> source)
-    {
-        var firstTwo = source.Take(2).ToImmutableArray();
-        if (firstTwo.Length != 1)
-            return default;
-
-        return firstTwo[0];
     }
 
     public static IEnumerable<T> ReturnSeq<T>(T? source) where T : notnull
@@ -106,4 +92,11 @@ public partial class Util
 
     public static KeyValuePair<TKey, TValue> ToKeyValuePair<TKey, TValue>(this (TKey key, TValue value) pair) =>
         new(pair.key, pair.value);
+
+    public static IEnumerable<(T, U)> CartesianProduct<T, U>(this IEnumerable<T> source1, IEnumerable<U> source2)
+    {
+        foreach (var x in source1)
+            foreach (var y in source2)
+                yield return (x, y);
+    }
 }

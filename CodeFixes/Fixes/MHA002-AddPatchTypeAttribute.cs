@@ -101,8 +101,8 @@ public readonly struct AddPatchTypeAttribute : IHarmonyCodeFix
                 .OfType<IMethodSymbol>().Where(m => m.MetadataName == targetMethodName) ?? [];
         }
 
-        foreach (var ((patchType, attributeType), targetMethod) in patchTypeAttributes
-            .Join(targetMethodCandidates.DefaultIfEmpty(), _ => true, _ => true, (a, b) => (a, b)))
+        foreach (var ((patchType, attributeType), targetMethod) in
+            patchTypeAttributes.CartesianProduct(targetMethodCandidates.DefaultIfEmpty()))
         {
             var validReturnTypes = HarmonyHelpers.ValidReturnTypes(
                 patchType,
