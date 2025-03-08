@@ -8,24 +8,12 @@ internal class PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl> : CodeFixVerifi
     where TCodeFix : PatchClassCodeFixProvider<TCodeFixImpl>, new()
     where TCodeFixImpl : struct, IHarmonyCodeFix
 {
-    public static class Default
-    {
-        public static DiagnosticResult Diagnostic() =>
-            PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl>
-                .Diagnostic(HarmonyCodeFix.GetDiagnosticId<TCodeFixImpl>().ToString())
-                .WithLocation(0)
-                .WithMessage(null);
-    }
+    public static new DiagnosticResult Diagnostic() =>
+        Diagnostic(HarmonyCodeFix.GetDiagnosticId<TCodeFixImpl>().ToString())
+            .WithMessage(null);
 
     public static string GetEquivalenceKey(params object[] formatArgs) =>
         HarmonyCodeFix.GetEquivalenceKey<TCodeFixImpl>(formatArgs);
-
-    public static Task VerifyCodeFixAsync(
-        string source,
-        string fixedSource,
-        string? codeActionKey = null,
-        ImmutableArray<string> disabledDiagnostics = default) =>
-        VerifyCodeFixAsync(source, Default.Diagnostic(), fixedSource, codeActionKey, disabledDiagnostics);
 
     public static Task VerifyCodeFixAsync(
         string source,
@@ -50,12 +38,6 @@ internal class PatchClassCodeFixVerifier<TCodeFix, TCodeFixImpl> : CodeFixVerifi
 
         return VerifyCodeFixAsync(test, expected, codeActionKey, disabledDiagnostics);
     }
-
-    public static Task VerifyCodeFixAsync(
-    TestSources sources,
-    string? codeActionKey = null,
-    ImmutableArray<string> disabledDiagnostics = default) =>
-    VerifyCodeFixAsync(sources, Default.Diagnostic(), codeActionKey, disabledDiagnostics);
 
     public static Task VerifyCodeFixAsync(
         TestSources sources,

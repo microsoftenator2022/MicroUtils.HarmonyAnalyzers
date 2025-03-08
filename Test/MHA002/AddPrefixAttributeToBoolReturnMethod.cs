@@ -43,7 +43,7 @@ static class PatchClass
 """;
         await Verify.VerifyCodeFixAsync(
             test,
-            Verify.Default.Diagnostic(),
+            Verify.Diagnostic().WithLocation(0),
             testfix,
             GetEquivalenceKey(HarmonyPatchType.Prefix));
     }

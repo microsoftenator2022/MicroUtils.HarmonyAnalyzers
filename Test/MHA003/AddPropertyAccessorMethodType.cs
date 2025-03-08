@@ -42,7 +42,7 @@ static class Patch
 """;
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, testPropertyPatch, testFix),
-            [Verify.Default.Diagnostic(), Verify.Default.Diagnostic()],
+            [Verify.Diagnostic().WithLocation(0), Verify.Diagnostic().WithLocation(0)],
             Verify.GetEquivalenceKey($"MethodType.{PatchTargetMethodType.Getter}"),
             Default.DisabledDiagnostics.Add("MHA005"));
     }
@@ -63,7 +63,7 @@ static class Patch
 """;
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, testPropertyPatch, testFix),
-            [Verify.Default.Diagnostic(), Verify.Default.Diagnostic()],
+            [Verify.Diagnostic().WithLocation(0), Verify.Diagnostic().WithLocation(0)],
             Verify.GetEquivalenceKey($"MethodType.{PatchTargetMethodType.Setter}"),
             disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA005"));
     }
@@ -95,7 +95,7 @@ static class Patch
 """;
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, testIndexerPatch, testFix),
-            Verify.Default.Diagnostic(),
+            Verify.Diagnostic().WithLocation(0),
             disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA005"));
     }
 }

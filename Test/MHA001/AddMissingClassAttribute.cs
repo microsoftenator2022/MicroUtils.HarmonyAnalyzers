@@ -39,6 +39,7 @@ static class {|#0:TypeName|}
 """;
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, test, testFix),
+            Verify.Diagnostic().WithLocation(0),
             Verify.GetEquivalenceKey());
     }
 }

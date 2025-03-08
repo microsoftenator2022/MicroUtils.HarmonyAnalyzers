@@ -47,6 +47,7 @@ static class PatchClass
 """;
         await Verify.VerifyCodeFixAsync(
             test,
+            Verify.Diagnostic().WithLocation(0),
             testfix,
             disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA013"));
     }

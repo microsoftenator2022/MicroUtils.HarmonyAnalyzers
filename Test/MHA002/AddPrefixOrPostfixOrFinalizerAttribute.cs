@@ -37,6 +37,7 @@ static class PatchClass
 
             await Verify.VerifyCodeFixAsync(
                 test,
+                Verify.Diagnostic().WithLocation(0),
                 prefix,
                 GetEquivalenceKey(HarmonyPatchType.Prefix));
         }
@@ -48,6 +49,7 @@ static class PatchClass
 
             await Verify.VerifyCodeFixAsync(
                 test,
+                Verify.Diagnostic().WithLocation(0),
                 postfix,
                 GetEquivalenceKey(HarmonyPatchType.Postfix));
         }
@@ -59,6 +61,7 @@ static class PatchClass
 
             await Verify.VerifyCodeFixAsync(
                 test,
+                Verify.Diagnostic().WithLocation(0),
                 finalizer,
                 GetEquivalenceKey(HarmonyPatchType.Finalizer));
         }

@@ -42,6 +42,7 @@ static class Patch
 
         await Verify.VerifyCodeFixAsync(
             new TestSources(targetClass, testPatch, testFix),
+            Verify.Diagnostic().WithLocation(0),
             disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA005"));
     }
 
