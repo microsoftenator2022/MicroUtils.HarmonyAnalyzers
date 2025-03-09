@@ -2,7 +2,7 @@ using MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 
 namespace MicroUtils.HarmonyAnalyzers.Test.MHA003;
 
-using Verify = PatchClassCodeFixVerifier<AddMissingMethodTypeCodeFix, AddMissingMethodType>;
+using Verify = PatchClassCodeFixVerifier<AddMissingMethodTypeCodeFix, AddMissingMethodTypeCodeFix.Descriptor>;
 
 [TestClass]
 public class AddPropertyAccessorMethodType

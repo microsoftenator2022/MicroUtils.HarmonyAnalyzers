@@ -2,7 +2,7 @@
 
 namespace MicroUtils.HarmonyAnalyzers.Test.MHA002;
 
-using Verify = PatchClassCodeFixVerifier<AddPatchTypeAttributeCodeFix, AddPatchTypeAttribute>;
+using Verify = PatchClassCodeFixVerifier<AddPatchTypeAttributeCodeFix, AddPatchTypeAttributeCodeFix.Descriptor>;
 
 public partial class AddMissingPatchMethodTypeAttribute
 {

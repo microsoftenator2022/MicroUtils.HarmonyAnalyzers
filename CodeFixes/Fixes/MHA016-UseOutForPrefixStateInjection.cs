@@ -15,18 +15,18 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA016;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class UseOutForPrefixStateInjectionCodeFix : PatchClassCodeFixProvider<UseOutForPrefixStateInjection> { }
-
-public readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
+public class UseOutForPrefixStateInjectionCodeFix : PatchClassCodeFixProvider<UseOutForPrefixStateInjectionCodeFix.Descriptor>
 {
     const string Title = "Use out for __state injection";
 
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA016;
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public DiagnosticId Id => DiagnosticId.MHA016;
+        public  string GetTitle(params object[] _) => Title;
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+    }
 
-    public string GetTitle(params object[] _) => Title;
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
-
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -36,7 +36,10 @@ public readonly struct UseOutForPrefixStateInjection : IHarmonyCodeFix
             await document.FindSyntaxNodeAsync<ParameterSyntax>(location, ct).ConfigureAwait(false) is not { } ps)
             yield break;
 
-        yield return CodeAction.Create(Title, ct => SetOutKeywordAsync(document, ps, ct));
+        yield return CodeAction.Create(
+            Title,
+            ct => SetOutKeywordAsync(document, ps, ct),
+            equivalenceKey: GetEquivalenceKey());
     }
 
     private static async Task<Document> SetOutKeywordAsync(Document document, ParameterSyntax ps, CancellationToken ct)

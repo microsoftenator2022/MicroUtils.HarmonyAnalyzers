@@ -3,13 +3,13 @@ using System.Text;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 
 namespace MicroUtils.HarmonyAnalyzers.Test;
 
-internal class PatchClassCodeFixTest<TCodeFix> : CSharpCodeFixTest<PatchClassAnalyzer, TCodeFix, DefaultVerifier>
-    where TCodeFix : CodeFixProvider, new()
+internal class PatchClassCodeFixTest<TCodeFix, TDescriptor> : CSharpCodeFixTest<PatchClassAnalyzer, TCodeFix, DefaultVerifier>
+    where TCodeFix : PatchClassCodeFixProvider<TDescriptor>, new()
+    where TDescriptor : struct, IPatchClassCodeFixDescriptor
 {
     public PatchClassCodeFixTest()
     {

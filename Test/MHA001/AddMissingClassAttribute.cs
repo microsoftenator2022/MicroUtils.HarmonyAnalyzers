@@ -2,7 +2,7 @@
 
 namespace MicroUtils.HarmonyAnalyzers.Test.MHA001;
 
-using Verify = PatchClassCodeFixVerifier<AddHarmonyPatchAttributeCodeFix, AddHarmonyPatchAttribute>;
+using Verify = PatchClassCodeFixVerifier<AddHarmonyPatchAttributeCodeFix, AddHarmonyPatchAttributeCodeFix.Descriptor>;
 
 [TestClass]
 public class AddMissingClassAttribute

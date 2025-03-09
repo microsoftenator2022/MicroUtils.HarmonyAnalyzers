@@ -3,24 +3,57 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 
 using MicroUtils.HarmonyAnalyzers;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
 
-public abstract class PatchClassCodeFixProvider<TCodeFixImpl> : CodeFixProvider
-    where TCodeFixImpl : struct, IHarmonyCodeFix
+//public interface IPatchClassCodeFix
+//{
+//    IAsyncEnumerable<CodeAction> GetActionsAsync(
+//        Diagnostic diagnostic,
+//        Document document,
+//        SemanticModel semanticModel,
+//        CancellationToken cancellationToken);
+
+//    //DiagnosticId Id { get; }
+
+//    //string GetEquivalenceKey(params object[] formatArgs);
+//    //string GetTitle(params object[] formatArgs);
+//}
+
+public interface IPatchClassCodeFixDescriptor
 {
+    DiagnosticId Id { get; }
+
+    string GetEquivalenceKey(params object[] formatArgs);
+    string GetTitle(params object[] formatArgs);
+}
+
+public abstract class PatchClassCodeFixProvider<TDescriptor> : CodeFixProvider
+    where TDescriptor : struct, IPatchClassCodeFixDescriptor
+{
+    public static DiagnosticId Id => default(TDescriptor).Id;
+    public static string GetEquivalenceKey(params object[] formatArgs) => default(TDescriptor).GetEquivalenceKey(formatArgs);
+    public static string GetTitle(params object[] formatArgs) => default(TDescriptor).GetTitle(formatArgs);
+
     private protected PatchClassCodeFixProvider() { }
 
     public override FixAllProvider? GetFixAllProvider() => null;
     
     public override ImmutableArray<string> FixableDiagnosticIds => [Id.ToString()];
 
-    readonly static DiagnosticId Id = HarmonyCodeFix.GetDiagnosticId<TCodeFixImpl>();
+    public abstract IAsyncEnumerable<CodeAction> GetActionsAsync(
+        Diagnostic diagnostic,
+        Document document,
+        SemanticModel semanticModel,
+        CancellationToken cancellationToken);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
@@ -44,7 +77,7 @@ public abstract class PatchClassCodeFixProvider<TCodeFixImpl> : CodeFixProvider
 
         foreach (var diagnostic in context.Diagnostics.Where(d => Enum.TryParse<DiagnosticId>(d.Id, out var id) && id == Id))
         {
-            var actions = HarmonyCodeFix.GetFixActions<TCodeFixImpl>()(
+            var actions = this.GetActionsAsync(
                 diagnostic,
                 context.Document,
                 semanticModel,

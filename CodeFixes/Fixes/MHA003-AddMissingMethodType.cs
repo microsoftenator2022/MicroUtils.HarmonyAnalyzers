@@ -17,16 +17,17 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA003;
 using static SyntaxFactory;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class AddMissingMethodTypeCodeFix : PatchClassCodeFixProvider<AddMissingMethodType> { }
-
-public readonly struct AddMissingMethodType : IHarmonyCodeFix
+public class AddMissingMethodTypeCodeFix : PatchClassCodeFixProvider<AddMissingMethodTypeCodeFix.Descriptor>
 {
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA003;
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public DiagnosticId Id => DiagnosticId.MHA003;
+        public string GetTitle(params object[] formatArgs) => string.Format("Add {0} with HarmonyPatch attribute", formatArgs);
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
 
-    public string GetTitle(params object[] formatArgs) => string.Format("Add {0} with HarmonyPatch attribute", formatArgs);
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+    }
 
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -46,7 +47,7 @@ public readonly struct AddMissingMethodType : IHarmonyCodeFix
         var enumField = methodTypeType.GetMembers().OfType<IFieldSymbol>().FirstOrDefault(f => f.HasConstantValue && (f.ConstantValue as int?) == (int)methodType);
 
         var title = /*$"Add {enumField.ToMinimalDisplayString(sm, mds.SpanStart)} with HarmonyPatch attribute";*/
-            this.GetTitle(enumField.ToMinimalDisplayString(sm, mds.SpanStart));
+            GetTitle(enumField.ToMinimalDisplayString(sm, mds.SpanStart));
 
         yield return CodeAction.Create(
             title,

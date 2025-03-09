@@ -17,18 +17,18 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA001;
 using static SyntaxFactory;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class AddHarmonyPatchAttributeCodeFix : PatchClassCodeFixProvider<AddHarmonyPatchAttribute> {}
-
-public readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
+public class AddHarmonyPatchAttributeCodeFix : PatchClassCodeFixProvider<AddHarmonyPatchAttributeCodeFix.Descriptor>
 {
     const string Title = "Add HarmonyPatch Attribute";
-    
-    public string GetTitle(params object[] _) => Title;
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
 
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA001;
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public string GetTitle(params object[] _) => Title;
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+        public DiagnosticId Id => DiagnosticId.MHA001;
+    }
 
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -41,7 +41,7 @@ public readonly struct AddHarmonyPatchAttribute : IHarmonyCodeFix
         yield return CodeAction.Create(
             Title,
             ct => AddHarmonyPatchAttributeAsync(document, cds, sm, ct),
-            equivalenceKey: this.GetTitle());
+            equivalenceKey: GetTitle());
     }
 
     private static async Task<Document> AddHarmonyPatchAttributeAsync(

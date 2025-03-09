@@ -18,22 +18,22 @@ namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA018;
 using static SyntaxFactory;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSignature> { }
-
-public readonly struct FixMethodSignature : IHarmonyCodeFix
+public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSignatureCodeFix.Descriptor>
 {
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA018;
-
-    public string GetTitle(params object[] formatArgs) =>
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public DiagnosticId Id => DiagnosticId.MHA018;
+        public string GetTitle(params object[] formatArgs) =>
 #if DEBUG
-        string.Format("Change method signature to match target method: {0} {1}({2})", formatArgs);
+            string.Format("Change method signature to match target method: {0} {1}({2})", formatArgs);
 #else
             "Fix method signature";
 #endif
 
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+    }
 
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -80,6 +80,8 @@ public readonly struct FixMethodSignature : IHarmonyCodeFix
         if (!method.HasValue)
             yield break;
 
+        var title = GetTitle(method.Value.ReturnType, method.Value.Name, string.Join(", ", method.Value.Parameters.Select(p => p.Type)));
+
         yield return CodeAction.Create(
 //#if DEBUG
 //            $"Change method signature to match target method: " +
@@ -88,9 +90,9 @@ public readonly struct FixMethodSignature : IHarmonyCodeFix
 //#else
 //            "Fix method signature",
 //#endif
-            GetTitle(method.Value.ReturnType, method.Value.Name, string.Join(", ", method.Value.Parameters.Select(p => p.Type))),
-
-            ct => FixMethodSignatureAsync(document, diagnostic, sm, mds, method.Value, ct));
+            title,
+            ct => FixMethodSignatureAsync(document, diagnostic, sm, mds, method.Value, ct),
+            equivalenceKey: title);
     }
 
     private static async Task<Document> FixMethodSignatureAsync(

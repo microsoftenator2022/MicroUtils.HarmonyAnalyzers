@@ -14,18 +14,18 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA012;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class RemoveResultInjectionCodeFix : PatchClassCodeFixProvider<RemoveResultInjection> { }
-
-public readonly struct RemoveResultInjection : IHarmonyCodeFix
+public class RemoveResultInjectionCodeFix : PatchClassCodeFixProvider<RemoveResultInjectionCodeFix.Descriptor>
 {
     const string Title = "Remove __result parameter";
 
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA012;
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public DiagnosticId Id => DiagnosticId.MHA012;
+        public string GetTitle(params object[] _) => Title;
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+    }
 
-    public string GetTitle(params object[] _) => Title;
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
-
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,

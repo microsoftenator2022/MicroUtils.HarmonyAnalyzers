@@ -14,16 +14,17 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes.MHA017;
 
 [ExportCodeFixProvider(LanguageNames.CSharp)]
-public class ReplaceIndexInjectionWithNameCodeFix : PatchClassCodeFixProvider<ReplaceIndexInjectionWithName> { }
-
-public readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
+public class ReplaceIndexInjectionWithNameCodeFix : PatchClassCodeFixProvider<ReplaceIndexInjectionWithNameCodeFix.Descriptor>
 {
-    public DiagnosticId DiagnosticId => DiagnosticId.MHA017;
+    public readonly struct Descriptor : IPatchClassCodeFixDescriptor
+    {
+        public DiagnosticId Id => DiagnosticId.MHA017;
+        public string GetTitle(params object[] formatArgs) => string.Format("Replace '{0}' with '{1}'", formatArgs);
+        public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
 
-    public string GetTitle(params object[] formatArgs) => string.Format("Replace '{0}' with '{1}'", formatArgs);
-    public string GetEquivalenceKey(params object[] formatArgs) => this.GetTitle(formatArgs);
+    }
 
-    async IAsyncEnumerable<CodeAction> IHarmonyCodeFix.GetActionsAsync(
+    public override async IAsyncEnumerable<CodeAction> GetActionsAsync(
         Diagnostic diagnostic,
         Document document,
         SemanticModel sm,
@@ -36,7 +37,7 @@ public readonly struct ReplaceIndexInjectionWithName : IHarmonyCodeFix
         if (!diagnostic.Properties.TryGetValue("ParameterName", out var name) || name is null)
             yield break;
 
-        var title = this.GetTitle(ps.Identifier, name);
+        var title = GetTitle(ps.Identifier, name);
 
         yield return CodeAction.Create(
             /*$"Replace '{ps.Identifier}' with '{name}'",*/

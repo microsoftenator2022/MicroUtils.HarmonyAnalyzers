@@ -4,7 +4,7 @@ using MicroUtils.HarmonyAnalyzers.CodeFixes.MHA008;
 
 namespace MicroUtils.HarmonyAnalyzers.Test.MHA008;
 
-using Verify = PatchClassCodeFixVerifier<AddRefKeywordCodeFix, AddRefKeyword>;
+using Verify = PatchClassCodeFixVerifier<AddRefKeywordCodeFix, AddRefKeywordCodeFix.Descriptor>;
 
 [TestClass]
 public class AddRefKeywordToInjectionParameter

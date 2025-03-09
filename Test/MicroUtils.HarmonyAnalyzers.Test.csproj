@@ -3,10 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
 
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,21 @@
     <ProjectReference Include="..\Analyzers\MicroUtils.HarmonyAnalyzers.csproj" />
     <ProjectReference Include="..\CodeFixes\MicroUtils.HarmonyAnalyzers.CodeFixes.csproj" />
     <ProjectReference Include="..\Completions\MicroUtils.HarmonyAnalyzers.Completions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="MHA015\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.CodeAnalysis.Testing;" />
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting;" />
+    <Using Include="MicroUtils.HarmonyAnalyzers" />
+    <Using Include="MicroUtils.HarmonyAnalyzers.CodeFixes" />
+    <Using Include="MicroUtils.HarmonyAnalyzers.HarmonyConstants">
+      <Static>True</Static>
+    </Using>
+    <Using Include="System.Collections.Immutable" />
   </ItemGroup>
 
 </Project>
