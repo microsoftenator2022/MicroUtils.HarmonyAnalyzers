@@ -27,10 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="MHA015\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Using Include="Microsoft.CodeAnalysis.Testing;" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting;" />
     <Using Include="MicroUtils.HarmonyAnalyzers" />

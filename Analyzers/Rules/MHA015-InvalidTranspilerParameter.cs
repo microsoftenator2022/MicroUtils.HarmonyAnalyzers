@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MicroUtils.HarmonyAnalyzers.Rules;
 
@@ -49,7 +50,17 @@ internal readonly struct InvalidTranspilerParameter : IPatchMethodRule
             if (ct.IsCancellationRequested)
                 yield break;
 
-            yield return methodData.CreateDiagnostics(Descriptor, p.Locations, messageArgs: [p]);
+            var locations =
+                p.DeclaringSyntaxReferences
+                    .Select(sr => sr.GetSyntax(ct))
+                    .OfType<ParameterSyntax>()
+                    .Select(n => n.GetLocation())
+                    .ToImmutableArray();
+
+            if (locations.IsDefaultOrEmpty)
+                locations = p.Locations;
+
+            yield return methodData.CreateDiagnostics(Descriptor, locations, messageArgs: [p]);
         }
     }
 
