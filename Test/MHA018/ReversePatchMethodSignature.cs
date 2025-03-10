@@ -8,9 +8,12 @@ using Verify = PatchClassCodeFixVerifier<FixMethodSignatureCodeFix, FixMethodSig
 public class ReversePatchMethodSignature
 {
     const string targetClass = """
-class TargetType
+namespace Namespace
 {
-    public string TargetMethod(int i) => i.ToString();
+    public class TargetType
+    {
+        public string TargetMethod(int i) => i.ToString();
+    }
 }
 """;
 
@@ -22,11 +25,11 @@ using System;
 
 using HarmonyLib;
 
-[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+[HarmonyPatch(typeof(Namespace.TargetType), nameof(Namespace.TargetType.TargetMethod))]
 static class Patch
 {
     [HarmonyReversePatch]
-    static string ReversePatch(TargetType instance, int i)
+    static string ReversePatch(Namespace.TargetType instance, int i)
     {
         throw new NotImplementedException("STUB");
     }
@@ -46,11 +49,11 @@ using System.Collections.Generic;
 
 using HarmonyLib;
 
-[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+[HarmonyPatch(typeof(Namespace.TargetType), nameof(Namespace.TargetType.TargetMethod))]
 static class Patch
 {
     [HarmonyReversePatch]
-    static string ReversePatch(TargetType instance, int i)
+    static string ReversePatch()
     {
         IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => instructions;
 
@@ -74,11 +77,11 @@ using System;
 
 using HarmonyLib;
 
-[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+[HarmonyPatch(typeof(Namespace.TargetType), nameof(Namespace.TargetType.TargetMethod))]
 static class Patch
 {
     [HarmonyReversePatch]
-    static string {|#0:ReversePatch|}(TargetType instance)
+    static string {|#0:ReversePatch|}(Namespace.TargetType instance)
     {
         throw new NotImplementedException("STUB");
     }
@@ -90,11 +93,11 @@ using System;
 
 using HarmonyLib;
 
-[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+[HarmonyPatch(typeof(Namespace.TargetType), nameof(Namespace.TargetType.TargetMethod))]
 static class Patch
 {
     [HarmonyReversePatch]
-    static string ReversePatch(TargetType instance, int i)
+    static string ReversePatch(Namespace.TargetType instance, int i)
     {
         throw new NotImplementedException("STUB");
     }

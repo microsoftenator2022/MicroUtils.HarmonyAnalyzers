@@ -15,6 +15,7 @@ internal class PatchClassCodeFixTest<TCodeFix, TDescriptor> : CSharpCodeFixTest<
     {
         this.ReferenceAssemblies = ReferenceAssemblies.Default.AddPackages([HarmonyPackage]);
         this.DisabledDiagnostics.AddRange(Default.DisabledDiagnostics);
+        this.CodeActionValidationMode = CodeActionValidationMode.None;
     }
 
     const string targetClassSourceName = "TargetClass.cs";

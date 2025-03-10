@@ -116,15 +116,6 @@ public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSign
                 if (ct.IsCancellationRequested)
                     yield break;
 
-                //var typeName = p.Type.ToMinimalDisplayString(sm, position);
-
-                if (p.DeclaringSyntaxReferences
-                    .Select(sr => sr.GetSyntax())
-                    .OfType<ParameterSyntax>()
-                    .Select(ps => ps.Type)
-                    .FirstOrDefault() is not { }  parameterTypeNode)
-                    yield break;
-
                 yield return Parameter(
                     [],
                     p.RefKind switch
@@ -133,22 +124,15 @@ public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSign
                         RefKind.Out => [Token(SyntaxKind.OutKeyword)],
                         _ => []
                     },
-                    parameterTypeNode,
+                    IdentifierName(p.Type.ToMinimalDisplayString(sm, position)),
                     Identifier(default, p.Name, default),
                     default
                 );
             }
         }
 
-        if (targetMethod.DeclaringSyntaxReferences
-            .Select(sr => sr.GetSyntax())
-            .OfType<MethodDeclarationSyntax>()
-            .Select(m => m.ReturnType)
-            .FirstOrDefault() is not { } targetReturnType)
-            return document;
-
         var newMds = mds
-            .WithReturnType(targetReturnType)
+            .WithReturnType(IdentifierName(targetMethod.ReturnType.ToMinimalDisplayString(sm, position)))
             .WithParameterList(ParameterList(SeparatedList(parameters())));
 
         if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(mds, newMds) is not { } newRoot)
