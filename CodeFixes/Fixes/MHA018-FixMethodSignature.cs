@@ -83,13 +83,6 @@ public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSign
         var title = GetTitle(method.Value.ReturnType, method.Value.Name, string.Join(", ", method.Value.Parameters.Select(p => p.Type)));
 
         yield return CodeAction.Create(
-//#if DEBUG
-//            $"Change method signature to match target method: " +
-//            $"{method.Value.ReturnType} {method.Value.Name}({
-//                string.Join(", ", method.Value.Parameters.Select(p => p.Type))})",
-//#else
-//            "Fix method signature",
-//#endif
             title,
             ct => FixMethodSignatureAsync(document, diagnostic, sm, mds, method.Value, ct),
             equivalenceKey: title);
@@ -123,6 +116,15 @@ public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSign
                 if (ct.IsCancellationRequested)
                     yield break;
 
+                //var typeName = p.Type.ToMinimalDisplayString(sm, position);
+
+                if (p.DeclaringSyntaxReferences
+                    .Select(sr => sr.GetSyntax())
+                    .OfType<ParameterSyntax>()
+                    .Select(ps => ps.Type)
+                    .FirstOrDefault() is not { }  parameterTypeNode)
+                    yield break;
+
                 yield return Parameter(
                     [],
                     p.RefKind switch
@@ -131,15 +133,22 @@ public class FixMethodSignatureCodeFix : PatchClassCodeFixProvider<FixMethodSign
                         RefKind.Out => [Token(SyntaxKind.OutKeyword)],
                         _ => []
                     },
-                    IdentifierName(p.Type.ToMinimalDisplayString(sm, position)),
+                    parameterTypeNode,
                     Identifier(default, p.Name, default),
                     default
                 );
             }
         }
 
+        if (targetMethod.DeclaringSyntaxReferences
+            .Select(sr => sr.GetSyntax())
+            .OfType<MethodDeclarationSyntax>()
+            .Select(m => m.ReturnType)
+            .FirstOrDefault() is not { } targetReturnType)
+            return document;
+
         var newMds = mds
-            .WithReturnType(IdentifierName(targetMethod.ReturnType.ToMinimalDisplayString(sm, position)))
+            .WithReturnType(targetReturnType)
             .WithParameterList(ParameterList(SeparatedList(parameters())));
 
         if ((await document.GetSyntaxRootAsync(ct).ConfigureAwait(false))?.ReplaceNode(mds, newMds) is not { } newRoot)
