@@ -9,11 +9,6 @@ public partial class AddMissingPatchMethodTypeAttribute
     const string part1 = """
 using HarmonyLib;
 
-static class TargetClass
-{
-    public static string TargetMethod() => "";
-}
-
 [HarmonyPatch]
 static class PatchClass
 {
@@ -25,7 +20,7 @@ static class PatchClass
 }
 """;
 
-    static readonly string test = part1 + Environment.NewLine + part2;
+    static readonly string testPatch = part1 + Environment.NewLine + part2;
 
     [TestClass]
     public class AddPrefixOrPostfixOrFinalizerAttribute
@@ -33,36 +28,33 @@ static class PatchClass
         [TestMethod]
         public async Task AddPrefixAttribute()
         {
-            var prefix = string.Join(Environment.NewLine, part1, "    [HarmonyPrefix]", part2);
+            var prefixPatch = string.Join(Environment.NewLine, part1, "    [HarmonyPrefix]", part2);
 
             await Verify.VerifyCodeFixAsync(
-                test,
+                new TestSources(targetClass, testPatch, prefixPatch),
                 Verify.Diagnostic().WithLocation(0),
-                prefix,
                 GetEquivalenceKey(HarmonyPatchType.Prefix));
         }
 
         [TestMethod]
         public async Task AddPostfixAttribute()
         {
-            var postfix = string.Join(Environment.NewLine, part1, "    [HarmonyPostfix]", part2);
+            var postfixPatch = string.Join(Environment.NewLine, part1, "    [HarmonyPostfix]", part2);
 
             await Verify.VerifyCodeFixAsync(
-                test,
+                new TestSources(targetClass, testPatch, postfixPatch),
                 Verify.Diagnostic().WithLocation(0),
-                postfix,
                 GetEquivalenceKey(HarmonyPatchType.Postfix));
         }
 
         [TestMethod]
         public async Task AddFinalizerAttribute()
         {
-            var finalizer = string.Join(Environment.NewLine, part1, "    [HarmonyFinalizer]", part2);
+            var finalizerPatch = string.Join(Environment.NewLine, part1, "    [HarmonyFinalizer]", part2);
 
             await Verify.VerifyCodeFixAsync(
-                test,
+                new TestSources(targetClass, testPatch, finalizerPatch),
                 Verify.Diagnostic().WithLocation(0),
-                finalizer,
                 GetEquivalenceKey(HarmonyPatchType.Finalizer));
         }
     }

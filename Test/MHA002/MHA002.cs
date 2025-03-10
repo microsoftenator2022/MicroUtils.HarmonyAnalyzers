@@ -6,6 +6,13 @@ using Verify = PatchClassCodeFixVerifier<AddPatchTypeAttributeCodeFix, AddPatchT
 
 public partial class AddMissingPatchMethodTypeAttribute
 {
+    const string targetClass = """
+static class TargetClass
+{
+    public static string TargetMethod() => "";
+}    
+""";
+
     static string GetEquivalenceKey(HarmonyPatchType patchType) =>
         Verify.GetEquivalenceKey(HarmonyHelpers.GetPatchTypeAttributeName(patchType));
 }

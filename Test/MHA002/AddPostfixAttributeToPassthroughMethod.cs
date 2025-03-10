@@ -7,16 +7,12 @@ using Verify = PatchClassCodeFixVerifier<AddPatchTypeAttributeCodeFix, AddPatchT
 [TestClass]
 public partial class AddMissingPatchMethodTypeAttribute
 {
+
     [TestMethod]
     public async Task AddPostfixAttributeToPassthroughMethod()
     {
-        var test = """
+        var testPatch = """
 using HarmonyLib;
-
-static class TargetClass
-{
-    public static string TargetMethod() => "";
-}
 
 [HarmonyPatch]
 static class PatchClass
@@ -26,13 +22,8 @@ static class PatchClass
 }
 """;
 
-        var testfix = """
+        var fixedPatch = """
 using HarmonyLib;
-
-static class TargetClass
-{
-    public static string TargetMethod() => "";
-}
 
 [HarmonyPatch]
 static class PatchClass
@@ -43,9 +34,8 @@ static class PatchClass
 }
 """;
         await Verify.VerifyCodeFixAsync(
-            test,
+            new TestSources(targetClass, testPatch, fixedPatch),
             Verify.Diagnostic().WithLocation(0),
-            testfix,
             GetEquivalenceKey(HarmonyPatchType.Postfix));
     }
 }

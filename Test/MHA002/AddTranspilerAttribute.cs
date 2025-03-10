@@ -9,15 +9,10 @@ public partial class AddMissingPatchMethodTypeAttribute
     [TestMethod]
     public async Task AddTranspilerAttribute()
     {
-        var test = """
+        var testPatch = """
 using System.Collections.Generic;
 
 using HarmonyLib;
-
-static class TargetClass
-{
-    public static string TargetMethod() => "";
-}
 
 [HarmonyPatch]
 static class PatchClass
@@ -27,15 +22,10 @@ static class PatchClass
 }
 """;
 
-        var testfix = """
+        var fixedPatch = """
 using System.Collections.Generic;
 
 using HarmonyLib;
-
-static class TargetClass
-{
-    public static string TargetMethod() => "";
-}
 
 [HarmonyPatch]
 static class PatchClass
@@ -46,9 +36,8 @@ static class PatchClass
 }
 """;
         await Verify.VerifyCodeFixAsync(
-            test,
+            new TestSources(targetClass, testPatch, fixedPatch),
             Verify.Diagnostic().WithLocation(0),
-            testfix,
             disabledDiagnostics: Default.DisabledDiagnostics.Add("MHA013"));
     }
 }

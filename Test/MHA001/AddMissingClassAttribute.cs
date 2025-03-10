@@ -17,7 +17,7 @@ static class TargetType
     [TestMethod]
     public async Task AddMissingAttributeToClass()
     {
-        var test = """
+        var testPatch = """
 using HarmonyLib;
 
 static class {|#0:TypeName|}
@@ -27,7 +27,7 @@ static class {|#0:TypeName|}
 }
 """;
 
-        var testFix = """
+        var fixedPatch = """
 using HarmonyLib;
 
 [HarmonyPatch]
@@ -38,7 +38,7 @@ static class {|#0:TypeName|}
 }
 """;
         await Verify.VerifyCodeFixAsync(
-            new TestSources(targetClass, test, testFix),
+            new TestSources(targetClass, testPatch, fixedPatch),
             Verify.Diagnostic().WithLocation(0),
             Verify.GetEquivalenceKey());
     }
