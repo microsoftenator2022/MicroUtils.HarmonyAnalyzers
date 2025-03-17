@@ -98,4 +98,8 @@ public partial class Util
             foreach (var y in source2)
                 yield return (x, y);
     }
+
+    public static string[] GetEnumNames<TEnum>() where TEnum : Enum => Enum.GetNames(typeof(TEnum));
+    public static string GetEnumValueName<TEnum>(this TEnum value) where TEnum : Enum => Enum.GetName(typeof(TEnum), value);
+    public static TEnum[] GetEnumValues<TEnum>() where TEnum : Enum => Enum.GetValues(typeof(TEnum)).OfType<TEnum>().ToArray();
 }

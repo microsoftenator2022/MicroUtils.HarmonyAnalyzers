@@ -1,4 +1,4 @@
-namespace MicroUtils.HarmonyAnalyzers;
+﻿namespace MicroUtils.HarmonyAnalyzers;
 
 public enum RuleCategory
 {
@@ -26,5 +26,6 @@ public enum DiagnosticId
     MHA015,
     MHA016,
     MHA017,
-    MHA018
+    MHA018,
+    MHA019
 }
