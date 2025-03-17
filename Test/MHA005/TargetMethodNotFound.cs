@@ -18,11 +18,11 @@ class TargetType
         const string testPatch = """
 using HarmonyLib;
 
-[HarmonyPatch]
+[HarmonyPatch(typeof(TargetType))]
 static class Patch
 {
-    [HarmonyPatch(typeof(TargetType), "")]
-    static void {|#0:Postfix|}() {}
+    [HarmonyPostfix]
+    static void {|#0:PostfixMethod|}() {}
 }
 """;
 
@@ -37,11 +37,11 @@ static class Patch
         const string testPatch = """
 using HarmonyLib;
 
-[HarmonyPatch]
+[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
 static class Patch
 {
-    [HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
-    static void {|#0:Postfix|}() {}
+    [HarmonyPostfix]
+    static void {|#0:PostfixMethod|}() {}
 }
 """;
         

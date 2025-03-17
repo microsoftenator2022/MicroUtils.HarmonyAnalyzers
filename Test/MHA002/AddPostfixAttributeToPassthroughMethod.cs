@@ -14,10 +14,10 @@ public partial class AddMissingPatchMethodTypeAttribute
         var testPatch = """
 using HarmonyLib;
 
-[HarmonyPatch]
+[HarmonyPatch(typeof(TargetClass), nameof(TargetClass.TargetMethod))]
 static class PatchClass
 {
-    [HarmonyPatch(typeof(TargetClass), nameof(TargetClass.TargetMethod))]
+    [HarmonyPatch]
     static string {|#0:PatchMethod|}(string _) => "";
 }
 """;
@@ -25,10 +25,10 @@ static class PatchClass
         var fixedPatch = """
 using HarmonyLib;
 
-[HarmonyPatch]
+[HarmonyPatch(typeof(TargetClass), nameof(TargetClass.TargetMethod))]
 static class PatchClass
 {
-    [HarmonyPatch(typeof(TargetClass), nameof(TargetClass.TargetMethod))]
+    [HarmonyPatch]
     [HarmonyPostfix]
     static string {|#0:PatchMethod|}(string _) => "";
 }
