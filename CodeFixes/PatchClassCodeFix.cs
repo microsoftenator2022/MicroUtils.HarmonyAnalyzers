@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,20 +12,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using MicroUtils.HarmonyAnalyzers;
 
 namespace MicroUtils.HarmonyAnalyzers.CodeFixes;
-
-//public interface IPatchClassCodeFix
-//{
-//    IAsyncEnumerable<CodeAction> GetActionsAsync(
-//        Diagnostic diagnostic,
-//        Document document,
-//        SemanticModel semanticModel,
-//        CancellationToken cancellationToken);
-
-//    //DiagnosticId Id { get; }
-
-//    //string GetEquivalenceKey(params object[] formatArgs);
-//    //string GetTitle(params object[] formatArgs);
-//}
 
 public interface IPatchClassCodeFixDescriptor
 {

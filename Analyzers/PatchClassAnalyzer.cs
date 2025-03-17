@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -183,7 +181,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
             .Select(m =>
             {
                 var attrs = m.GetAttributes()
-                    .Where(attr => attr.AttributeClass is { } type && 
+                    .Where(attr => attr.AttributeClass is { } type &&
                         (type.Equals(harmonyAttribute, SymbolEqualityComparer.Default) ||
                         commonSymbols.HarmonyPatchTypeAttributes.Values
                             .Any(at => at.Equals(type, SymbolEqualityComparer.Default))
@@ -192,7 +190,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
                 return (m, attrs);
             })
-            .Where(pair => pair.attrs.Length > 0 || 
+            .Where(pair => pair.attrs.Length > 0 ||
                 (classAttributes.Length > 0 && HarmonyConstants.HarmonyPatchTypeNames.Contains(pair.m.Name)))
             .ToImmutableArray();
         

@@ -2,12 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace MicroUtils.HarmonyAnalyzers;
 internal record class DiagnosticBuilder(DiagnosticDescriptor Descriptor)
