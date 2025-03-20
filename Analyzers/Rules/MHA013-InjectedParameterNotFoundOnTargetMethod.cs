@@ -18,7 +18,8 @@ internal readonly struct InjectedParamterNotFoundOnTargetMethod : IPatchMethodRu
         "Parameter '{0}' does not match {1}",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA013).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

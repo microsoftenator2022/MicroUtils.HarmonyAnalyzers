@@ -17,7 +17,8 @@ internal readonly struct PatchTypeMethodNameViolation : IPatchMethodRule
         "Patch type method name should match patch type {0}",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA019).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

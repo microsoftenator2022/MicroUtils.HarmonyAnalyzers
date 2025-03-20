@@ -12,5 +12,6 @@ internal static class TargetMethodMatchFailed
         "Patch target method resolution failed. No matching method was found.",
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA005).ValueOrDefault());
 }

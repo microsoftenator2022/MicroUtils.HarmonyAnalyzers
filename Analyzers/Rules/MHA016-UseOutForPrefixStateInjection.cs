@@ -17,7 +17,8 @@ internal readonly struct UseOutForPrefixStateInjection : IPatchMethodRule
         "Use out modifier for __state parameter",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Info,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA016).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

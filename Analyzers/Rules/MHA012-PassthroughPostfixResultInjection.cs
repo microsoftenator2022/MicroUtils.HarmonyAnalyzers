@@ -16,7 +16,8 @@ internal readonly struct PaasthroughPostfixResultInjection : IPatchMethodRule
         "Unnecessary injected __result parameter in passthrough postfix",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Info,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA012).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

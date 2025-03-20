@@ -32,7 +32,8 @@ internal static class InvalidPatchMethodReturnType
         ,
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA009).ValueOrDefault());
 
     static IEnumerable<TypeSyntax> GetMethodReturnTypeNodes(IMethodSymbol method) =>
         method.DeclaringSyntaxReferences

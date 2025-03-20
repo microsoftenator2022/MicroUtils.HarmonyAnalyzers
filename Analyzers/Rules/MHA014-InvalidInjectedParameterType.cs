@@ -18,7 +18,8 @@ internal readonly struct InvalidInjectedParameterType : IPatchMethodRule
         "Invalid type '{0}' for injection parameter '{1}'. Expected '{2}'.",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA014).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

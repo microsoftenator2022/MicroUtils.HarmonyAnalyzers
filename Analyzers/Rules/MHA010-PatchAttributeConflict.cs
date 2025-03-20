@@ -16,7 +16,8 @@ internal readonly struct PatchAttributeConflict : IPatchMethodRule
         "Conflicting patch attributes: {0}",
         nameof(RuleCategory.PatchAttribute),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA010).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 

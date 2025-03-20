@@ -15,7 +15,8 @@ internal readonly struct AmbiguousMatch : IPatchMethodRule
         "Ambiguous target method for patch. Candidate methods: {0}.",
         nameof(RuleCategory.TargetMethod),
         DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: ReferenceDoc.GetUriString(MHA004).ValueOrDefault());
 
     DiagnosticDescriptor IPatchRule.Descriptor => Descriptor;
 
