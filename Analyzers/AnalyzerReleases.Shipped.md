@@ -40,3 +40,11 @@ MHA018  | PatchMethod      | Warning  | Reverse patch method signature does not 
 Rule ID |     Category     | Severity | Notes
 --------|------------------|----------|----------------------------------------------------
 MHI000  | PatchInfo        | Hidden   | PatchClassAnalyzer
+
+## Release 1.5
+
+### New Rules
+
+Rule ID |     Category     | Severity | Notes
+--------|------------------|----------|----------------------------------------------------
+MHA019  | PatchMethod | Warning  | Patch method name violation

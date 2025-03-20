@@ -3,4 +3,3 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|--------------------
-MHA019  | PatchMethod | Warning  | Patch method name violation

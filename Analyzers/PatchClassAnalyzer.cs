@@ -61,7 +61,6 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         PatchInfo,
 #if DEBUG
         DebugMessage,
-        PatchTypeMethodNameViolation.Descriptor,
 #endif
         MissingClassAttribute.Descriptor,
         MissingPatchTypeAttribute.Descriptor,
@@ -80,7 +79,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         InvalidTranspilerParameter.Descriptor,
         UseOutForPrefixStateInjection.Descriptor,
         ParameterIndexInjection.Descriptor,
-        ReversePatchType.Descriptor
+        ReversePatchType.Descriptor,
+        PatchTypeMethodNameViolation.Descriptor,
     ];
 
     delegate ImmutableArray<Diagnostic> PatchClassRuleCheck(
@@ -119,9 +119,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         PatchRule.Check<UseOutForPrefixStateInjection>,
         PatchRule.Check<ParameterIndexInjection>,
         PatchRule.Check<ReversePatchType>,
-#if DEBUG
         PatchRule.Check<PatchTypeMethodNameViolation>
-#endif
     ];
 
     public override void Initialize(AnalysisContext context)
