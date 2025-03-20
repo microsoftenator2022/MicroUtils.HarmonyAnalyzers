@@ -14,8 +14,8 @@ internal readonly struct InvalidInjectedParameterType : IPatchMethodRule
 {
     internal static readonly DiagnosticDescriptor Descriptor = new(
         nameof(MHA014),
-        "Invalid injected parameter type",
-        "Invalid type '{0}' for injected parameter '{1}'. Expected '{2}'.",
+        "Invalid injectiong parameter type",
+        "Invalid type '{0}' for injection parameter '{1}'. Expected '{2}'.",
         nameof(RuleCategory.PatchMethod),
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
@@ -36,7 +36,6 @@ internal readonly struct InvalidInjectedParameterType : IPatchMethodRule
             .SelectMany(p =>
             {
                 var locations =
-                    
                     p.param.DeclaringSyntaxReferences
                         .Select(sr => sr.GetSyntax(ct))
                         .OfType<ParameterSyntax>()
