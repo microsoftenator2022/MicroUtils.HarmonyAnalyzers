@@ -81,6 +81,7 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         ParameterIndexInjection.Descriptor,
         ReversePatchType.Descriptor,
         PatchTypeMethodNameViolation.Descriptor,
+        NonStaticPatchMethod.Descriptor,
     ];
 
     delegate ImmutableArray<Diagnostic> PatchClassRuleCheck(
@@ -119,7 +120,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
         PatchRule.Check<UseOutForPrefixStateInjection>,
         PatchRule.Check<ParameterIndexInjection>,
         PatchRule.Check<ReversePatchType>,
-        PatchRule.Check<PatchTypeMethodNameViolation>
+        PatchRule.Check<PatchTypeMethodNameViolation>,
+        PatchRule.Check<NonStaticPatchMethod>,
     ];
 
     public override void Initialize(AnalysisContext context)

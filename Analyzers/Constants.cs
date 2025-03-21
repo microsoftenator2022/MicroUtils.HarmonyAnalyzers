@@ -31,7 +31,8 @@ public enum DiagnosticId
     MHA016,
     MHA017,
     MHA018,
-    MHA019
+    MHA019,
+    MHA020
 }
 
 internal static class ReferenceDoc
