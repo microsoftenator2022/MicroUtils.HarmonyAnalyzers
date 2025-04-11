@@ -53,8 +53,6 @@ internal static class InvalidPatchMethodReturnType
 
             var compilation = methodData.Compilation;
 
-        
-
             var voidType = compilation.GetSpecialType(SpecialType.System_Void);
             var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
             var ExceptionType = typeof(Exception).ToNamedTypeSymbol(compilation);
@@ -70,15 +68,15 @@ internal static class InvalidPatchMethodReturnType
                 yield break;
             }
 
-            if (methodData.PatchType is not { } patchType)
-                yield break;
+            var isNotPostfix = methodData.PatchType is null or not HarmonyConstants.HarmonyPatchType.Postfix &&
+                !methodData.GetPatchTypeAttributes(compilation, ct).Any();
 
-            var maybePassthrough = methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
+            var maybePassthrough = !isNotPostfix && methodData.PatchMethod.MayBePassthroughPostfix(methodData.TargetMethod, compilation);
 
             var (hasValidReturnType, validReturnTypes) = HarmonyHelpers.HasValidReturnType(methodData, compilation, ct);
 
-            if ((methodData.TargetMethod is not null || !maybePassthrough) && !hasValidReturnType
-                )
+            if ((methodData.TargetMethod is not null || !maybePassthrough) &&
+                !hasValidReturnType)
             {
                 foreach (var d in methodData.CreateDiagnostics(
                     descriptor: Descriptor,
@@ -114,6 +112,7 @@ internal static class InvalidPatchMethodReturnType
         public ImmutableArray<Diagnostic> Check(PatchClassData patchClassData, CancellationToken ct)
         {
             return patchClassData.TargetMethodMethods.Value
+                .Where(method => !patchClassData.TargetMethodsMethods.Value.Contains(method, SymbolEqualityComparer.Default))
                 .SelectMany(method =>
                 {
                     if (ct.IsCancellationRequested)
@@ -154,6 +153,7 @@ internal static class InvalidPatchMethodReturnType
         public ImmutableArray<Diagnostic> Check(PatchClassData patchClassData, CancellationToken ct)
         {
             return patchClassData.TargetMethodsMethods.Value
+                .Where(method => !patchClassData.TargetMethodMethods.Value.Contains(method, SymbolEqualityComparer.Default))
                 .SelectMany(method =>
                 {
                     if (ct.IsCancellationRequested)

@@ -26,7 +26,7 @@ internal readonly struct PatchTypeAttributeConflict : IPatchMethodRule
         PatchMethodData methodData,
         CancellationToken ct)
     {
-        if (methodData.PatchType is null)
+        if (methodData.PatchType is not null)
             return [];
 
         HarmonyConstants.HarmonyPatchType? methodNamePatchType = null;
@@ -42,8 +42,8 @@ internal readonly struct PatchTypeAttributeConflict : IPatchMethodRule
             return [];
 
         if (patchTypeAttributes.Length == 1 &&
-            patchTypeAttributes[0].Item2 ==
-                (methodNamePatchType is not null ? methodNamePatchType : methodData.PatchType))
+            methodNamePatchType is not null &&
+            patchTypeAttributes[0].Item2 == methodNamePatchType)
                 return [];
 
         return patchTypeAttributes

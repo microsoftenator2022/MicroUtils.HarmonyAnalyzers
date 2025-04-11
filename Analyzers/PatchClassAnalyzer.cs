@@ -213,8 +213,8 @@ public partial class PatchClassAnalyzer : DiagnosticAnalyzer
 
                 var maybeAttr = methodData.GetPatchTypeAttributes(compilation, ct).TryFirst();
 
-                if (maybeAttr.HasValue)
-                    methodData = methodData with { PatchType = maybeAttr.Value.Item2 };
+                if (maybeAttr.HasValue && methodData.PatchType != maybeAttr.Value.Item2)
+                    methodData = methodData with { PatchType = methodData.PatchType is null ? maybeAttr.Value.Item2 : null };
 
                 return methodData;
             })

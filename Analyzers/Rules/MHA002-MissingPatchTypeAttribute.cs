@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
@@ -22,10 +23,10 @@ internal readonly struct MissingPatchTypeAttribute : IPatchMethodRule
 
     public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
-        SemanticModel _1,
-        CancellationToken _2)
+        SemanticModel sm,
+        CancellationToken ct)
     {
-        if (methodData.PatchType is null)
+        if (methodData.PatchType is null && !methodData.GetPatchTypeAttributes(sm.Compilation, ct).Any())
         {
             return methodData.CreateDiagnostics(Descriptor);
         }

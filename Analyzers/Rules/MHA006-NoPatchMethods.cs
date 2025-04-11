@@ -25,7 +25,7 @@ internal readonly struct NoPatchMethods : IPatchClassRule
         CancellationToken _)
     {
         if (patchClassData.ClassAttributes.Length > 0 && patchClassData.PatchMethods.Length == 0)
-        { 
+        {
             return new DiagnosticBuilder(Descriptor).ForAllLocations(patchClassData.ClassSymbol.Locations).CreateAll().ToImmutableArray();
         }
 
