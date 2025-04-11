@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.5.0</VersionPrefix>
+    <VersionPrefix>1.6.0</VersionPrefix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <DevelopmentDependency>true</DevelopmentDependency>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
@@ -16,8 +16,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <!--<VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>-->
-    <VersionSuffix>rc4</VersionSuffix>
+    <VersionSuffix>beta$([System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString())</VersionSuffix>
+    <!--<VersionSuffix>rc1</VersionSuffix>-->
   </PropertyGroup>
   
 </Project>
