@@ -73,8 +73,16 @@ public readonly record struct PatchMethodData(
             (Getter, _) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.GetMethod)).FindMethodsWithArgs(argumentTypes, this.Compilation),
             (Setter, null) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.SetMethod)),
             (Setter, _) => @this.GetTargetProperties().Choose(p => Optional.MaybeValue(p.SetMethod)).FindMethodsWithArgs(argumentTypes, this.Compilation),
-            (Constructor, null) => @this.TargetType?.Constructors.Where(m => !m.IsStatic) ?? [],
-            (Constructor, _) => @this.TargetType?.Constructors.Where(m => !m.IsStatic).FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
+
+            // When argument types are not provided, Harmony will only look for the parameterless constructor
+            (Constructor, null) => @this.TargetType?.Constructors
+                .Where(m =>
+                    m.Parameters.Length == 0 &&
+                    !m.IsStatic) ?? [],
+            (Constructor, _) => @this.TargetType?.Constructors
+                .Where(m => !m.IsStatic)
+                .FindMethodsWithArgs(argumentTypes, this.Compilation) ?? [],
+
             (StaticConstructor, _) => @this.TargetType?.StaticConstructors ?? [],
             (Enumerator, _) => @this.GetCandidateMethods(Normal, null)
                 .Choose(m => Optional.MaybeValue(Util.GetEnumeratorMoveNext(m, @this.Compilation))),

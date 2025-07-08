@@ -98,3 +98,7 @@ Fixes are provided for the following rules:
 ### Notes
 
 Analysis is currently not fully implemented for reverse patches and not at all for `ReturnRef<T>`.
+
+Patch methods that target `MethodType.Constructor` and do not provide and argument types array to the
+`HarmonyPatch` attribtue will only ever resolve to the class' parameterless constructor.
+If a parameterless constructor does not exist, Harmony will fail to find a target method.
