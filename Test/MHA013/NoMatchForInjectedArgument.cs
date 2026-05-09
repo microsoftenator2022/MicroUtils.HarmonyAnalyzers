@@ -6,8 +6,15 @@ using Verify = PatchClassAnalyzerVerifier;
 public class NoMatchForInjectedArgument
 {
     const string targetClass = """
-class TargetType
+class ParentType {
+    private static bool staticParentField;
+    private bool parentField;
+}
+
+class TargetType : ParentType
 {
+    private bool field;
+    
     public void TargetMethod(string s) {}
 }
 """;
@@ -46,5 +53,39 @@ static class Patch
         await Verify.VerifyAnalyzerAsync(
             new TestSources(targetClass, testPatch),
             Verify.Diagnostic("MHA013").WithLocation(0));
+    }
+    
+    [TestMethod]
+    public async Task ValidInjectedField()
+    {
+        const string testPatch = """
+using HarmonyLib;
+
+[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+static class Patch
+{
+    static void Postfix(string s, ref bool ___field) {}
+}
+""";
+
+        await Verify.VerifyAnalyzerAsync(
+            new TestSources(targetClass, testPatch), []);
+    }    
+    
+    [TestMethod]
+    public async Task ValidInjectedParentField()
+    {
+        const string testPatch = """
+using HarmonyLib;
+
+[HarmonyPatch(typeof(TargetType), nameof(TargetType.TargetMethod))]
+static class Patch
+{
+    static void Postfix(string s, ref bool ___parentField, ref bool ___staticParentField) {}
+}
+""";
+
+        await Verify.VerifyAnalyzerAsync(
+            new TestSources(targetClass, testPatch), []);
     }
 }
