@@ -47,7 +47,7 @@ internal readonly struct InjectedParamterNotFoundOnTargetMethod : IPatchMethodRu
             {
                 var fieldInjectionMatch = HarmonyHelpers.FieldInjectionRegex.Match(p.Name);
                 if (fieldInjectionMatch.Success &&
-                    methodData.TargetMethod.ContainingType.GetMembers().OfType<IFieldSymbol>().Any(f =>
+                    GetAllFields(methodData.TargetMethod.ContainingType).Any(f =>
                         f.Name == fieldInjectionMatch.Groups[1].Value &&
                         methodData.Compilation.ClassifyConversion(f.Type, p.Type).IsStandardImplicit()))
                     continue;
@@ -80,6 +80,20 @@ internal readonly struct InjectedParamterNotFoundOnTargetMethod : IPatchMethodRu
         }
     }
 
+    // Harmony supports injecting both declared and inherited fields.
+    private static IEnumerable<IFieldSymbol> GetAllFields(INamedTypeSymbol type)
+    {
+        var current = type;
+        while (current is not null)
+        {
+            foreach (var field in current.GetMembers().OfType<IFieldSymbol>())
+            {
+                yield return field;
+            }
+            current = current.BaseType;
+        }
+    }
+    
     public ImmutableArray<Diagnostic> Check(
         PatchMethodData methodData,
         SemanticModel _1,
